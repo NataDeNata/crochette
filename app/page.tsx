@@ -2,18 +2,61 @@ import Link from "next/link";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { Float } from "@/components/motion/Float";
 import { ProductCard } from "@/components/ui/ProductCard";
-import { GalleryTile } from "@/components/ui/GalleryTile";
-import { getFeaturedProducts } from "@/lib/data/products";
+import { GallerySection } from "@/components/gallery/GallerySection";
+import { QuickCustomOrderForm } from "@/components/custom/QuickCustomOrderForm";
+import { getProducts } from "@/lib/data/products.server";
 import { getHomeGallery } from "@/lib/data/gallery";
 
-export default function Home() {
-  const products = getFeaturedProducts();
+export default async function Home() {
+  const products = await getProducts();
   const gallery = getHomeGallery();
 
   return (
     <>
       {/* HERO */}
-      <section style={{ padding: "96px 48px 64px", textAlign: "center", position: "relative" }}>
+      <section style={{ padding: "96px 48px 64px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <svg
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 0,
+            opacity: 0.6,
+          }}
+          viewBox="0 0 1440 760"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M -40 120 C 220 40, 380 220, 620 130 S 1040 60, 1300 160 S 1520 260, 1480 340"
+            fill="none"
+            stroke="oklch(0.82 0.05 20)"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            opacity={0.5}
+          />
+          <path
+            d="M -60 480 C 180 560, 340 380, 600 470 S 1000 560, 1260 460 S 1500 400, 1500 500"
+            fill="none"
+            stroke="oklch(0.82 0.05 150)"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            opacity={0.45}
+          />
+          <path
+            d="M 100 680 C 320 620, 520 720, 780 660 S 1160 600, 1420 680"
+            fill="none"
+            stroke="oklch(0.8 0.04 60)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            opacity={0.4}
+          />
+          <circle cx={-40} cy={120} r={6} fill="oklch(0.75 0.06 20)" opacity={0.55} />
+          <circle cx={-60} cy={480} r={6} fill="oklch(0.75 0.06 150)" opacity={0.5} />
+          <circle cx={100} cy={680} r={5} fill="oklch(0.72 0.05 60)" opacity={0.45} />
+        </svg>
         <Float
           style={{
             position: "absolute",
@@ -24,6 +67,7 @@ export default function Home() {
             borderRadius: "48% 52% 45% 55%/55% 48% 52% 45%",
             background: "oklch(0.9 0.05 20)",
             opacity: 0.5,
+            zIndex: 1,
           }}
           duration={9}
           distance={14}
@@ -41,6 +85,7 @@ export default function Home() {
             borderRadius: "50% 50% 40% 60%/45% 55% 50% 50%",
             background: "oklch(0.88 0.05 150)",
             opacity: 0.55,
+            zIndex: 1,
           }}
           duration={11}
           distance={10}
@@ -57,6 +102,12 @@ export default function Home() {
               textTransform: "uppercase",
               color: "oklch(0.5 0.05 20)",
               marginBottom: 18,
+              position: "relative",
+              zIndex: 1,
+              background: "oklch(0.975 0.012 85 / 0.75)",
+              display: "inline-block",
+              padding: "2px 10px",
+              borderRadius: 10,
             }}
           >
             Handmade crochet decor
@@ -71,6 +122,8 @@ export default function Home() {
               lineHeight: 1.02,
               margin: "0 auto 22px",
               maxWidth: 920,
+              position: "relative",
+              zIndex: 1,
             }}
           >
             Every stitch, made
@@ -79,12 +132,22 @@ export default function Home() {
           </h1>
         </FadeIn>
         <FadeIn delay={0.1}>
-          <p style={{ fontSize: 17, color: "oklch(0.42 0.02 60)", maxWidth: 460, margin: "0 auto 36px", lineHeight: 1.6 }}>
+          <p
+            style={{
+              fontSize: 17,
+              color: "oklch(0.42 0.02 60)",
+              maxWidth: 460,
+              margin: "0 auto 36px",
+              lineHeight: 1.6,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
             Soft amigurumi, flowers, and cozy decor — crocheted by hand, one loop at a time. Custom pieces welcome.
           </p>
         </FadeIn>
         <FadeIn delay={0.15}>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 64 }}>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 64, position: "relative", zIndex: 1 }}>
             <Link
               href="/shop"
               style={{
@@ -121,6 +184,8 @@ export default function Home() {
             margin: "0 auto",
             borderRadius: "44% 56% 52% 48%/58% 52% 48% 42%",
             overflow: "hidden",
+            position: "relative",
+            zIndex: 1,
           }}
         >
           <div
@@ -170,13 +235,29 @@ export default function Home() {
             </h2>
           </div>
         </FadeIn>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 32 }}>
-          {products.map((p, i) => (
-            <FadeIn key={p.id} delay={(i % 4) * 0.06}>
-              <ProductCard product={p} />
-            </FadeIn>
-          ))}
-        </div>
+        <FadeIn>
+          <div style={{ overflow: "hidden" }}>
+            <div
+              className="shop-marquee-track"
+              style={{
+                display: "flex",
+                gap: 32,
+                width: "max-content",
+                ["--marquee-duration" as string]: `${products.length * 8}s`,
+              }}
+            >
+              {[...products, ...products].map((p, i) => (
+                <div
+                  key={`${p.id}-${i}`}
+                  style={{ width: 260, flexShrink: 0 }}
+                  aria-hidden={i >= products.length || undefined}
+                >
+                  <ProductCard product={p} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
         <div style={{ textAlign: "center", marginTop: 56 }}>
           <Link
             href="/shop"
@@ -278,13 +359,7 @@ export default function Home() {
             </h2>
           </div>
         </FadeIn>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gridAutoRows: 150, gap: 20 }}>
-          {gallery.map((g, i) => (
-            <FadeIn key={i} delay={(i % 4) * 0.05} style={{ gridRow: `span ${g.span}` }}>
-              <GalleryTile item={g} />
-            </FadeIn>
-          ))}
-        </div>
+        <GallerySection items={gallery} rowHeight={150} />
       </section>
 
       {/* CUSTOM ORDER TEASER */}
@@ -328,19 +403,7 @@ export default function Home() {
               Tell us the size, colors, and character — we&apos;ll turn it into a one-of-a-kind piece, made just for
               you.
             </p>
-            <Link
-              href="/custom"
-              style={{
-                background: "oklch(0.28 0.02 60)",
-                color: "oklch(0.98 0.01 85)",
-                padding: "14px 30px",
-                borderRadius: 30,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Start a custom request →
-            </Link>
+            <QuickCustomOrderForm />
           </div>
           <div
             style={{

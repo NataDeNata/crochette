@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { FadeIn } from "@/components/motion/FadeIn";
-import { GalleryTile } from "@/components/ui/GalleryTile";
+import { GallerySection } from "@/components/gallery/GallerySection";
 import { getFullGallery } from "@/lib/data/gallery";
 
 export const metadata: Metadata = {
@@ -43,13 +43,7 @@ export default function GalleryPage() {
       </section>
 
       <section style={{ padding: "20px 48px 100px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gridAutoRows: 180, gap: 20 }}>
-          {gallery.map((g, i) => (
-            <FadeIn key={i} delay={(i % 4) * 0.04} style={{ gridRow: `span ${g.span}` }}>
-              <GalleryTile item={g} />
-            </FadeIn>
-          ))}
-        </div>
+        <GallerySection items={gallery} rowHeight={180} />
       </section>
 
       <FadeIn>

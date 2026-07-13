@@ -17,7 +17,8 @@ const inputStyle = {
   fontFamily: "inherit",
 } as const;
 
-export function CustomOrderForm() {
+/** Compact 3-field teaser version of CustomOrderForm, embedded on the home page. */
+export function QuickCustomOrderForm() {
   const [state, formAction, isPending] = useActionState(submitCustomOrder, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
 
@@ -33,8 +34,12 @@ export function CustomOrderForm() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 420 }}
         >
+          <input type="hidden" name="pieceType" value="Quick request (via homepage)" />
+          <input type="hidden" name="preferredSize" value="" />
+          <input type="hidden" name="preferredColors" value="" />
+
           <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <input name="name" placeholder="Your name" style={inputStyle} />
             <FieldError error={fieldErrors.name?.[0]} />
@@ -46,28 +51,10 @@ export function CustomOrderForm() {
           </motion.div>
 
           <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", gap: 14 }}>
-              <select name="pieceType" style={{ ...inputStyle, flex: 1, color: "oklch(0.4 0.02 60)" }} defaultValue="">
-                <option value="" disabled>
-                  Piece type
-                </option>
-                <option>Amigurumi character</option>
-                <option>Flower / bouquet</option>
-                <option>Home decor</option>
-                <option>Something else</option>
-              </select>
-              <input name="preferredSize" placeholder="Preferred size" style={{ ...inputStyle, flex: 1 }} />
-            </div>
-            <FieldError error={fieldErrors.pieceType?.[0]} />
-          </motion.div>
-
-          <input name="preferredColors" placeholder="Preferred colors" style={inputStyle} />
-
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <textarea
               name="description"
               placeholder="Describe your dream piece..."
-              rows={4}
+              rows={3}
               style={{ ...inputStyle, resize: "vertical" }}
             />
             <FieldError error={fieldErrors.description?.[0]} />

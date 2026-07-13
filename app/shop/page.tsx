@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ShopGrid } from "@/components/shop/ShopGrid";
-import { getProducts } from "@/lib/data/products";
+import { getProducts } from "@/lib/data/products.server";
 
 export const metadata: Metadata = {
   title: "Shop — Crochette",
   description: "Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.",
 };
 
-export default function ShopPage() {
-  const products = getProducts();
+export default async function ShopPage() {
+  const products = await getProducts();
 
   return (
     <>

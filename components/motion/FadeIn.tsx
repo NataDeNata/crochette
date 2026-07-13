@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type TargetAndTransition } from "framer-motion";
 import type { CSSProperties, ReactNode } from "react";
 
 type FadeInProps = {
@@ -15,6 +15,10 @@ type FadeInProps = {
   /** Vertical rise distance in px. */
   y?: number;
   as?: "div" | "section" | "li" | "article" | "header";
+  /** Enables FLIP reflow animation when siblings are added/removed. */
+  layout?: boolean;
+  /** Exit animation — requires an ancestor `AnimatePresence`. */
+  exit?: TargetAndTransition;
 };
 
 /**
@@ -29,6 +33,8 @@ export function FadeIn({
   delay = 0,
   y = 24,
   as = "div",
+  layout,
+  exit,
 }: FadeInProps) {
   const reduceMotion = useReducedMotion();
   const MotionTag = motion[as];
@@ -46,6 +52,8 @@ export function FadeIn({
     <MotionTag
       className={className}
       style={style}
+      layout={layout}
+      exit={exit}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}

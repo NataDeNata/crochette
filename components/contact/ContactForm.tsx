@@ -1,8 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { submitContactMessage } from "@/app/contact/actions";
 import { IDLE_STATE } from "@/lib/actions/types";
+import { FormSuccessMessage } from "@/components/forms/FormSuccessMessage";
+import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FieldError } from "@/components/forms/FieldError";
 
 const inputStyle = {
   padding: "14px 18px",
@@ -13,69 +17,46 @@ const inputStyle = {
   fontFamily: "inherit",
 } as const;
 
-const errorStyle = {
-  fontSize: 12.5,
-  color: "oklch(0.5 0.18 25)",
-  marginTop: -8,
-} as const;
-
 export function ContactForm() {
   const [state, formAction, isPending] = useActionState(submitContactMessage, IDLE_STATE);
-
-  if (state.status === "success") {
-    return (
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 16,
-          background: "oklch(0.95 0.03 150)",
-          color: "oklch(0.3 0.05 150)",
-          fontSize: 15,
-          lineHeight: 1.6,
-        }}
-      >
-        {state.message}
-      </div>
-    );
-  }
-
   const fieldErrors = state.fieldErrors ?? {};
 
   return (
-    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <input name="name" placeholder="Your name" style={inputStyle} />
-      {fieldErrors.name && <span style={errorStyle}>{fieldErrors.name[0]}</span>}
+    <AnimatePresence mode="wait">
+      {state.status === "success" ? (
+        <FormSuccessMessage key="success" message={state.message} />
+      ) : (
+        <motion.form
+          key="form"
+          action={formAction}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+        >
+          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <input name="name" placeholder="Your name" style={inputStyle} />
+            <FieldError error={fieldErrors.name?.[0]} />
+          </motion.div>
 
-      <input name="email" placeholder="Email address" type="email" style={inputStyle} />
-      {fieldErrors.email && <span style={errorStyle}>{fieldErrors.email[0]}</span>}
+          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <input name="email" placeholder="Email address" type="email" style={inputStyle} />
+            <FieldError error={fieldErrors.email?.[0]} />
+          </motion.div>
 
-      <input name="subject" placeholder="Subject" style={inputStyle} />
+          <input name="subject" placeholder="Subject" style={inputStyle} />
 
-      <textarea name="message" placeholder="Your message..." rows={5} style={{ ...inputStyle, resize: "vertical" }} />
-      {fieldErrors.message && <span style={errorStyle}>{fieldErrors.message[0]}</span>}
+          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <textarea name="message" placeholder="Your message..." rows={5} style={{ ...inputStyle, resize: "vertical" }} />
+            <FieldError error={fieldErrors.message?.[0]} />
+          </motion.div>
 
-      {state.status === "error" && state.message && (
-        <span style={{ ...errorStyle, marginTop: 0 }}>{state.message}</span>
+          <FieldError error={state.status === "error" ? state.message : undefined} />
+
+          <SubmitButton isPending={isPending} label="Send message" pendingLabel="Sending…" />
+        </motion.form>
       )}
-
-      <button
-        type="submit"
-        disabled={isPending}
-        style={{
-          alignSelf: "flex-start",
-          background: "oklch(0.28 0.02 60)",
-          color: "oklch(0.98 0.01 85)",
-          border: "none",
-          padding: "14px 30px",
-          borderRadius: 30,
-          fontSize: 14,
-          fontWeight: 500,
-          cursor: isPending ? "default" : "pointer",
-          opacity: isPending ? 0.7 : 1,
-        }}
-      >
-        {isPending ? "Sending…" : "Send message"}
-      </button>
-    </form>
+    </AnimatePresence>
   );
 }

@@ -56,10 +56,43 @@
   }
 }
 
-/* Product-card hover lift (design's `style-hover="transform:translateY(-6px)"`) */
-.hover-lift {
-  transition: transform 0.3s ease;
+@keyframes shopMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
-.hover-lift:hover {
-  transform: translateY(-6px);
+
+.shop-marquee-track {
+  animation: shopMarquee var(--marquee-duration, 60s) linear infinite;
+}
+
+.shop-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-marquee-track {
+    animation: none;
+  }
+}
+
+.nav-desktop-links {
+  display: flex;
+}
+
+.nav-hamburger-btn {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .nav-desktop-links,
+  .nav-cta {
+    display: none;
+  }
+  .nav-hamburger-btn {
+    display: inline-flex;
+  }
 }

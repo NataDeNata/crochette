@@ -3,10 +3,10 @@ config({ path: ".env.local" });
 
 import { db } from "./index";
 import { products } from "./schema";
-import { getProducts } from "../data/products";
+import { getSeedProducts } from "../data/products-seed";
 
 async function main() {
-  const catalog = getProducts();
+  const catalog = getSeedProducts();
 
   await db
     .insert(products)
