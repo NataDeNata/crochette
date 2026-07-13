@@ -25,6 +25,7 @@ async function fetchActiveProducts(): Promise<Product[]> {
     id: row.id,
     slug: row.slug,
     name: row.name,
+    description: row.description ?? undefined,
     priceCents: row.priceCents,
     category: row.category as ProductCategory,
     tag: row.tag ?? undefined,
@@ -39,4 +40,14 @@ async function fetchActiveProducts(): Promise<Product[]> {
  * `CATEGORIES`, and `formatPrice` instead). */
 export async function getProducts(): Promise<Product[]> {
   return fetchActiveProducts();
+}
+
+/** Single active product by slug, for the product detail page
+ * (`app/shop/[slug]/page.tsx`). Returns `null` if not found or not active,
+ * so the caller can render a 404. Reuses the same bg/placeholder derivation
+ * as the full catalog by finding the product's position within it, keeping
+ * a product's card color consistent between the grid and its detail page. */
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const all = await fetchActiveProducts();
+  return all.find((p) => p.slug === slug) ?? null;
 }

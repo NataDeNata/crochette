@@ -11,19 +11,68 @@ const BG_CYCLE = [
 
 const CATALOG: Array<{
   name: string;
+  description: string;
   priceCents: number;
   category: ProductCategory;
   tag?: string;
 }> = [
-  { name: "Milo the Bear", priceCents: 3200, category: "amigurumi", tag: "Bestseller" },
-  { name: "Sunny Daisy Bouquet", priceCents: 2400, category: "flowers" },
-  { name: "Cloud Basket", priceCents: 2800, category: "baskets" },
-  { name: "Little Fox Friend", priceCents: 3600, category: "amigurumi", tag: "New" },
-  { name: "Rosebud Coaster Set", priceCents: 1800, category: "home-decor" },
-  { name: "Petal Garland", priceCents: 2200, category: "flowers", tag: "New" },
-  { name: "Bumble the Bee", priceCents: 3000, category: "amigurumi" },
-  { name: "Meadow Wall Hanging", priceCents: 4400, category: "home-decor" },
-  { name: "Tiny Turtle Duo", priceCents: 2600, category: "amigurumi" },
+  {
+    name: "Milo the Bear",
+    description: "A soft, huggable bear amigurumi with a hand-embroidered face and a little tartan bow.",
+    priceCents: 3200,
+    category: "amigurumi",
+    tag: "Bestseller",
+  },
+  {
+    name: "Sunny Daisy Bouquet",
+    description: "A cheerful bouquet of crocheted daisies on wire stems — never wilts, always sunny.",
+    priceCents: 2400,
+    category: "flowers",
+  },
+  {
+    name: "Cloud Basket",
+    description: "A sturdy cotton-rope basket in cloud white, perfect for yarn, plants, or odds and ends.",
+    priceCents: 2800,
+    category: "baskets",
+  },
+  {
+    name: "Little Fox Friend",
+    description: "A curious little fox with a fluffy tail and a mischievous stitched-on grin.",
+    priceCents: 3600,
+    category: "amigurumi",
+    tag: "New",
+  },
+  {
+    name: "Rosebud Coaster Set",
+    description: "Four rosebud coasters in dusty rose and sage, worked flat and stiffened to hold their shape.",
+    priceCents: 1800,
+    category: "home-decor",
+  },
+  {
+    name: "Petal Garland",
+    description: "A long garland of tiny crocheted petals, strung together for a shelf, wall, or window.",
+    priceCents: 2200,
+    category: "flowers",
+    tag: "New",
+  },
+  {
+    name: "Bumble the Bee",
+    description: "A round, striped little bee with gauzy net wings and a gentle smile.",
+    priceCents: 3000,
+    category: "amigurumi",
+  },
+  {
+    name: "Meadow Wall Hanging",
+    description: "A woven wall hanging with crocheted florals scattered across a driftwood dowel.",
+    priceCents: 4400,
+    category: "home-decor",
+  },
+  {
+    name: "Tiny Turtle Duo",
+    description: "Two miniature turtles with mismatched shell patterns, sold as a pair.",
+    priceCents: 2600,
+    category: "amigurumi",
+  },
 ];
 
 function slugify(name: string) {
@@ -41,6 +90,7 @@ export function getSeedProducts(): Product[] {
     id: `p_${slugify(item.name)}`,
     slug: slugify(item.name),
     name: item.name,
+    description: item.description,
     priceCents: item.priceCents,
     category: item.category,
     tag: item.tag,

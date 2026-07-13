@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { products } from "./schema";
 import { getSeedProducts } from "../data/products-seed";
@@ -14,12 +15,16 @@ async function main() {
       catalog.map((p) => ({
         slug: p.slug,
         name: p.name,
+        description: p.description,
         priceCents: p.priceCents,
         category: p.category,
         tag: p.tag,
       }))
     )
-    .onConflictDoNothing({ target: products.slug });
+    .onConflictDoUpdate({
+      target: products.slug,
+      set: { description: sql`excluded.description` },
+    });
 
   console.log(`Seeded ${catalog.length} products.`);
   process.exit(0);

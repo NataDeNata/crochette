@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/data/products";
 import { formatPrice } from "@/lib/data/products";
@@ -55,7 +56,10 @@ export function ProductCard({ product }: { product: Product }) {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <Link
+      href={`/shop/${product.slug}`}
+      style={{ display: "flex", flexDirection: "column", gap: 14 }}
+    >
       {reduceMotion ? (
         <div style={{ ...imageWrapStyle, background: product.bg }}>
           {tag}
@@ -89,6 +93,6 @@ export function ProductCard({ product }: { product: Product }) {
           {formatPrice(product.priceCents)}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }

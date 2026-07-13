@@ -4,6 +4,7 @@ export interface Product {
   id: string;
   slug: string;
   name: string;
+  description?: string;
   priceCents: number;
   category: ProductCategory;
   tag?: string;
