@@ -79,6 +79,16 @@
   }
 }
 
+.step-thread {
+  display: block;
+}
+
+@media (max-width: 760px) {
+  .step-thread {
+    display: none;
+  }
+}
+
 .nav-desktop-links {
   display: flex;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FadeIn } from "@/components/motion/FadeIn";
-import { CustomOrderForm } from "@/components/custom/CustomOrderForm";
+import { CustomOrderPanel } from "@/components/custom/CustomOrderPanel";
+import { StepThread } from "@/components/custom/StepThread";
 import { CUSTOM_STEPS } from "@/lib/data/custom";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ export default function CustomOrderPage() {
 
       <section
         style={{
+          position: "relative",
           padding: "0 48px 90px",
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
@@ -51,6 +53,7 @@ export default function CustomOrderPage() {
           margin: "0 auto",
         }}
       >
+        <StepThread />
         {CUSTOM_STEPS.map((s, i) => (
           <FadeIn key={s.n} delay={i * 0.08}>
             <div style={{ textAlign: "center", padding: "0 12px" }}>
@@ -91,37 +94,7 @@ export default function CustomOrderPage() {
             alignItems: "center",
           }}
         >
-          <div>
-            <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 28, margin: "0 0 22px" }}>
-              Start your request
-            </h2>
-            <CustomOrderForm />
-          </div>
-          <div
-            style={{
-              aspectRatio: "1/1",
-              borderRadius: 32,
-              overflow: "hidden",
-              background:
-                "repeating-linear-gradient(135deg, oklch(0.95 0.03 20) 0 18px, oklch(0.98 0.015 20) 18px 36px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "ui-monospace, monospace",
-                fontSize: 13,
-                color: "oklch(0.4 0.04 20)",
-                background: "oklch(1 0 0 / 0.6)",
-                padding: "8px 16px",
-                borderRadius: 8,
-              }}
-            >
-              custom order sample photo
-            </span>
-          </div>
+          <CustomOrderPanel />
         </section>
       </FadeIn>
     </>

@@ -43,6 +43,7 @@ export const customOrderRequests = pgTable("custom_order_requests", {
   preferredColors: text("preferred_colors"),
   description: text("description").notNull(),
   budgetRange: text("budget_range"),
+  referenceImageUrls: text("reference_image_urls").array(),
   status: customOrderStatusEnum("status").notNull().default("new"),
   quotedPriceCents: integer("quoted_price_cents"),
   adminNotes: text("admin_notes"),

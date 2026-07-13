@@ -6,6 +6,7 @@ export const customOrderSchema = z.object({
   pieceType: z.string().trim().min(1, "Please choose a piece type"),
   preferredSize: z.string().trim().max(120).optional().or(z.literal("")),
   preferredColors: z.string().trim().max(200).optional().or(z.literal("")),
+  budgetRange: z.string().trim().max(60).optional().or(z.literal("")),
   description: z.string().trim().min(10, "Tell us a bit more (at least 10 characters)").max(2000),
 });
 
