@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-serif: var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-work), ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: oklch(0.975 0.012 85);
+    color: oklch(0.28 0.02 60);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: oklch(0.55 0.09 20);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  a:hover {
+    color: oklch(0.45 0.1 20);
+  }
+
+  ::selection {
+    background: oklch(0.85 0.05 20);
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid oklch(0.7 0.06 20);
+    outline-offset: 1px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Product-card hover lift (design's `style-hover="transform:translateY(-6px)"`) */
+.hover-lift {
+  transition: transform 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
 }
