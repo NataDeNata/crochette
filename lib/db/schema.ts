@@ -50,6 +50,16 @@ export const customOrderRequests = pgTable("custom_order_requests", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Studio-owner login for /admin — not a customer-facing users table.
+ * Customer accounts are explicitly deferred (Phase 1 ships guest-only). */
+export const admins = pgTable("admins", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  name: text("name"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const contactMessages = pgTable("contact_messages", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -65,3 +75,5 @@ export type CustomOrderRequestRow = typeof customOrderRequests.$inferSelect;
 export type NewCustomOrderRequestRow = typeof customOrderRequests.$inferInsert;
 export type ContactMessageRow = typeof contactMessages.$inferSelect;
 export type NewContactMessageRow = typeof contactMessages.$inferInsert;
+export type AdminRow = typeof admins.$inferSelect;
+export type NewAdminRow = typeof admins.$inferInsert;

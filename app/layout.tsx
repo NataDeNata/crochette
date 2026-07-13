@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Work_Sans } from "next/font/google";
 import "./globals.css";
-import { Nav } from "@/components/sections/Nav";
-import { Footer } from "@/components/sections/Footer";
-import { PageTransition } from "@/components/motion/PageTransition";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -35,9 +33,7 @@ export default function RootLayout({
     <html lang="en" className={`${cormorant.variable} ${workSans.variable}`}>
       <body>
         <div style={{ maxWidth: 1440, margin: "0 auto", position: "relative", overflow: "hidden" }}>
-          <Nav />
-          <PageTransition>{children}</PageTransition>
-          <Footer />
+          <SiteChrome>{children}</SiteChrome>
         </div>
       </body>
     </html>
