@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CATEGORIES, formatPrice } from "@/lib/data/products";
 import { getProductBySlug, getProducts } from "@/lib/data/products.server";
 
@@ -144,33 +145,28 @@ export default async function ProductPage({
               {product.description}
             </p>
           )}
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <Link
-              href="/contact"
-              style={{
-                background: "oklch(0.28 0.02 60)",
-                color: "oklch(0.98 0.01 85)",
-                padding: "14px 30px",
-                borderRadius: 30,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Ask about this piece
-            </Link>
-            <Link
-              href="/custom"
-              style={{
-                border: "1.5px solid oklch(0.75 0.03 20)",
-                color: "oklch(0.28 0.02 60)",
-                padding: "13px 26px",
-                borderRadius: 30,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Request it personalized
-            </Link>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <AddToCartButton
+              product={{ id: product.id, slug: product.slug, name: product.name, priceCents: product.priceCents }}
+            />
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+              <Link
+                href="/custom"
+                style={{
+                  border: "1.5px solid oklch(0.75 0.03 20)",
+                  color: "oklch(0.28 0.02 60)",
+                  padding: "13px 26px",
+                  borderRadius: 30,
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
+                Request it personalized
+              </Link>
+              <Link href="/contact" style={{ fontSize: 13, color: "oklch(0.5 0.05 20)", alignSelf: "center" }}>
+                Have a question? Contact us
+              </Link>
+            </div>
           </div>
         </FadeIn>
       </section>

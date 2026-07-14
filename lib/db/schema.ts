@@ -19,6 +19,15 @@ export const customOrderStatusEnum = pgEnum("custom_order_status", [
   "declined",
 ]);
 
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "paid",
+  "failed",
+  "shipped",
+  "completed",
+  "cancelled",
+]);
+
 /** Mirrors lib/data/products.ts — seeded from the mock catalog. Storefront reads
  * still come from the mock module until a live DATABASE_URL is wired in. */
 export const products = pgTable("products", {
@@ -50,6 +59,40 @@ export const customOrderRequests = pgTable("custom_order_requests", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const orders = pgTable("orders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone"),
+  shippingLine1: text("shipping_line1").notNull(),
+  shippingLine2: text("shipping_line2"),
+  shippingCity: text("shipping_city").notNull(),
+  shippingProvince: text("shipping_province").notNull(),
+  shippingPostalCode: text("shipping_postal_code").notNull(),
+  subtotalCents: integer("subtotal_cents").notNull(),
+  shippingCents: integer("shipping_cents").notNull(),
+  totalCents: integer("total_cents").notNull(),
+  status: orderStatusEnum("status").notNull().default("pending"),
+  xenditPaymentSessionId: text("xendit_payment_session_id"),
+  xenditPaymentId: text("xendit_payment_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id),
+  /** Snapshot at purchase time — product name/price may change later. */
+  productName: text("product_name").notNull(),
+  unitPriceCents: integer("unit_price_cents").notNull(),
+  quantity: integer("quantity").notNull(),
+});
+
 /** Studio-owner login for /admin — not a customer-facing users table.
  * Customer accounts are explicitly deferred (Phase 1 ships guest-only). */
 export const admins = pgTable("admins", {
@@ -77,3 +120,7 @@ export type ContactMessageRow = typeof contactMessages.$inferSelect;
 export type NewContactMessageRow = typeof contactMessages.$inferInsert;
 export type AdminRow = typeof admins.$inferSelect;
 export type NewAdminRow = typeof admins.$inferInsert;
+export type OrderRow = typeof orders.$inferSelect;
+export type NewOrderRow = typeof orders.$inferInsert;
+export type OrderItemRow = typeof orderItems.$inferSelect;
+export type NewOrderItemRow = typeof orderItems.$inferInsert;

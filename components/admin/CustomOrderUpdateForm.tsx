@@ -50,7 +50,7 @@ export function CustomOrderUpdateForm({
       </div>
 
       <div>
-        <label style={labelStyle} htmlFor="quotedPriceDollars">Quoted price (USD, optional)</label>
+        <label style={labelStyle} htmlFor="quotedPriceDollars">Quoted price (PHP, optional)</label>
         <input
           id="quotedPriceDollars"
           name="quotedPriceDollars"

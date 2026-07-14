@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { CartIcon } from "@/components/cart/CartIcon";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -98,36 +99,40 @@ export function Nav() {
         Shop now
       </Link>
 
-      <button
-        type="button"
-        className="nav-hamburger-btn"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Toggle menu"
-        aria-expanded={open}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: 6,
-          flexDirection: "column",
-          gap: 5,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <motion.span
-          animate={reduceMotion ? undefined : { rotate: open ? 45 : 0, y: open ? 6 : 0 }}
-          style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
-        />
-        <motion.span
-          animate={reduceMotion ? undefined : { opacity: open ? 0 : 1 }}
-          style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
-        />
-        <motion.span
-          animate={reduceMotion ? undefined : { rotate: open ? -45 : 0, y: open ? -6 : 0 }}
-          style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
-        />
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <CartIcon />
+
+        <button
+          type="button"
+          className="nav-hamburger-btn"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Toggle menu"
+          aria-expanded={open}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 6,
+            flexDirection: "column",
+            gap: 5,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <motion.span
+            animate={reduceMotion ? undefined : { rotate: open ? 45 : 0, y: open ? 6 : 0 }}
+            style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
+          />
+          <motion.span
+            animate={reduceMotion ? undefined : { opacity: open ? 0 : 1 }}
+            style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
+          />
+          <motion.span
+            animate={reduceMotion ? undefined : { rotate: open ? -45 : 0, y: open ? -6 : 0 }}
+            style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
+          />
+        </button>
+      </div>
 
       {reduceMotion ? (
         open && (

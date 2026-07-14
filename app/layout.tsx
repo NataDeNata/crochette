@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { CartProvider } from "@/lib/cart/CartContext";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -33,7 +34,9 @@ export default function RootLayout({
     <html lang="en" className={`${cormorant.variable} ${workSans.variable}`}>
       <body>
         <div style={{ maxWidth: 1440, margin: "0 auto", position: "relative", overflow: "hidden" }}>
-          <SiteChrome>{children}</SiteChrome>
+          <CartProvider>
+            <SiteChrome>{children}</SiteChrome>
+          </CartProvider>
         </div>
       </body>
     </html>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { count, eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { products, customOrderRequests } from "@/lib/db/schema";
+import { products, customOrderRequests, orders } from "@/lib/db/schema";
 
 const cardStyle = {
   padding: 24,
@@ -11,10 +11,11 @@ const cardStyle = {
 } as const;
 
 export default async function AdminDashboardPage() {
-  const [[{ productCount }], [{ activeProductCount }], [{ newRequestCount }], recentRequests] = await Promise.all([
+  const [[{ productCount }], [{ activeProductCount }], [{ newRequestCount }], [{ newOrderCount }], recentRequests] = await Promise.all([
     db.select({ productCount: count() }).from(products),
     db.select({ activeProductCount: count() }).from(products).where(eq(products.status, "active")),
     db.select({ newRequestCount: count() }).from(customOrderRequests).where(eq(customOrderRequests.status, "new")),
+    db.select({ newOrderCount: count() }).from(orders).where(eq(orders.status, "paid")),
     db
       .select({
         id: customOrderRequests.id,
@@ -46,6 +47,13 @@ export default async function AdminDashboardPage() {
             {newRequestCount}
           </div>
           <div style={{ fontSize: 12.5, color: "oklch(0.55 0.02 60)" }}>awaiting review</div>
+        </Link>
+        <Link href="/admin/orders" style={{ ...cardStyle, display: "block" }}>
+          <div style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", marginBottom: 6 }}>Paid orders awaiting fulfillment</div>
+          <div style={{ fontSize: 30, fontWeight: 500, color: newOrderCount > 0 ? "oklch(0.5 0.18 25)" : undefined }}>
+            {newOrderCount}
+          </div>
+          <div style={{ fontSize: 12.5, color: "oklch(0.55 0.02 60)" }}>not yet shipped</div>
         </Link>
       </div>
 

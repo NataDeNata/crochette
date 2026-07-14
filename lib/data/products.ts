@@ -21,9 +21,9 @@ export const CATEGORIES: { name: string; value: ProductCategory | "all" }[] = [
 ];
 
 export function formatPrice(priceCents: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-PH", {
     style: "currency",
-    currency: "usd",
+    currency: "php",
     minimumFractionDigits: 0,
   }).format(priceCents / 100);
 }

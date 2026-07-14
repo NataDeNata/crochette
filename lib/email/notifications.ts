@@ -1,4 +1,5 @@
 import { sendEmail } from "./resend";
+import { formatPrice } from "@/lib/data/products";
 
 const STUDIO_NOTIFY_EMAIL = process.env.STUDIO_NOTIFY_EMAIL;
 
@@ -94,6 +95,71 @@ export async function notifyCustomOrderSubmitted(data: {
             `),
           },
           "custom-order studio notification"
+        )
+      : Promise.resolve(),
+  ]);
+}
+
+export async function notifyOrderPaid(order: {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  shippingLine1: string;
+  shippingLine2: string | null;
+  shippingCity: string;
+  shippingProvince: string;
+  shippingPostalCode: string;
+  subtotalCents: number;
+  shippingCents: number;
+  totalCents: number;
+}, items: Array<{ productName: string; unitPriceCents: number; quantity: number }>) {
+  const safeName = escapeHtml(order.customerName);
+  const address = [order.shippingLine1, order.shippingLine2, order.shippingCity, order.shippingProvince, order.shippingPostalCode]
+    .filter(Boolean)
+    .join(", ");
+
+  const itemRows = items
+    .map(
+      (item) =>
+        `<li>${escapeHtml(item.productName)} × ${item.quantity} — ${escapeHtml(formatPrice(item.unitPriceCents * item.quantity))}</li>`
+    )
+    .join("");
+
+  await Promise.all([
+    sendEmailSafe(
+      {
+        to: order.customerEmail,
+        subject: "Your Crochette order is confirmed",
+        html: wrapEmail(`
+          <p>Hi ${safeName},</p>
+          <p>Thank you for your order! We've received your payment and will start preparing it soon.</p>
+          <ul style="font-size: 13px; color: #6b6257; padding-left: 18px;">${itemRows}</ul>
+          ${detailList([
+            ["Subtotal", formatPrice(order.subtotalCents)],
+            ["Shipping", formatPrice(order.shippingCents)],
+            ["Total", formatPrice(order.totalCents)],
+            ["Shipping to", address],
+          ])}
+        `),
+      },
+      "order customer receipt"
+    ),
+    STUDIO_NOTIFY_EMAIL
+      ? sendEmailSafe(
+          {
+            to: STUDIO_NOTIFY_EMAIL,
+            subject: `New paid order from ${order.customerName} — ${formatPrice(order.totalCents)}`,
+            html: wrapEmail(`
+              <p>New paid order:</p>
+              <ul style="font-size: 13px; color: #6b6257; padding-left: 18px;">${itemRows}</ul>
+              ${detailList([
+                ["Total", formatPrice(order.totalCents)],
+                ["Shipping to", address],
+              ])}
+              <p style="font-size: 13px;"><a href="${SITE_URL}/admin/orders/${order.id}">Review in admin dashboard</a></p>
+            `),
+          },
+          "order studio notification"
         )
       : Promise.resolve(),
   ]);

@@ -23,7 +23,7 @@ async function main() {
     )
     .onConflictDoUpdate({
       target: products.slug,
-      set: { description: sql`excluded.description` },
+      set: { description: sql`excluded.description`, priceCents: sql`excluded.price_cents` },
     });
 
   console.log(`Seeded ${catalog.length} products.`);
