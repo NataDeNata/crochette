@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { contactMessages } from "@/lib/db/schema";
 import { contactSchema } from "@/lib/validation/contact";
 import type { FormActionState } from "@/lib/actions/types";
+import { notifyContactMessageSubmitted } from "@/lib/email/notifications";
 
 export async function submitContactMessage(
   _prevState: FormActionState,
@@ -38,6 +39,13 @@ export async function submitContactMessage(
       message: "We couldn't send your message right now — please try again in a moment.",
     };
   }
+
+  await notifyContactMessageSubmitted({
+    name: parsed.data.name,
+    email: parsed.data.email,
+    subject: parsed.data.subject || null,
+    message: parsed.data.message,
+  });
 
   return {
     status: "success",

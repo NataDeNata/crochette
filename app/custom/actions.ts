@@ -6,6 +6,7 @@ import { customOrderRequests } from "@/lib/db/schema";
 import { customOrderSchema } from "@/lib/validation/custom-order";
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
 import type { FormActionState } from "@/lib/actions/types";
+import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
@@ -85,6 +86,17 @@ export async function submitCustomOrder(
       message: "We couldn't send your request right now — please try again in a moment.",
     };
   }
+
+  await notifyCustomOrderSubmitted({
+    name: parsed.data.name,
+    email: parsed.data.email,
+    pieceType: parsed.data.pieceType,
+    preferredSize: parsed.data.preferredSize || null,
+    preferredColors: parsed.data.preferredColors || null,
+    budgetRange: parsed.data.budgetRange || null,
+    description: parsed.data.description,
+    photoCount: uploadResult.urls.length,
+  });
 
   return {
     status: "success",
