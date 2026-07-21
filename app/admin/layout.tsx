@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { adminSignOut } from "@/app/admin/actions";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const NAV_LINKS = [
   { href: "/admin", label: "Dashboard" },

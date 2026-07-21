@@ -3,8 +3,12 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { ContactForm } from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact — Crochette",
+  title: "Contact",
   description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
+  openGraph: {
+    title: "Contact — Crochette",
+    description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
+  },
 };
 
 const DETAILS = [

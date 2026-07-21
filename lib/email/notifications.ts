@@ -1,11 +1,8 @@
 import { sendEmail } from "./resend";
 import { formatPrice } from "@/lib/data/products";
+import { SITE_URL } from "@/lib/site";
 
 const STUDIO_NOTIFY_EMAIL = process.env.STUDIO_NOTIFY_EMAIL;
-
-/** Studio owner's admin link in outbound emails. Update once a custom
- * production domain replaces the Vercel-assigned one (see update.md). */
-const SITE_URL = "https://crochette-zeta.vercel.app";
 
 async function sendEmailSafe(params: { to: string; subject: string; html: string }, context: string) {
   try {

@@ -5,8 +5,12 @@ import { StepThread } from "@/components/custom/StepThread";
 import { CUSTOM_STEPS } from "@/lib/data/custom";
 
 export const metadata: Metadata = {
-  title: "Custom Orders — Crochette",
+  title: "Custom Orders",
   description: "Tell us the size, colors, and character — we'll turn it into a one-of-a-kind piece.",
+  openGraph: {
+    title: "Custom Orders — Crochette",
+    description: "Tell us the size, colors, and character — we'll turn it into a one-of-a-kind piece.",
+  },
 };
 
 export default function CustomOrderPage() {

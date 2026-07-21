@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+
+export const metadata: Metadata = {
+  title: "Order confirmation",
+  robots: { index: false, follow: false },
+};
 
 export default async function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

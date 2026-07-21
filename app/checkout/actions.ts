@@ -64,6 +64,15 @@ export async function submitCheckout(
         message: "One or more items in your cart are no longer available. Please review your cart and try again.",
       };
     }
+    if (item.quantity > product.stockQty) {
+      return {
+        status: "error",
+        message:
+          product.stockQty > 0
+            ? `Only ${product.stockQty} of "${product.name}" left in stock — please update the quantity in your cart.`
+            : `"${product.name}" just sold out — please remove it from your cart.`,
+      };
+    }
     lineItems.push({
       productId: product.id,
       name: product.name,

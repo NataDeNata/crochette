@@ -31,6 +31,7 @@ async function fetchActiveProducts(): Promise<Product[]> {
     tag: row.tag ?? undefined,
     bg: BG_CYCLE[i % BG_CYCLE.length],
     placeholder: `product shot — ${row.name.toLowerCase()}`,
+    stockQty: row.stockQty,
   }));
 }
 

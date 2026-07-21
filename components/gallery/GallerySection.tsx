@@ -12,7 +12,7 @@ export function GallerySection({ items, rowHeight }: { items: GalleryItem[]; row
 
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gridAutoRows: rowHeight, gap: 20 }}>
+      <div className="gallery-grid" style={{ display: "grid", gridAutoRows: rowHeight, gap: 20 }}>
         {items.map((g, i) => (
           <FadeIn key={i} delay={(i % 4) * 0.05} style={{ gridRow: `span ${g.span}` }}>
             <GalleryTile item={g} layoutId={`gallery-${i}`} onClick={() => setOpenIndex(i)} />

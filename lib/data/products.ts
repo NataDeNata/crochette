@@ -10,7 +10,11 @@ export interface Product {
   tag?: string;
   bg: string;
   placeholder: string;
+  stockQty: number;
 }
+
+/** At or below this many left, the product page shows a "Low on Stock" notice. */
+export const LOW_STOCK_THRESHOLD = 5;
 
 export const CATEGORIES: { name: string; value: ProductCategory | "all" }[] = [
   { name: "All", value: "all" },

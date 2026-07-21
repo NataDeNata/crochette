@@ -13,7 +13,7 @@ const wrapperStyle = {
   top: 0,
   height: 44,
   pointerEvents: "none",
-  zIndex: 0,
+  zIndex: -1,
 } as const;
 
 /** Self-drawing thread connecting the 3 "how it works" step badges, echoing

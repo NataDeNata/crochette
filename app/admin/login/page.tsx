@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 
 export const metadata: Metadata = {
-  title: "Admin sign in — Crochette",
+  title: "Admin sign in",
 };
 
 export default async function AdminLoginPage() {

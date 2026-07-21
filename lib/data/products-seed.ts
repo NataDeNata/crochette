@@ -96,5 +96,7 @@ export function getSeedProducts(): Product[] {
     tag: item.tag,
     bg: BG_CYCLE[i % BG_CYCLE.length],
     placeholder: `product shot — ${item.name.toLowerCase()}`,
+    // Not written by the seed insert (see seed.ts) — the DB column's own default (0) applies on insert.
+    stockQty: 0,
   }));
 }

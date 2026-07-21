@@ -8,11 +8,15 @@ export type CartItem = {
   name: string;
   priceCents: number;
   quantity: number;
+  stockQty: number;
 };
 
 type CartContextValue = {
   items: CartItem[];
-  addItem: (product: { id: string; slug: string; name: string; priceCents: number }, quantity: number) => void;
+  addItem: (
+    product: { id: string; slug: string; name: string; priceCents: number; stockQty: number },
+    quantity: number
+  ) => void;
   removeItem: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
   clear: () => void;
@@ -56,12 +60,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const existing = prev.find((i) => i.productId === product.id);
           if (existing) {
             return prev.map((i) =>
-              i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i
+              i.productId === product.id
+                ? { ...i, stockQty: product.stockQty, quantity: Math.min(i.quantity + quantity, product.stockQty) }
+                : i
             );
           }
           return [
             ...prev,
-            { productId: product.id, slug: product.slug, name: product.name, priceCents: product.priceCents, quantity },
+            {
+              productId: product.id,
+              slug: product.slug,
+              name: product.name,
+              priceCents: product.priceCents,
+              stockQty: product.stockQty,
+              quantity: Math.min(quantity, product.stockQty),
+            },
           ];
         });
       },
@@ -70,7 +83,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems((prev) =>
           quantity <= 0
             ? prev.filter((i) => i.productId !== productId)
-            : prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+            : prev.map((i) =>
+                i.productId === productId ? { ...i, quantity: Math.min(quantity, i.stockQty) } : i
+              )
         ),
       clear: () => setItems([]),
       subtotalCents,
