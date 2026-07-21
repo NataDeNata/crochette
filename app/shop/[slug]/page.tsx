@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
-import { CATEGORIES, formatPrice } from "@/lib/data/products";
+import { CATEGORIES, formatPrice, LOW_STOCK_THRESHOLD } from "@/lib/data/products";
 import { getProductBySlug, getProducts } from "@/lib/data/products.server";
+import { SITE_URL } from "@/lib/site";
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -18,11 +20,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Product not found — Crochette" };
+  if (!product) return { title: "Product not found" };
+
+  const description = product.description ?? `${product.name}, handmade to order.`;
 
   return {
-    title: `${product.name} — Crochette`,
-    description: product.description ?? `${product.name}, handmade to order.`,
+    title: product.name,
+    description,
+    openGraph: {
+      title: `${product.name} — Crochette`,
+      description,
+    },
+    twitter: {
+      title: `${product.name} — Crochette`,
+      description,
+    },
   };
 }
 
@@ -37,8 +49,30 @@ export default async function ProductPage({
 
   const categoryLabel = CATEGORIES.find((c) => c.value === product.category)?.name ?? product.category;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description ?? `${product.name}, handmade to order.`,
+    category: categoryLabel,
+    sku: product.id,
+    offers: {
+      "@type": "Offer",
+      url: `${SITE_URL}/shop/${product.slug}`,
+      priceCurrency: "PHP",
+      price: (product.priceCents / 100).toFixed(2),
+      availability:
+        product.stockQty > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+
       <section style={{ padding: "36px 48px 0" }}>
         <FadeIn>
           <Link
@@ -137,9 +171,20 @@ export default async function ProductPage({
           >
             {product.name}
           </h1>
-          <div style={{ fontSize: 22, color: "oklch(0.4 0.05 20)", marginBottom: 22 }}>
+          <div style={{ fontSize: 22, color: "oklch(0.4 0.05 20)", marginBottom: 8 }}>
             {formatPrice(product.priceCents)}
           </div>
+          {product.stockQty <= 0 ? (
+            <div style={{ fontSize: 13, fontWeight: 600, color: "oklch(0.5 0.05 20)", marginBottom: 22 }}>
+              Out of stock
+            </div>
+          ) : product.stockQty <= LOW_STOCK_THRESHOLD ? (
+            <div style={{ fontSize: 13, fontWeight: 600, color: "oklch(0.55 0.15 40)", marginBottom: 22 }}>
+              Low on Stock — only {product.stockQty} left
+            </div>
+          ) : (
+            <div style={{ marginBottom: 22 }} />
+          )}
           {product.description && (
             <p style={{ fontSize: 15.5, lineHeight: 1.75, color: "oklch(0.4 0.02 60)", maxWidth: 440, margin: "0 0 32px" }}>
               {product.description}
@@ -147,22 +192,18 @@ export default async function ProductPage({
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <AddToCartButton
-              product={{ id: product.id, slug: product.slug, name: product.name, priceCents: product.priceCents }}
+              product={{
+                id: product.id,
+                slug: product.slug,
+                name: product.name,
+                priceCents: product.priceCents,
+                stockQty: product.stockQty,
+              }}
             />
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link
-                href="/custom"
-                style={{
-                  border: "1.5px solid oklch(0.75 0.03 20)",
-                  color: "oklch(0.28 0.02 60)",
-                  padding: "13px 26px",
-                  borderRadius: 30,
-                  fontSize: 14,
-                  fontWeight: 500,
-                }}
-              >
+              <Button href="/custom" variant="outline" size="md">
                 Request it personalized
-              </Link>
+              </Button>
               <Link href="/contact" style={{ fontSize: 13, color: "oklch(0.5 0.05 20)", alignSelf: "center" }}>
                 Have a question? Contact us
               </Link>

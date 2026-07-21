@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
+import { Button } from "@/components/ui/Button";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -20,10 +21,16 @@ export function Nav() {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const isShopPage = pathname === "/shop";
 
-  useEffect(() => {
+  // Close the mobile drawer on route change — derived during render (React's
+  // recommended pattern for resetting state on a prop change) rather than in
+  // a useEffect, which would cause an extra render pass.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <nav
@@ -61,7 +68,8 @@ export function Nav() {
             <Link
               key={link.href}
               href={link.href}
-              style={{ position: "relative", color: isActive ? ACTIVE_COLOR : "inherit", paddingBottom: 6 }}
+              className="nav-link"
+              style={{ position: "relative", color: isActive ? ACTIVE_COLOR : undefined, paddingBottom: 6 }}
             >
               {link.label}
               {isActive && !reduceMotion && (
@@ -84,23 +92,14 @@ export function Nav() {
         })}
       </div>
 
-      <Link
-        href="/shop"
-        className="nav-cta"
-        style={{
-          border: "1.5px solid oklch(0.28 0.02 60)",
-          borderRadius: 24,
-          padding: "8px 20px",
-          fontSize: 13,
-          fontWeight: 500,
-          color: "oklch(0.28 0.02 60)",
-        }}
-      >
-        Shop now
-      </Link>
+      {!isShopPage && (
+        <Button href="/shop" size="sm" className="nav-cta">
+          Shop now
+        </Button>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-        <CartIcon />
+        <CartIcon className="cart-icon-link" />
 
         <button
           type="button"
@@ -152,13 +151,15 @@ export function Nav() {
             }}
           >
             {LINKS.map((link) => (
-              <Link key={link.href} href={link.href} style={{ color: pathname === link.href ? ACTIVE_COLOR : "inherit" }}>
+              <Link key={link.href} href={link.href} className="nav-link" style={{ color: pathname === link.href ? ACTIVE_COLOR : undefined }}>
                 {link.label}
               </Link>
             ))}
-            <Link href="/shop" style={{ color: "oklch(0.28 0.02 60)", fontWeight: 500 }}>
-              Shop now
-            </Link>
+            {!isShopPage && (
+              <Link href="/shop" className="nav-link" style={{ fontWeight: 500 }}>
+                Shop now
+              </Link>
+            )}
           </div>
         )
       ) : (
@@ -185,13 +186,15 @@ export function Nav() {
               }}
             >
               {LINKS.map((link) => (
-                <Link key={link.href} href={link.href} style={{ color: pathname === link.href ? ACTIVE_COLOR : "inherit" }}>
+                <Link key={link.href} href={link.href} className="nav-link" style={{ color: pathname === link.href ? ACTIVE_COLOR : undefined }}>
                   {link.label}
                 </Link>
               ))}
-              <Link href="/shop" style={{ color: "oklch(0.28 0.02 60)", fontWeight: 500 }}>
-                Shop now
-              </Link>
+              {!isShopPage && (
+                <Link href="/shop" className="nav-link" style={{ fontWeight: 500 }}>
+                  Shop now
+                </Link>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

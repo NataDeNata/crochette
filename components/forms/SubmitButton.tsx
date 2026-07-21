@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Button } from "@/components/ui/Button";
 
 export function SubmitButton({
   isPending,
@@ -13,40 +14,10 @@ export function SubmitButton({
 }) {
   const reduceMotion = useReducedMotion();
 
-  const style = {
-    alignSelf: "flex-start",
-    background: "oklch(0.28 0.02 60)",
-    color: "oklch(0.98 0.01 85)",
-    border: "none",
-    padding: "14px 30px",
-    borderRadius: 30,
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: isPending ? "default" : "pointer",
-    opacity: isPending ? 0.7 : 1,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  } as const;
-
-  if (reduceMotion) {
-    return (
-      <button type="submit" disabled={isPending} style={style}>
-        {isPending ? pendingLabel : label}
-      </button>
-    );
-  }
-
   return (
-    <motion.button
-      type="submit"
-      disabled={isPending}
-      whileHover={!isPending ? { scale: 1.03 } : undefined}
-      whileTap={!isPending ? { scale: 0.97 } : undefined}
-      style={style}
-    >
+    <Button type="submit" disabled={isPending} className="self-start">
       <AnimatePresence initial={false}>
-        {isPending && (
+        {isPending && !reduceMotion && (
           <motion.span
             key="spinner"
             initial={{ opacity: 0, scale: 0.6, rotate: 0 }}
@@ -69,6 +40,6 @@ export function SubmitButton({
         )}
       </AnimatePresence>
       {isPending ? pendingLabel : label}
-    </motion.button>
+    </Button>
   );
 }

@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   // tunnel (needed for local Xendit webhook testing, which requires HTTPS).
   // Dev-only — has no effect on production builds.
   allowedDevOrigins: ["*.ngrok-free.dev", "*.ngrok-free.app"],
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+  },
 };
 
 export default nextConfig;

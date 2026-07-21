@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/motion/FadeIn";
 
 export default function ProductNotFound() {
@@ -29,19 +29,7 @@ export default function ProductNotFound() {
         <p style={{ fontSize: 15.5, color: "oklch(0.42 0.02 60)", maxWidth: 420, margin: "0 auto 32px", lineHeight: 1.6 }}>
           It may have sold out or been renamed. Take a look at the full collection instead.
         </p>
-        <Link
-          href="/shop"
-          style={{
-            background: "oklch(0.28 0.02 60)",
-            color: "oklch(0.98 0.01 85)",
-            padding: "14px 30px",
-            borderRadius: 30,
-            fontSize: 14,
-            fontWeight: 500,
-          }}
-        >
-          Back to shop
-        </Link>
+        <Button href="/shop">Back to shop</Button>
       </FadeIn>
     </section>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { GalleryItem } from "@/lib/data/gallery";
 
@@ -36,7 +37,9 @@ export function Lightbox({
     </button>
   );
 
-  const panelContent = (
+  const panelContent = item.image ? (
+    <Image src={item.image} alt={item.alt ?? ""} fill sizes="90vw" style={{ objectFit: "cover" }} />
+  ) : (
     <span
       style={{
         fontFamily: "ui-monospace, monospace",
@@ -67,7 +70,7 @@ export function Lightbox({
     aspectRatio: "4/3",
     borderRadius: 24,
     overflow: "hidden",
-    background: item.bg,
+    background: item.image ? undefined : item.bg,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

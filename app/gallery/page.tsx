@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { GallerySection } from "@/components/gallery/GallerySection";
 import { getFullGallery } from "@/lib/data/gallery";
 
 export const metadata: Metadata = {
-  title: "Gallery — Crochette",
+  title: "Gallery",
   description: "Works in progress, finished pieces, and the little moments in between.",
+  openGraph: {
+    title: "Gallery — Crochette",
+    description: "Works in progress, finished pieces, and the little moments in between.",
+  },
 };
 
 export default function GalleryPage() {
@@ -62,19 +67,7 @@ export default function GalleryPage() {
           <p style={{ fontSize: 15, color: "oklch(0.3 0.03 150)", margin: "0 0 24px" }}>
             New pieces, works in progress, and behind-the-scenes.
           </p>
-          <a
-            href="https://instagram.com"
-            style={{
-              background: "oklch(0.28 0.02 60)",
-              color: "oklch(0.98 0.01 85)",
-              padding: "14px 30px",
-              borderRadius: 30,
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            @crochette.studio
-          </a>
+          <Button href="https://instagram.com">@crochette.studio</Button>
         </section>
       </FadeIn>
     </>

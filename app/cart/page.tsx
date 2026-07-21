@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Button } from "@/components/ui/Button";
 import { useCart } from "@/lib/cart/CartContext";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";
@@ -19,20 +20,7 @@ export default function CartPage() {
         <p style={{ fontSize: 14.5, color: "oklch(0.5 0.02 60)", marginBottom: 28 }}>
           Take a look around the shop — something handmade is waiting.
         </p>
-        <Link
-          href="/shop"
-          style={{
-            display: "inline-block",
-            background: "oklch(0.28 0.02 60)",
-            color: "oklch(0.98 0.01 85)",
-            padding: "14px 30px",
-            borderRadius: 30,
-            fontSize: 14,
-            fontWeight: 500,
-          }}
-        >
-          Browse the shop
-        </Link>
+        <Button href="/shop">Browse the shop</Button>
       </section>
     );
   }
@@ -94,13 +82,23 @@ export default function CartPage() {
                   <span style={{ fontSize: 13.5, minWidth: 16, textAlign: "center" }}>{item.quantity}</span>
                   <button
                     type="button"
-                    onClick={() => setQuantity(item.productId, Math.min(20, item.quantity + 1))}
+                    disabled={item.quantity >= Math.min(20, item.stockQty)}
+                    onClick={() => setQuantity(item.productId, Math.min(20, item.stockQty, item.quantity + 1))}
                     aria-label={`Increase quantity of ${item.name}`}
-                    style={{ padding: "8px 12px", background: "none", border: "none", cursor: "pointer" }}
+                    style={{
+                      padding: "8px 12px",
+                      background: "none",
+                      border: "none",
+                      cursor: item.quantity >= Math.min(20, item.stockQty) ? "not-allowed" : "pointer",
+                      opacity: item.quantity >= Math.min(20, item.stockQty) ? 0.4 : 1,
+                    }}
                   >
                     +
                   </button>
                 </div>
+                {item.quantity >= item.stockQty && (
+                  <span style={{ fontSize: 12, color: "oklch(0.55 0.15 40)" }}>Max in stock</span>
+                )}
 
                 <div style={{ fontSize: 14.5, minWidth: 70, textAlign: "right" }}>
                   {formatPrice(item.priceCents * item.quantity)}
@@ -135,22 +133,9 @@ export default function CartPage() {
         </div>
       </div>
 
-      <Link
-        href="/checkout"
-        style={{
-          display: "block",
-          textAlign: "center",
-          marginTop: 28,
-          background: "oklch(0.28 0.02 60)",
-          color: "oklch(0.98 0.01 85)",
-          padding: "16px 30px",
-          borderRadius: 30,
-          fontSize: 15,
-          fontWeight: 500,
-        }}
-      >
+      <Button href="/checkout" className="block w-full text-center mt-7 text-[15px]">
         Proceed to checkout
-      </Link>
+      </Button>
     </section>
   );
 }

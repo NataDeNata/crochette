@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { VALUES } from "@/lib/data/about";
 
 export const metadata: Metadata = {
-  title: "About — Crochette",
+  title: "About",
   description: "A small studio, made from yarn and patience.",
+  openGraph: {
+    title: "About — Crochette",
+    description: "A small studio, made from yarn and patience.",
+  },
 };
 
 export default function AboutPage() {
@@ -125,32 +129,10 @@ export default function AboutPage() {
             Browse the collection or tell us what you&apos;re dreaming up.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-            <Link
-              href="/shop"
-              style={{
-                background: "oklch(0.28 0.02 60)",
-                color: "oklch(0.98 0.01 85)",
-                padding: "14px 30px",
-                borderRadius: 30,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Shop the collection
-            </Link>
-            <Link
-              href="/custom"
-              style={{
-                border: "1.5px solid oklch(0.28 0.02 60)",
-                padding: "14px 30px",
-                borderRadius: 30,
-                fontSize: 14,
-                fontWeight: 500,
-                color: "oklch(0.28 0.02 60)",
-              }}
-            >
+            <Button href="/shop">Shop the collection</Button>
+            <Button href="/custom" variant="outline">
               Request custom order
-            </Link>
+            </Button>
           </div>
         </section>
       </FadeIn>

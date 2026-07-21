@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ShopGrid } from "@/components/shop/ShopGrid";
 import { getProducts } from "@/lib/data/products.server";
 
 export const metadata: Metadata = {
-  title: "Shop — Crochette",
+  title: "Shop",
   description: "Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.",
+  openGraph: {
+    title: "Shop — Crochette",
+    description: "Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.",
+  },
 };
 
 export default async function ShopPage() {
@@ -61,19 +65,7 @@ export default async function ShopPage() {
           <p style={{ fontSize: 15, color: "oklch(0.32 0.03 20)", margin: "0 0 24px" }}>
             We make custom pieces too — any color, size, or character.
           </p>
-          <Link
-            href="/custom"
-            style={{
-              background: "oklch(0.28 0.02 60)",
-              color: "oklch(0.98 0.01 85)",
-              padding: "14px 30px",
-              borderRadius: 30,
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            Request a custom order
-          </Link>
+          <Button href="/custom">Request a custom order</Button>
         </section>
       </FadeIn>
     </>

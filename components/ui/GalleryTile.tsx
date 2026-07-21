@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { GalleryItem } from "@/lib/data/gallery";
 
@@ -14,7 +15,15 @@ export function GalleryTile({
 }) {
   const reduceMotion = useReducedMotion();
 
-  const content = (
+  const content = item.image ? (
+    <Image
+      src={item.image}
+      alt={item.alt ?? ""}
+      fill
+      sizes="(max-width: 760px) 100vw, 33vw"
+      style={{ objectFit: "cover" }}
+    />
+  ) : (
     <span
       style={{
         fontFamily: "ui-monospace, monospace",
@@ -34,7 +43,8 @@ export function GalleryTile({
     height: "100%",
     borderRadius: 18,
     overflow: "hidden",
-    background: item.bg,
+    position: "relative",
+    background: item.image ? undefined : item.bg,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
