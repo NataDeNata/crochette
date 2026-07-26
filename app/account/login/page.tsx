@@ -1,26 +1,20 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
+import { LoginForm } from "@/components/account/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Admin sign in",
+  title: "Sign in",
+  robots: { index: false, follow: false },
 };
 
-export default async function AdminLoginPage() {
+export default async function AccountLoginPage() {
   const session = await auth();
-  if (session?.user?.role === "admin") redirect("/admin");
+  if (session?.user?.role === "customer") redirect("/account");
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-      }}
-    >
+    <section style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div
         style={{
           width: "100%",
@@ -40,13 +34,16 @@ export default async function AdminLoginPage() {
             margin: "0 0 6px",
           }}
         >
-          Crochette
+          Welcome back
         </div>
         <p style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", textAlign: "center", margin: "0 0 28px" }}>
-          Studio admin sign in
+          Sign in to your Crochette account
         </p>
-        <AdminLoginForm />
+        <LoginForm />
+        <p style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", textAlign: "center", marginTop: 20 }}>
+          New here? <Link href="/account/signup">Create an account</Link>
+        </p>
       </div>
-    </div>
+    </section>
   );
 }

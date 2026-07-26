@@ -3,14 +3,14 @@
 import { AuthError } from "next-auth";
 import { signIn } from "@/lib/auth";
 import { getClientIp, isRateLimited, recordFailedAttempt } from "@/lib/security/rate-limit";
-import type { AdminLoginState } from "@/lib/actions/admin-login-types";
+import type { AccountLoginState } from "@/lib/actions/account-login-types";
 
-export async function adminLogin(_prevState: AdminLoginState, formData: FormData): Promise<AdminLoginState> {
+export async function accountLogin(_prevState: AccountLoginState, formData: FormData): Promise<AccountLoginState> {
   const email = formData.get("email");
   const emailKey = typeof email === "string" ? email.trim().toLowerCase() : "";
 
   const ip = await getClientIp();
-  const rateLimitKey = `admin-login:${ip}:${emailKey}`;
+  const rateLimitKey = `login:${ip}:${emailKey}`;
   if (isRateLimited(rateLimitKey)) {
     return {
       status: "error",
@@ -20,10 +20,10 @@ export async function adminLogin(_prevState: AdminLoginState, formData: FormData
   }
 
   try {
-    await signIn("admin", {
+    await signIn("customer", {
       email,
       password: formData.get("password"),
-      redirectTo: "/admin",
+      redirectTo: "/account",
     });
     return { status: "idle" };
   } catch (error) {

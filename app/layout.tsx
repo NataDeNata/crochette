@@ -4,6 +4,9 @@ import "./globals.css";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { CartProvider } from "@/lib/cart/CartContext";
 import { SITE_URL } from "@/lib/site";
+import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
+import { auth } from "@/lib/auth";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -61,19 +64,24 @@ export const viewport: Viewport = {
   themeColor: "#f8f4ee",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Only the customer role matters to the storefront chrome (admin sessions
+  // never render Nav/Footer — see SiteChrome's /admin special-case).
+  const session = await auth();
+
   return (
-    <html lang="en" className={`${cormorant.variable} ${workSans.variable}`}>
+    <html lang="en" className={cn(cormorant.variable, workSans.variable, "font-sans")}>
       <body>
         <div style={{ position: "relative" }}>
           <CartProvider>
-            <SiteChrome>{children}</SiteChrome>
+            <SiteChrome session={session}>{children}</SiteChrome>
           </CartProvider>
         </div>
+        <Toaster position="top-center" />
       </body>
     </html>
   );

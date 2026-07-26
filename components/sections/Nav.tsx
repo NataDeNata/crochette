@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { Session } from "next-auth";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
-import { Button } from "@/components/ui/Button";
+import { AccountIcon } from "@/components/account/AccountIcon";
+import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -17,11 +19,12 @@ const LINKS = [
 
 const ACTIVE_COLOR = "oklch(0.55 0.09 20)";
 
-export function Nav() {
+export function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const isShopPage = pathname === "/shop";
+  const accountHref = session?.user?.role === "customer" ? "/account" : "/account/login";
 
   // Close the mobile drawer on route change — derived during render (React's
   // recommended pattern for resetting state on a prop change) rather than in
@@ -99,6 +102,7 @@ export function Nav() {
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <AccountIcon href={accountHref} className="account-icon-link" />
         <CartIcon className="cart-icon-link" />
 
         <button
@@ -160,6 +164,9 @@ export function Nav() {
                 Shop now
               </Link>
             )}
+            <Link href={accountHref} className="nav-link" style={{ fontWeight: 500 }}>
+              {session?.user?.role === "customer" ? "My account" : "Sign in"}
+            </Link>
           </div>
         )
       ) : (
