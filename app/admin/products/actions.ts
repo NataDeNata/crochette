@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
+import { products, orderItems } from "@/lib/db/schema";
 import { productSchema } from "@/lib/validation/product";
 import type { FormActionState } from "@/lib/actions/types";
 
@@ -88,8 +88,35 @@ export async function updateProduct(
   redirect("/admin/products");
 }
 
-export async function deleteProduct(id: string, slug: string) {
-  await db.delete(products).where(eq(products.id, id));
+export async function deleteProduct(
+  id: string,
+  slug: string,
+  _prevState: FormActionState,
+  _formData: FormData
+): Promise<FormActionState> {
+  // order_items.product_id is a NOT NULL foreign key with no cascade, so a
+  // product that's ever been ordered can't be hard-deleted — Postgres would
+  // reject it. Check up front instead of letting that surface as a crash.
+  const [existingOrderItem] = await db
+    .select({ id: orderItems.id })
+    .from(orderItems)
+    .where(eq(orderItems.productId, id))
+    .limit(1);
+
+  if (existingOrderItem) {
+    return {
+      status: "error",
+      message: 'This product has order history and can’t be deleted — set it to "Draft" or "Sold out" instead to hide it from the storefront.',
+    };
+  }
+
+  try {
+    await db.delete(products).where(eq(products.id, id));
+  } catch (err) {
+    console.error("deleteProduct failed:", err);
+    return { status: "error", message: "Couldn't delete the product — please try again." };
+  }
+
   revalidateStorefront(slug);
   redirect("/admin/products");
 }

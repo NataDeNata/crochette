@@ -51,6 +51,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <div style={labelStyle}>Shipping</div>
               <div style={fieldStyle}>{formatPrice(order.shippingCents)}</div>
             </div>
+            {order.discountCents > 0 && (
+              <div>
+                <div style={labelStyle}>Discount</div>
+                <div style={{ ...fieldStyle, color: "oklch(0.55 0.12 150)" }}>−{formatPrice(order.discountCents)}</div>
+              </div>
+            )}
             <div>
               <div style={labelStyle}>Total</div>
               <div style={fieldStyle}>{formatPrice(order.totalCents)}</div>

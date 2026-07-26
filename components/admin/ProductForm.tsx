@@ -1,21 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { productSchema, type ProductFormValues, type ProductFormInput } from "@/lib/validation/product";
 import { IDLE_STATE, type FormActionState } from "@/lib/actions/types";
-import { SubmitButton } from "@/components/forms/SubmitButton";
-import { FieldError } from "@/components/forms/FieldError";
-
-const inputStyle = {
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "1.5px solid oklch(0.85 0.02 60)",
-  background: "oklch(1 0 0)",
-  fontSize: 14,
-  fontFamily: "inherit",
-  width: "100%",
-} as const;
-
-const labelStyle = { fontSize: 12.5, color: "oklch(0.45 0.02 60)", marginBottom: 6, display: "block" } as const;
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
 
 export type ProductFormDefaults = {
   name: string;
@@ -37,73 +31,126 @@ export function ProductForm({
   defaults?: ProductFormDefaults;
   submitLabel: string;
 }) {
-  const [state, formAction, isPending] = useActionState(action, IDLE_STATE);
-  const fieldErrors = state.fieldErrors ?? {};
+  const [state, dispatch, isPending] = useActionState(action, IDLE_STATE);
+  const [isSubmitting, startTransition] = useTransition();
+
+  const form = useForm<ProductFormInput, unknown, ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: defaults?.name ?? "",
+      slug: defaults?.slug ?? "",
+      description: defaults?.description ?? "",
+      priceDollars: defaults ? Number(defaults.priceDollars) : undefined,
+      category: (defaults?.category as ProductFormInput["category"]) ?? "amigurumi",
+      tag: defaults?.tag ?? "",
+      status: (defaults?.status as ProductFormInput["status"]) ?? "active",
+      stockQty: defaults ? Number(defaults.stockQty) : 0,
+    },
+  });
+
+  function onValid(values: ProductFormValues) {
+    const fd = new FormData();
+    fd.set("name", values.name);
+    fd.set("slug", values.slug);
+    fd.set("description", values.description ?? "");
+    fd.set("priceDollars", String(values.priceDollars));
+    fd.set("category", values.category);
+    fd.set("tag", values.tag ?? "");
+    fd.set("status", values.status);
+    fd.set("stockQty", String(values.stockQty));
+    startTransition(() => dispatch(fd));
+  }
 
   return (
-    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 480 }}>
-      <div>
-        <label style={labelStyle} htmlFor="name">Name</label>
-        <input id="name" name="name" defaultValue={defaults?.name} style={inputStyle} />
-        <FieldError error={fieldErrors.name?.[0]} />
-      </div>
+    <form onSubmit={form.handleSubmit(onValid)} className="flex max-w-md flex-col gap-6">
+      <FieldGroup>
+        <Field data-invalid={!!form.formState.errors.name}>
+          <FieldLabel htmlFor="name">Name</FieldLabel>
+          <Input id="name" {...form.register("name")} />
+          <FieldError errors={[form.formState.errors.name]} />
+        </Field>
 
-      <div>
-        <label style={labelStyle} htmlFor="slug">Slug (used in the product URL)</label>
-        <input id="slug" name="slug" defaultValue={defaults?.slug} placeholder="e.g. milo-the-bear" style={inputStyle} />
-        <FieldError error={fieldErrors.slug?.[0]} />
-      </div>
+        <Field data-invalid={!!form.formState.errors.slug}>
+          <FieldLabel htmlFor="slug">Slug (used in the product URL)</FieldLabel>
+          <Input id="slug" placeholder="e.g. milo-the-bear" {...form.register("slug")} />
+          <FieldError errors={[form.formState.errors.slug]} />
+        </Field>
 
-      <div>
-        <label style={labelStyle} htmlFor="description">Description</label>
-        <textarea id="description" name="description" defaultValue={defaults?.description} rows={4} style={{ ...inputStyle, resize: "vertical" }} />
-        <FieldError error={fieldErrors.description?.[0]} />
-      </div>
+        <Field data-invalid={!!form.formState.errors.description}>
+          <FieldLabel htmlFor="description">Description</FieldLabel>
+          <Textarea id="description" rows={4} {...form.register("description")} />
+          <FieldError errors={[form.formState.errors.description]} />
+        </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div>
-          <label style={labelStyle} htmlFor="priceDollars">Price (USD)</label>
-          <input id="priceDollars" name="priceDollars" type="number" step="0.01" min="0.01" defaultValue={defaults?.priceDollars} style={inputStyle} />
-          <FieldError error={fieldErrors.priceDollars?.[0]} />
+        <div className="grid grid-cols-2 gap-4">
+          <Field data-invalid={!!form.formState.errors.priceDollars}>
+            <FieldLabel htmlFor="priceDollars">Price (₱)</FieldLabel>
+            <Input id="priceDollars" type="number" step="0.01" min="0.01" {...form.register("priceDollars")} />
+            <FieldError errors={[form.formState.errors.priceDollars]} />
+          </Field>
+          <Field data-invalid={!!form.formState.errors.stockQty}>
+            <FieldLabel htmlFor="stockQty">Stock quantity</FieldLabel>
+            <Input id="stockQty" type="number" step="1" min="0" {...form.register("stockQty")} />
+            <FieldError errors={[form.formState.errors.stockQty]} />
+          </Field>
         </div>
-        <div>
-          <label style={labelStyle} htmlFor="stockQty">Stock quantity</label>
-          <input id="stockQty" name="stockQty" type="number" step="1" min="0" defaultValue={defaults?.stockQty ?? "0"} style={inputStyle} />
-          <FieldError error={fieldErrors.stockQty?.[0]} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field data-invalid={!!form.formState.errors.category}>
+            <FieldLabel htmlFor="category">Category</FieldLabel>
+            <Controller
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="category" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="amigurumi">Amigurumi</SelectItem>
+                    <SelectItem value="flowers">Flowers</SelectItem>
+                    <SelectItem value="home-decor">Home decor</SelectItem>
+                    <SelectItem value="baskets">Baskets</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError errors={[form.formState.errors.category]} />
+          </Field>
+          <Field data-invalid={!!form.formState.errors.status}>
+            <FieldLabel htmlFor="status">Status</FieldLabel>
+            <Controller
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="status" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="sold_out">Sold out</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError errors={[form.formState.errors.status]} />
+          </Field>
         </div>
-      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div>
-          <label style={labelStyle} htmlFor="category">Category</label>
-          <select id="category" name="category" defaultValue={defaults?.category ?? "amigurumi"} style={inputStyle}>
-            <option value="amigurumi">Amigurumi</option>
-            <option value="flowers">Flowers</option>
-            <option value="home-decor">Home decor</option>
-            <option value="baskets">Baskets</option>
-          </select>
-          <FieldError error={fieldErrors.category?.[0]} />
-        </div>
-        <div>
-          <label style={labelStyle} htmlFor="status">Status</label>
-          <select id="status" name="status" defaultValue={defaults?.status ?? "active"} style={inputStyle}>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="sold_out">Sold out</option>
-          </select>
-          <FieldError error={fieldErrors.status?.[0]} />
-        </div>
-      </div>
+        <Field data-invalid={!!form.formState.errors.tag}>
+          <FieldLabel htmlFor="tag">Tag (optional — e.g. &quot;New&quot;, &quot;Bestseller&quot;)</FieldLabel>
+          <Input id="tag" {...form.register("tag")} />
+          <FieldError errors={[form.formState.errors.tag]} />
+        </Field>
+      </FieldGroup>
 
-      <div>
-        <label style={labelStyle} htmlFor="tag">Tag (optional — e.g. &quot;New&quot;, &quot;Bestseller&quot;)</label>
-        <input id="tag" name="tag" defaultValue={defaults?.tag} style={inputStyle} />
-        <FieldError error={fieldErrors.tag?.[0]} />
-      </div>
+      {state.status === "error" && state.message && <p className="text-sm text-destructive">{state.message}</p>}
 
-      <FieldError error={state.status === "error" ? state.message : undefined} />
-
-      <SubmitButton isPending={isPending} label={submitLabel} pendingLabel="Saving…" />
+      <Button type="submit" disabled={isPending || isSubmitting} className="self-start">
+        {isPending || isSubmitting ? "Saving…" : submitLabel}
+      </Button>
     </form>
   );
 }
