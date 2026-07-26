@@ -108,6 +108,7 @@ export async function notifyOrderPaid(order: {
   shippingPostalCode: string;
   subtotalCents: number;
   shippingCents: number;
+  discountCents: number;
   totalCents: number;
 }, items: Array<{ productName: string; unitPriceCents: number; quantity: number }>) {
   const safeName = escapeHtml(order.customerName);
@@ -134,6 +135,7 @@ export async function notifyOrderPaid(order: {
           ${detailList([
             ["Subtotal", formatPrice(order.subtotalCents)],
             ["Shipping", formatPrice(order.shippingCents)],
+            ["Discount", order.discountCents > 0 ? `-${formatPrice(order.discountCents)}` : null],
             ["Total", formatPrice(order.totalCents)],
             ["Shipping to", address],
           ])}
@@ -160,6 +162,23 @@ export async function notifyOrderPaid(order: {
         )
       : Promise.resolve(),
   ]);
+}
+
+export async function notifyAccountCreated(data: { email: string; name: string }) {
+  const safeName = escapeHtml(data.name);
+
+  await sendEmailSafe(
+    {
+      to: data.email,
+      subject: "Welcome to Crochette",
+      html: wrapEmail(`
+        <p>Hi ${safeName},</p>
+        <p>Your account is ready — you can now save shipping addresses and see your order history any time you're signed in.</p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/account">Go to your account</a></p>
+      `),
+    },
+    "account welcome"
+  );
 }
 
 export async function notifyContactMessageSubmitted(data: {

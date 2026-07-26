@@ -11,22 +11,31 @@ export function CartIcon({ className }: { className?: string }) {
       href="/cart"
       className={className}
       aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
-      style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 6 }}
+      style={{
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+      }}
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-        <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
-        <path d="M9 8V6a3 3 0 0 1 6 0v2" strokeLinecap="round" />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
       {count > 0 && (
         <span
           style={{
             position: "absolute",
-            top: -2,
-            right: -4,
-            minWidth: 16,
-            height: 16,
+            top: 2,
+            right: 2,
+            minWidth: 17,
+            height: 17,
             padding: "0 3px",
-            borderRadius: 8,
+            borderRadius: 9,
             background: "oklch(0.55 0.09 20)",
             color: "oklch(0.98 0.01 85)",
             fontSize: 10,

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { useState, type MouseEvent } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/data/products";
 import { formatPrice } from "@/lib/data/products";
+import { useCart } from "@/lib/cart/CartContext";
 
 const imageWrapStyle = {
   aspectRatio: "1",
@@ -18,6 +20,86 @@ const imageWrapStyle = {
 
 export function ProductCard({ product }: { product: Product }) {
   const reduceMotion = useReducedMotion();
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+  const outOfStock = product.stockQty <= 0;
+
+  function handleQuickAdd(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (outOfStock) return;
+    addItem(product, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1400);
+  }
+
+  const quickAddButton = (
+    <button
+      type="button"
+      onClick={handleQuickAdd}
+      disabled={outOfStock}
+      aria-label={outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
+      className="quick-add-btn"
+      style={{
+        position: "absolute",
+        bottom: 12,
+        right: 12,
+        zIndex: 2,
+        width: 38,
+        height: 38,
+        borderRadius: "50%",
+        border: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: outOfStock ? "not-allowed" : "pointer",
+        opacity: outOfStock ? 0.5 : 1,
+        boxShadow: "0 4px 10px -4px oklch(0.28 0.02 60 / 0.35)",
+      }}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {added ? (
+          <motion.svg
+            key="check"
+            initial={reduceMotion ? undefined : { opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.15 }}
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </motion.svg>
+        ) : (
+          <motion.svg
+            key="cart"
+            initial={reduceMotion ? undefined : { opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.15 }}
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </motion.svg>
+        )}
+      </AnimatePresence>
+    </button>
+  );
 
   const tag = product.tag && (
     <div
@@ -64,6 +146,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div style={{ ...imageWrapStyle, background: product.bg }}>
           {tag}
           {placeholder}
+          {quickAddButton}
         </div>
       ) : (
         <motion.div
@@ -85,11 +168,12 @@ export function ProductCard({ product }: { product: Product }) {
           >
             {placeholder}
           </motion.div>
+          {quickAddButton}
         </motion.div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <span style={{ fontSize: 15, fontWeight: 500 }}>{product.name}</span>
-        <span style={{ fontSize: 14, color: "oklch(0.5 0.05 20)" }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "oklch(0.5 0.09 20)" }}>
           {formatPrice(product.priceCents)}
         </span>
       </div>

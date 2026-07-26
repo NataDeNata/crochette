@@ -9,6 +9,7 @@ export const checkoutSchema = z.object({
   shippingCity: z.string().trim().min(1, "Please enter your city").max(120),
   shippingProvince: z.string().trim().min(1, "Please enter your province").max(120),
   shippingPostalCode: z.string().trim().min(1, "Please enter your postal code").max(20),
+  discountCode: z.string().trim().max(40).optional().or(z.literal("")),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

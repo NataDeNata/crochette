@@ -1,9 +1,8 @@
 import Image from "next/image";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ShopMarquee } from "@/components/shop/ShopMarquee";
 import { GallerySection } from "@/components/gallery/GallerySection";
-import { QuickCustomOrderForm } from "@/components/custom/QuickCustomOrderForm";
 import { getProducts } from "@/lib/data/products.server";
 import { getHomeGallery } from "@/lib/data/gallery";
 
@@ -265,71 +264,6 @@ export default async function Home() {
           <GallerySection items={gallery} rowHeight={150} />
         </div>
       </section>
-
-      {/* CUSTOM ORDER TEASER */}
-      <FadeIn>
-        <section
-          style={{
-            maxWidth: 1376,
-            marginLeft: "max(32px, calc(50% - 688px))",
-            marginRight: "max(32px, calc(50% - 688px))",
-            marginBottom: 110,
-            padding: "72px 48px",
-            borderRadius: 36,
-            background: "oklch(0.9 0.045 20)",
-            display: "grid",
-            gridTemplateColumns: "1.1fr 1fr",
-            gap: 56,
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: 13,
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                color: "oklch(0.4 0.05 20)",
-                marginBottom: 14,
-              }}
-            >
-              Custom orders
-            </div>
-            <h2
-              style={{
-                fontFamily: "var(--font-cormorant), serif",
-                fontWeight: 500,
-                fontSize: 34,
-                margin: "0 0 16px",
-                lineHeight: 1.15,
-              }}
-            >
-              Have something in mind?
-            </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: "oklch(0.32 0.03 20)", margin: "0 0 26px", maxWidth: 420 }}>
-              Tell us the size, colors, and character — we&apos;ll turn it into a one-of-a-kind piece, made just for
-              you.
-            </p>
-            <QuickCustomOrderForm />
-          </div>
-          <div
-            style={{
-              aspectRatio: "1/1",
-              borderRadius: 32,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            <Image
-              src="https://images.unsplash.com/photo-1588090644556-14707d0e886a?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=900"
-              alt="A custom crocheted bear, an example of a finished commissioned piece"
-              fill
-              sizes="(max-width: 768px) 90vw, 480px"
-              style={{ objectFit: "cover" }}
-            />
-          </div>
-        </section>
-      </FadeIn>
     </>
   );
 }

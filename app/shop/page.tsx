@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ShopGrid } from "@/components/shop/ShopGrid";
 import { getProducts } from "@/lib/data/products.server";

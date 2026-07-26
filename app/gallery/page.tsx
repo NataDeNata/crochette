@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { GallerySection } from "@/components/gallery/GallerySection";
 import { getFullGallery } from "@/lib/data/gallery";

@@ -7,6 +7,7 @@ import { customOrderSchema } from "@/lib/validation/custom-order";
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
 import type { FormActionState } from "@/lib/actions/types";
 import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
+import { auth } from "@/lib/auth";
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
@@ -68,8 +69,12 @@ export async function submitCustomOrder(
     };
   }
 
+  const session = await auth();
+  const customerId = session?.user?.role === "customer" ? session.user.id : null;
+
   try {
     await db.insert(customOrderRequests).values({
+      customerId,
       name: parsed.data.name,
       email: parsed.data.email,
       pieceType: parsed.data.pieceType,

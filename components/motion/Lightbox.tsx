@@ -90,8 +90,12 @@ export function Lightbox({
 
   return createPortal(
     <div style={overlayBaseStyle}>
+      {/* No zIndex here — it must stay behind the panel below. Both are
+       * siblings in the same stacking context (the wrapper above), so an
+       * explicit zIndex here would outrank the panel's and paint the gray
+       * backdrop over the image instead of behind it. */}
       <motion.div
-        style={{ ...overlayBaseStyle, background: "oklch(0.2 0.02 60 / 0.7)" }}
+        style={{ position: "fixed", inset: 0, background: "oklch(0.2 0.02 60 / 0.7)" }}
         onClick={onClose}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

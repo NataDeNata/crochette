@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart/CartContext";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";

@@ -18,4 +18,7 @@ export const productSchema = z.object({
   stockQty: z.coerce.number().int().min(0).max(100000),
 });
 
+/** z.coerce fields give distinct input/output shapes — see DiscountForm.tsx's
+ * useForm<Input, _, Output> comment for why both are exported. */
 export type ProductFormValues = z.infer<typeof productSchema>;
+export type ProductFormInput = z.input<typeof productSchema>;
