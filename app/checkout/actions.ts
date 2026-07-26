@@ -8,6 +8,8 @@ import { products, orders, orderItems } from "@/lib/db/schema";
 import { checkoutSchema, cartPayloadSchema } from "@/lib/validation/checkout";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { createPaymentSession } from "@/lib/payments/xendit";
+import { resolveDiscountCode } from "@/lib/db/discounts";
+import { auth } from "@/lib/auth";
 import type { FormActionState } from "@/lib/actions/types";
 
 async function getSiteOrigin(): Promise<string> {
@@ -30,6 +32,7 @@ export async function submitCheckout(
     shippingCity: formData.get("shippingCity"),
     shippingProvince: formData.get("shippingProvince"),
     shippingPostalCode: formData.get("shippingPostalCode"),
+    discountCode: formData.get("discountCode") || undefined,
   });
 
   if (!parsed.success) {
@@ -82,11 +85,28 @@ export async function submitCheckout(
   }
 
   const subtotalCents = lineItems.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
-  const totalCents = subtotalCents + SHIPPING_CENTS;
+
+  const { discount, error: discountError } = await resolveDiscountCode(parsed.data.discountCode ?? "", subtotalCents);
+  if (discountError) {
+    return {
+      status: "error",
+      message: "Please check the fields below.",
+      fieldErrors: { discountCode: [discountError] },
+    };
+  }
+
+  const discountCents = discount?.discountCents ?? 0;
+  const totalCents = subtotalCents + SHIPPING_CENTS - discountCents;
+
+  // Links the order to the account when logged in — guest checkout (no
+  // session, or an admin session) leaves this null, unaffected either way.
+  const authSession = await auth();
+  const customerId = authSession?.user?.role === "customer" ? authSession.user.id : null;
 
   const [order] = await db
     .insert(orders)
     .values({
+      customerId,
       customerName: parsed.data.name,
       customerEmail: parsed.data.email,
       customerPhone: parsed.data.phone || null,
@@ -97,6 +117,8 @@ export async function submitCheckout(
       shippingPostalCode: parsed.data.shippingPostalCode,
       subtotalCents,
       shippingCents: SHIPPING_CENTS,
+      discountCents,
+      discountCodeId: discount?.id ?? null,
       totalCents,
       status: "pending",
     })
@@ -122,6 +144,7 @@ export async function submitCheckout(
       items: [
         ...lineItems.map((item) => ({ name: item.name, amountCents: item.unitPriceCents, quantity: item.quantity })),
         { name: "Shipping", amountCents: SHIPPING_CENTS, quantity: 1 },
+        ...(discountCents > 0 ? [{ name: `Discount (${parsed.data.discountCode?.trim().toUpperCase()})`, amountCents: -discountCents, quantity: 1 }] : []),
       ],
       customer: { name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone || undefined },
       successUrl: `${origin}/order/${order.id}`,

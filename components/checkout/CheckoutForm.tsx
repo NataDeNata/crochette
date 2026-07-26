@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { submitCheckout } from "@/app/checkout/actions";
@@ -10,21 +10,35 @@ import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
+import { Input } from "@/components/ui/input";
 
-const inputStyle = {
-  padding: "14px 18px",
-  borderRadius: 12,
-  border: "1.5px solid oklch(0.75 0.03 20)",
-  background: "oklch(0.98 0.01 85)",
-  fontSize: 14,
-  fontFamily: "inherit",
-} as const;
+const fieldClassName = "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
 
-export function CheckoutForm() {
+export type SavedAddress = {
+  id: string;
+  label: string | null;
+  line1: string;
+  line2: string | null;
+  city: string;
+  province: string;
+  postalCode: string;
+};
+
+export function CheckoutForm({
+  addresses = [],
+  defaultName = "",
+  defaultEmail = "",
+}: {
+  addresses?: SavedAddress[];
+  defaultName?: string;
+  defaultEmail?: string;
+}) {
   const router = useRouter();
   const { items, subtotalCents } = useCart();
   const [state, formAction, isPending] = useActionState(submitCheckout, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   // A direct nav to /checkout with nothing in the cart has nothing to buy.
   useEffect(() => {
@@ -48,39 +62,76 @@ export function CheckoutForm() {
           Contact
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <input name="name" placeholder="Full name" style={inputStyle} />
+          <Input name="name" placeholder="Full name" defaultValue={defaultName} className={fieldClassName} />
           <FieldError error={fieldErrors.name?.[0]} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <input name="email" placeholder="Email address" type="email" style={inputStyle} />
+          <Input name="email" placeholder="Email address" type="email" defaultValue={defaultEmail} className={fieldClassName} />
           <FieldError error={fieldErrors.email?.[0]} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <input name="phone" placeholder="Phone number (optional)" style={inputStyle} />
+          <Input name="phone" placeholder="Phone number (optional)" className={fieldClassName} />
           <FieldError error={fieldErrors.phone?.[0]} />
         </div>
 
         <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 22, margin: "18px 0 4px" }}>
           Shipping address
         </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <input name="shippingLine1" placeholder="Street address" style={inputStyle} />
-          <FieldError error={fieldErrors.shippingLine1?.[0]} />
-        </div>
-        <input name="shippingLine2" placeholder="Apartment, suite, etc. (optional)" style={inputStyle} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <input name="shippingCity" placeholder="City" style={inputStyle} />
-          <FieldError error={fieldErrors.shippingCity?.[0]} />
-        </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-            <input name="shippingProvince" placeholder="Province" style={inputStyle} />
-            <FieldError error={fieldErrors.shippingProvince?.[0]} />
+
+        {addresses.length > 0 && (
+          <select
+            value={selectedAddressId}
+            onChange={(e) => setSelectedAddressId(e.target.value)}
+            className={fieldClassName}
+            style={{ appearance: "auto" }}
+          >
+            <option value="">Enter a new address</option>
+            {addresses.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label || a.line1}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div key={selectedAddressId || "new"} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <Input name="shippingLine1" placeholder="Street address" defaultValue={selectedAddress?.line1} className={fieldClassName} />
+            <FieldError error={fieldErrors.shippingLine1?.[0]} />
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-            <input name="shippingPostalCode" placeholder="Postal code" style={inputStyle} />
-            <FieldError error={fieldErrors.shippingPostalCode?.[0]} />
+          <Input
+            name="shippingLine2"
+            placeholder="Apartment, suite, etc. (optional)"
+            defaultValue={selectedAddress?.line2 ?? ""}
+            className={fieldClassName}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <Input name="shippingCity" placeholder="City" defaultValue={selectedAddress?.city} className={fieldClassName} />
+            <FieldError error={fieldErrors.shippingCity?.[0]} />
           </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <Input name="shippingProvince" placeholder="Province" defaultValue={selectedAddress?.province} className={fieldClassName} />
+              <FieldError error={fieldErrors.shippingProvince?.[0]} />
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <Input
+                name="shippingPostalCode"
+                placeholder="Postal code"
+                defaultValue={selectedAddress?.postalCode}
+                className={fieldClassName}
+              />
+              <FieldError error={fieldErrors.shippingPostalCode?.[0]} />
+            </div>
+          </div>
+        </div>
+
+        <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 22, margin: "18px 0 4px" }}>
+          Discount code
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <Input name="discountCode" placeholder="Optional code" className={`${fieldClassName} uppercase`} />
+          <FieldError error={fieldErrors.discountCode?.[0]} />
         </div>
 
         <FieldError error={state.status === "error" ? state.message : undefined} />
