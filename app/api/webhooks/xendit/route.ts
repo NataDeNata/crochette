@@ -1,8 +1,11 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
+import { decrementStockForOrder, getOrderProductSlugs } from "@/lib/db/inventory";
+import { incrementDiscountUsage } from "@/lib/db/discounts";
 import { notifyOrderPaid } from "@/lib/email/notifications";
 
 function isValidCallbackToken(received: string | null): boolean {
@@ -47,18 +50,50 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "order not found" }, { status: 400 });
   }
 
-  // Idempotency guard — Xendit may retry webhook delivery.
+  // Fast-path idempotency check — Xendit may retry webhook delivery.
   if (order.status === "paid") {
     return NextResponse.json({ received: true });
   }
 
-  const [updated] = await db
-    .update(orders)
-    .set({ status: "paid", paidAt: new Date(), xenditPaymentId: payload.data?.payment_id ?? null })
-    .where(eq(orders.id, orderId))
-    .returning();
+  const updated = await db.transaction(async (tx) => {
+    // The WHERE clause (not just the id) is what makes this safe under
+    // concurrent redelivery: Postgres takes a row lock as part of evaluating
+    // the UPDATE's WHERE, so if two deliveries race, the second one blocks
+    // until the first commits, then re-checks status and finds it's no
+    // longer "pending" — matching zero rows instead of double-processing.
+    const [row] = await tx
+      .update(orders)
+      .set({ status: "paid", paidAt: new Date(), xenditPaymentId: payload.data?.payment_id ?? null })
+      .where(and(eq(orders.id, orderId), eq(orders.status, "pending")))
+      .returning();
+
+    if (!row) return null;
+
+    // Stock is only ever decremented here, at confirmed payment — not at
+    // checkout-creation (still pending) or admin fulfillment ("completed"),
+    // so an abandoned/failed checkout never costs real inventory.
+    await decrementStockForOrder(tx, orderId);
+
+    // Same principle for discount-code usage — only counted once payment
+    // actually goes through, not merely entered at checkout.
+    if (row.discountCodeId) {
+      await incrementDiscountUsage(tx, row.discountCodeId);
+    }
+
+    return row;
+  });
+
+  if (!updated) {
+    // A concurrent/duplicate delivery already flipped this order to "paid".
+    return NextResponse.json({ received: true });
+  }
 
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+
+  const slugs = await getOrderProductSlugs(orderId);
+  revalidatePath("/");
+  revalidatePath("/shop");
+  for (const slug of slugs) revalidatePath(`/shop/${slug}`);
 
   await notifyOrderPaid(updated, items);
 

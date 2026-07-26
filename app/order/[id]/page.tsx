@@ -83,6 +83,12 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
                 <span>Shipping</span>
                 <span>{formatPrice(order.shippingCents)}</span>
               </div>
+              {order.discountCents > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "oklch(0.55 0.12 150)" }}>
+                  <span>Discount</span>
+                  <span>−{formatPrice(order.discountCents)}</span>
+                </div>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 500, marginTop: 4 }}>
                 <span>Total</span>
                 <span>{formatPrice(order.totalCents)}</span>
