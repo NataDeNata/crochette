@@ -43,3 +43,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Claude Code local machine-specific settings (absolute paths, per-machine
+# hook config) — .claude/skills/ itself IS committed so the team shares it.
+.claude/settings.local.json
