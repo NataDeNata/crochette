@@ -8,7 +8,7 @@ export interface Product {
   priceCents: number;
   category: ProductCategory;
   tag?: string;
-  bg: string;
+  bgClassName: string;
   placeholder: string;
   stockQty: number;
 }

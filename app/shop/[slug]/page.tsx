@@ -103,12 +103,12 @@ export default async function ProductPage({
       >
         <FadeIn>
           <div
+            className={product.bgClassName}
             style={{
               position: "relative",
               aspectRatio: "1",
               borderRadius: 28,
               overflow: "hidden",
-              background: product.bg,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

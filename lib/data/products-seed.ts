@@ -1,13 +1,5 @@
 import type { Product, ProductCategory } from "./products";
-
-const BG_CYCLE = [
-  "oklch(0.9 0.045 20)",
-  "oklch(0.9 0.05 150)",
-  "oklch(0.92 0.03 260)",
-  "oklch(0.9 0.05 60)",
-  "oklch(0.93 0.03 20)",
-  "oklch(0.91 0.04 150)",
-];
+import { BG_CYCLE_CLASSES } from "./bg-cycle";
 
 const CATALOG: Array<{
   name: string;
@@ -94,7 +86,7 @@ export function getSeedProducts(): Product[] {
     priceCents: item.priceCents,
     category: item.category,
     tag: item.tag,
-    bg: BG_CYCLE[i % BG_CYCLE.length],
+    bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
     placeholder: `product shot — ${item.name.toLowerCase()}`,
     // Not written by the seed insert (see seed.ts) — the DB column's own default (0) applies on insert.
     stockQty: 0,

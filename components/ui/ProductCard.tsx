@@ -6,17 +6,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/data/products";
 import { formatPrice } from "@/lib/data/products";
 import { useCart } from "@/lib/cart/CartContext";
+import { cn } from "@/lib/utils";
 
-const imageWrapStyle = {
-  aspectRatio: "1",
-  borderRadius: 20,
-  overflow: "hidden",
-  background: undefined as string | undefined,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
-} as const;
+const imageWrapClassName = "aspect-square rounded-[20px] overflow-hidden flex items-center justify-center relative";
 
 export function ProductCard({ product }: { product: Product }) {
   const reduceMotion = useReducedMotion();
@@ -39,23 +31,12 @@ export function ProductCard({ product }: { product: Product }) {
       onClick={handleQuickAdd}
       disabled={outOfStock}
       aria-label={outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
-      className="quick-add-btn"
-      style={{
-        position: "absolute",
-        bottom: 12,
-        right: 12,
-        zIndex: 2,
-        width: 38,
-        height: 38,
-        borderRadius: "50%",
-        border: "none",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: outOfStock ? "not-allowed" : "pointer",
-        opacity: outOfStock ? 0.5 : 1,
-        boxShadow: "0 4px 10px -4px oklch(0.28 0.02 60 / 0.35)",
-      }}
+      className={cn(
+        "absolute bottom-3 right-3 z-[2] w-[38px] h-[38px] rounded-full border-0 flex items-center justify-center",
+        "shadow-[0_4px_10px_-4px_oklch(0.28_0.02_60/0.35)] bg-[oklch(0.98_0.01_85/0.92)] text-[oklch(0.28_0.02_60)]",
+        "transition-colors duration-200 enabled:hover:bg-primary enabled:hover:text-card enabled:focus-visible:bg-primary enabled:focus-visible:text-card",
+        outOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer opacity-100",
+      )}
     >
       <AnimatePresence mode="wait" initial={false}>
         {added ? (
@@ -102,48 +83,21 @@ export function ProductCard({ product }: { product: Product }) {
   );
 
   const tag = product.tag && (
-    <div
-      style={{
-        position: "absolute",
-        top: 14,
-        left: 14,
-        background: "oklch(0.98 0.01 85 / 0.9)",
-        padding: "5px 12px",
-        borderRadius: 14,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: 0.5,
-        textTransform: "uppercase",
-        color: "oklch(0.5 0.09 20)",
-      }}
-    >
+    <div className="absolute top-3.5 left-3.5 bg-[oklch(0.98_0.01_85/0.9)] py-[5px] px-3 rounded-[14px] text-[11px] font-semibold tracking-[0.5px] uppercase text-[oklch(0.5_0.09_20)]">
       {product.tag}
     </div>
   );
 
   const placeholder = (
-    <span
-      style={{
-        fontFamily: "ui-monospace, monospace",
-        fontSize: 12,
-        color: "oklch(0.35 0.03 60)",
-        background: "oklch(1 0 0 / 0.6)",
-        padding: "6px 12px",
-        borderRadius: 6,
-        textAlign: "center",
-      }}
-    >
+    <span className="[font-family:ui-monospace,monospace] text-xs text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.6)] px-3 py-1.5 rounded-[6px] text-center">
       {product.placeholder}
     </span>
   );
 
   return (
-    <Link
-      href={`/shop/${product.slug}`}
-      style={{ display: "flex", flexDirection: "column", gap: 14 }}
-    >
+    <Link href={`/shop/${product.slug}`} className="flex flex-col gap-3.5">
       {reduceMotion ? (
-        <div style={{ ...imageWrapStyle, background: product.bg }}>
+        <div className={cn(imageWrapClassName, product.bgClassName)}>
           {tag}
           {placeholder}
           {quickAddButton}
@@ -158,18 +112,18 @@ export function ProductCard({ product }: { product: Product }) {
             hover: { y: -6, scale: 1.015, boxShadow: "0 18px 30px -12px oklch(0.28 0.02 60 / 0.25)" },
           }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          style={{ ...imageWrapStyle, background: product.bg }}
+          className={cn(imageWrapClassName, product.bgClassName)}
         >
           {tag}
-          <span className="product-card-placeholder-caption" style={{ position: "absolute", bottom: 12, left: 12 }}>
+          <span className="product-card-placeholder-caption absolute bottom-3 left-3">
             {product.placeholder}
           </span>
           {quickAddButton}
         </motion.div>
       )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <span style={{ fontSize: 15, fontWeight: 500 }}>{product.name}</span>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "oklch(0.5 0.09 20)" }}>
+      <div className="flex justify-between items-baseline">
+        <span className="text-[15px] font-medium">{product.name}</span>
+        <span className="text-[15px] font-bold text-[oklch(0.5_0.09_20)]">
           {formatPrice(product.priceCents)}
         </span>
       </div>

@@ -2,15 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import type { Product, ProductCategory } from "./products";
-
-const BG_CYCLE = [
-  "oklch(0.9 0.045 20)",
-  "oklch(0.9 0.05 150)",
-  "oklch(0.92 0.03 260)",
-  "oklch(0.9 0.05 60)",
-  "oklch(0.93 0.03 20)",
-  "oklch(0.91 0.04 150)",
-];
+import { BG_CYCLE_CLASSES } from "./bg-cycle";
 
 /** `bg`/`placeholder` aren't real columns — there's no product photography yet,
  * so they're derived here the same way the old mock catalog derived them. */
@@ -29,7 +21,7 @@ async function fetchActiveProducts(): Promise<Product[]> {
     priceCents: row.priceCents,
     category: row.category as ProductCategory,
     tag: row.tag ?? undefined,
-    bg: BG_CYCLE[i % BG_CYCLE.length],
+    bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
     placeholder: `product shot — ${row.name.toLowerCase()}`,
     stockQty: row.stockQty,
   }));
