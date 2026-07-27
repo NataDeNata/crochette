@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { CATEGORIES, type Product, type ProductCategory } from "@/lib/data/products";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 9;
 
@@ -31,16 +32,8 @@ export function ShopGrid({ products }: { products: Product[] }) {
 
   return (
     <>
-      <section
-        style={{
-          padding: "20px 48px 0",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 24,
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: 420 }}>
+      <section className="pt-5 px-12 pb-0 flex flex-col items-center gap-6">
+        <div className="w-full max-w-[420px]">
           <input
             type="search"
             value={query}
@@ -50,20 +43,11 @@ export function ShopGrid({ products }: { products: Product[] }) {
             }}
             placeholder="Search products…"
             aria-label="Search products"
-            style={{
-              width: "100%",
-              padding: "12px 20px",
-              borderRadius: 24,
-              border: "1.5px solid oklch(0.85 0.02 60)",
-              fontSize: 14,
-              fontFamily: "inherit",
-              background: "oklch(0.98 0.01 85)",
-              color: "oklch(0.28 0.02 60)",
-            }}
+            className="w-full py-3 px-5 rounded-[24px] border-[1.5px] border-[oklch(0.85_0.02_60)] text-sm [font-family:inherit] bg-card text-foreground"
           />
         </div>
 
-        <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+        <div className="flex gap-3.5 justify-center flex-wrap">
           {CATEGORIES.map((c) => {
             const isActive = c.value === active;
             return (
@@ -71,41 +55,27 @@ export function ShopGrid({ products }: { products: Product[] }) {
                 key={c.value}
                 type="button"
                 onClick={() => selectCategory(c.value)}
-                style={{
-                  position: "relative",
-                  padding: "9px 20px",
-                  borderRadius: 20,
-                  border: `1.5px solid ${isActive && reduceMotion ? "oklch(0.28 0.02 60)" : isActive ? "transparent" : "oklch(0.85 0.02 60)"}`,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  background: "transparent",
-                  fontFamily: "inherit",
-                }}
+                className={cn(
+                  "relative py-[9px] px-5 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-transparent [font-family:inherit]",
+                  isActive && reduceMotion
+                    ? "border-[oklch(0.28_0.02_60)]"
+                    : isActive
+                      ? "border-transparent"
+                      : "border-[oklch(0.85_0.02_60)]",
+                )}
               >
                 {isActive && !reduceMotion && (
                   <motion.span
                     layoutId="shop-filter-active"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      borderRadius: 20,
-                      background: "oklch(0.28 0.02 60)",
-                      zIndex: 0,
-                    }}
+                    className="absolute inset-0 rounded-[20px] bg-primary z-0"
                   />
                 )}
                 <span
-                  style={{
-                    position: "relative",
-                    zIndex: 1,
-                    color: isActive
-                      ? reduceMotion
-                        ? "oklch(0.28 0.02 60)"
-                        : "oklch(0.98 0.01 85)"
-                      : "oklch(0.5 0.02 60)",
-                  }}
+                  className={cn(
+                    "relative z-[1]",
+                    isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-muted-foreground",
+                  )}
                 >
                   {c.name}
                 </span>
@@ -115,20 +85,13 @@ export function ShopGrid({ products }: { products: Product[] }) {
         </div>
       </section>
 
-      <section style={{ padding: "48px 48px 60px" }}>
+      <section className="pt-12 px-12 pb-[60px]">
         {visible.length === 0 ? (
-          <p style={{ textAlign: "center", color: "oklch(0.5 0.02 60)", fontSize: 15 }}>
+          <p className="text-center text-muted-foreground text-[15px]">
             No products match &ldquo;{query}&rdquo;.
           </p>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(260px,320px))",
-              justifyContent: "center",
-              gap: 32,
-            }}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,320px))] justify-center gap-8">
             <AnimatePresence mode="popLayout">
               {visible.map((p, i) => (
                 <FadeIn key={p.id} delay={(i % 6) * 0.05} layout exit={{ opacity: 0, scale: 0.92 }}>
@@ -141,10 +104,7 @@ export function ShopGrid({ products }: { products: Product[] }) {
       </section>
 
       {totalPages > 1 && (
-        <section
-          aria-label="Shop pagination"
-          style={{ padding: "0 48px 100px", display: "flex", justifyContent: "center", gap: 8 }}
-        >
+        <section aria-label="Shop pagination" className="px-12 pb-[100px] flex justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
             <button
               key={n}
@@ -152,18 +112,12 @@ export function ShopGrid({ products }: { products: Product[] }) {
               onClick={() => setPage(n)}
               aria-current={n === currentPage ? "page" : undefined}
               aria-label={`Page ${n}`}
-              data-active={n === currentPage}
-              className="pagination-btn"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                border: "none",
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
+              className={cn(
+                "w-9 h-9 rounded-full border-0 text-sm font-medium cursor-pointer [font-family:inherit] transition-colors duration-200",
+                n === currentPage
+                  ? "bg-primary text-card"
+                  : "bg-transparent text-[oklch(0.42_0.02_60)] hover:bg-[oklch(0.9_0.02_60)] focus-visible:bg-[oklch(0.9_0.02_60)]",
+              )}
             >
               {n}
             </button>
