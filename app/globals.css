@@ -88,6 +88,16 @@
   color: oklch(0.55 0.09 20);
 }
 
+/* Same color as :hover above, on purpose - an active link is always "in the
+ * hover state" visually. Previously this was forced via an inline `color`
+ * style on the same element, which (per the specificity note above) also
+ * silently blocked the :hover/:focus-visible rules above from ever doing
+ * anything on that element. Expressing it as a real class-based rule
+ * instead removes that footgun. */
+.nav-link[data-active="true"] {
+  color: oklch(0.55 0.09 20);
+}
+
 .footer-link {
   color: oklch(0.72 0.03 60);
   transition: color 0.2s ease;

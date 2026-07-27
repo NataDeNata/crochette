@@ -17,8 +17,6 @@ const LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
-const ACTIVE_COLOR = "oklch(0.55 0.09 20)";
-
 export function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
@@ -36,58 +34,27 @@ export function Nav({ session }: { session: Session | null }) {
   }
 
   return (
-    <nav
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "22px 48px",
-        background: "oklch(0.975 0.012 85 / 0.85)",
-        backdropFilter: "blur(8px)",
-        borderBottom: "1px solid oklch(0.9 0.015 60)",
-      }}
-    >
-      <Link
-        href="/"
-        style={{
-          fontFamily: "var(--font-cormorant), serif",
-          fontSize: 26,
-          fontStyle: "italic",
-          fontWeight: 600,
-          letterSpacing: 0.5,
-          color: "inherit",
-        }}
-      >
+    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] px-12 bg-[oklch(0.975_0.012_85/0.85)] backdrop-blur border-b border-[oklch(0.9_0.015_60)]">
+      <Link href="/" className="font-serif text-[26px] italic font-semibold tracking-[0.5px] text-inherit">
         Crochette
       </Link>
 
-      <div className="nav-desktop-links" style={{ gap: 36, fontSize: 14, fontWeight: 500, letterSpacing: 0.3 }}>
+      <div className="nav-desktop-links gap-9 text-sm font-medium tracking-[0.3px]">
         {LINKS.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
               key={link.href}
               href={link.href}
-              className="nav-link"
-              style={{ position: "relative", color: isActive ? ACTIVE_COLOR : undefined, paddingBottom: 6 }}
+              className="nav-link relative pb-1.5"
+              data-active={isActive}
             >
               {link.label}
               {isActive && !reduceMotion && (
                 <motion.div
                   layoutId="nav-active-underline"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: -6,
-                    height: 2,
-                    borderRadius: 2,
-                    background: ACTIVE_COLOR,
-                  }}
+                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 rounded-[2px] bg-[oklch(0.55_0.09_20)]"
                 />
               )}
             </Link>
@@ -101,70 +68,46 @@ export function Nav({ session }: { session: Session | null }) {
         </Button>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <div className="flex items-center gap-1">
         <AccountIcon href={accountHref} className="account-icon-link" />
         <CartIcon className="cart-icon-link" />
 
         <button
           type="button"
-          className="nav-hamburger-btn"
+          className="nav-hamburger-btn bg-transparent border-0 cursor-pointer p-1.5 flex-col gap-1.25 items-center justify-center"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
           aria-expanded={open}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 6,
-            flexDirection: "column",
-            gap: 5,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
         >
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? 45 : 0, y: open ? 6 : 0 }}
-            style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
+            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
           />
           <motion.span
             animate={reduceMotion ? undefined : { opacity: open ? 0 : 1 }}
-            style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
+            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
           />
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? -45 : 0, y: open ? -6 : 0 }}
-            style={{ display: "block", width: 22, height: 2, borderRadius: 2, background: "oklch(0.28 0.02 60)" }}
+            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
           />
         </button>
       </div>
 
       {reduceMotion ? (
         open && (
-          <div
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 0,
-              background: "oklch(0.975 0.012 85 / 0.98)",
-              backdropFilter: "blur(8px)",
-              borderBottom: "1px solid oklch(0.9 0.015 60)",
-              display: "flex",
-              flexDirection: "column",
-              padding: 24,
-              gap: 18,
-            }}
-          >
+          <div className="absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col p-6 gap-4.5">
             {LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="nav-link" style={{ color: pathname === link.href ? ACTIVE_COLOR : undefined }}>
+              <Link key={link.href} href={link.href} className="nav-link" data-active={pathname === link.href}>
                 {link.label}
               </Link>
             ))}
             {!isShopPage && (
-              <Link href="/shop" className="nav-link" style={{ fontWeight: 500 }}>
+              <Link href="/shop" className="nav-link font-medium">
                 Shop now
               </Link>
             )}
-            <Link href={accountHref} className="nav-link" style={{ fontWeight: 500 }}>
+            <Link href={accountHref} className="nav-link font-medium">
               {session?.user?.role === "customer" ? "My account" : "Sign in"}
             </Link>
           </div>
@@ -178,27 +121,15 @@ export function Nav({ session }: { session: Session | null }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                right: 0,
-                background: "oklch(0.975 0.012 85 / 0.98)",
-                backdropFilter: "blur(8px)",
-                borderBottom: "1px solid oklch(0.9 0.015 60)",
-                display: "flex",
-                flexDirection: "column",
-                padding: 24,
-                gap: 18,
-              }}
+              className="absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col p-6 gap-4.5"
             >
               {LINKS.map((link) => (
-                <Link key={link.href} href={link.href} className="nav-link" style={{ color: pathname === link.href ? ACTIVE_COLOR : undefined }}>
+                <Link key={link.href} href={link.href} className="nav-link" data-active={pathname === link.href}>
                   {link.label}
                 </Link>
               ))}
               {!isShopPage && (
-                <Link href="/shop" className="nav-link" style={{ fontWeight: 500 }}>
+                <Link href="/shop" className="nav-link font-medium">
                   Shop now
                 </Link>
               )}
