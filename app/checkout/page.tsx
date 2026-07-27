@@ -13,10 +13,8 @@ export default async function CheckoutPage() {
   const addresses = session?.user?.role === "customer" ? await listAddresses(session.user.id) : [];
 
   return (
-    <section style={{ padding: "48px 48px 96px" }}>
-      <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 34, textAlign: "center", margin: "0 0 40px" }}>
-        Checkout
-      </h1>
+    <section className="pt-12 px-12 pb-24">
+      <h1 className="font-serif font-medium text-[34px] text-center mb-10">Checkout</h1>
       <CheckoutForm
         addresses={addresses.map((a) => ({
           id: a.id,
