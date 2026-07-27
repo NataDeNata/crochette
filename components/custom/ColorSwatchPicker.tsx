@@ -2,23 +2,18 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const SWATCHES = [
-  { label: "Rose", color: "oklch(0.75 0.09 20)" },
-  { label: "Sage", color: "oklch(0.78 0.06 150)" },
-  { label: "Cream", color: "oklch(0.93 0.02 85)" },
-  { label: "Dusty blue", color: "oklch(0.72 0.05 240)" },
-  { label: "Terracotta", color: "oklch(0.62 0.1 40)" },
+  { label: "Rose", swatchClass: "bg-[oklch(0.75_0.09_20)]" },
+  { label: "Sage", swatchClass: "bg-[oklch(0.78_0.06_150)]" },
+  { label: "Cream", swatchClass: "bg-[oklch(0.93_0.02_85)]" },
+  { label: "Dusty blue", swatchClass: "bg-[oklch(0.72_0.05_240)]" },
+  { label: "Terracotta", swatchClass: "bg-[oklch(0.62_0.1_40)]" },
 ];
 
-const inputStyle = {
-  padding: "12px 16px",
-  borderRadius: 12,
-  border: "1.5px solid oklch(0.75 0.03 20)",
-  background: "oklch(0.98 0.01 85)",
-  fontSize: 14,
-  fontFamily: "inherit",
-} as const;
+const inputClassName =
+  "py-3 px-4 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
 
 function joinValue(selected: Set<string>, custom: string) {
   return [...selected, custom.trim()].filter(Boolean).join(", ").slice(0, 200);
@@ -53,9 +48,9 @@ export function ColorSwatchPicker({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="flex flex-col gap-2.5">
       <input type="hidden" name={name} value={joinValue(selected, customText)} />
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="flex gap-3 items-center flex-wrap">
         {SWATCHES.map((s) => {
           const isActive = selected.has(s.label);
           return (
@@ -68,16 +63,13 @@ export function ColorSwatchPicker({
               onClick={() => toggle(s.label)}
               animate={{ scale: isActive ? 1.12 : 1 }}
               transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                background: s.color,
-                border: isActive ? "2.5px solid oklch(0.28 0.02 60)" : "1.5px solid oklch(0.98 0.01 85)",
-                boxShadow: isActive ? "0 0 0 2px oklch(0.98 0.01 85)" : "none",
-                cursor: "pointer",
-                padding: 0,
-              }}
+              className={cn(
+                "w-[30px] h-[30px] rounded-full cursor-pointer p-0",
+                s.swatchClass,
+                isActive
+                  ? "border-[2.5px] border-[oklch(0.28_0.02_60)] shadow-[0_0_0_2px_oklch(0.98_0.01_85)]"
+                  : "border-[1.5px] border-card shadow-none",
+              )}
             />
           );
         })}
@@ -85,17 +77,10 @@ export function ColorSwatchPicker({
           type="button"
           aria-pressed={customOpen}
           onClick={() => setCustomOpen((v) => !v)}
-          style={{
-            padding: "6px 14px",
-            borderRadius: 20,
-            border: `1.5px solid ${customOpen ? "oklch(0.28 0.02 60)" : "oklch(0.75 0.03 20)"}`,
-            fontSize: 12.5,
-            fontWeight: 500,
-            cursor: "pointer",
-            background: customOpen ? "oklch(0.28 0.02 60)" : "oklch(0.98 0.01 85)",
-            color: customOpen ? "oklch(0.98 0.01 85)" : "oklch(0.42 0.02 60)",
-            fontFamily: "inherit",
-          }}
+          className={cn(
+            "py-1.5 px-3.5 rounded-[20px] border-[1.5px] text-[12.5px] font-medium cursor-pointer [font-family:inherit]",
+            customOpen ? "border-primary bg-primary text-card" : "border-[oklch(0.75_0.03_20)] bg-card text-[oklch(0.42_0.02_60)]",
+          )}
         >
           Custom…
         </button>
@@ -105,7 +90,7 @@ export function ColorSwatchPicker({
           placeholder="Add specific colors…"
           value={customText}
           onChange={(e) => handleCustomChange(e.target.value)}
-          style={inputStyle}
+          className={inputClassName}
         />
       )}
     </div>
