@@ -36,7 +36,7 @@ function AddressCard({ address }: { address: AddressRow }) {
 
   if (editing) {
     return (
-      <div style={{ padding: 20, borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)" }}>
+      <div className="p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
         <AddressForm address={address} onSaved={() => setEditing(false)} />
         <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)} className="mt-2">
           Cancel
@@ -46,30 +46,20 @@ function AddressCard({ address }: { address: AddressRow }) {
   }
 
   return (
-    <div
-      style={{
-        padding: 20,
-        borderRadius: 16,
-        border: "1.5px solid oklch(0.9 0.02 60)",
-        display: "flex",
-        justifyContent: "space-between",
-        gap: 16,
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] flex justify-between gap-4 flex-wrap">
       <div>
         {(address.label || address.isDefault) && (
-          <div style={{ fontWeight: 500, fontSize: 13.5, marginBottom: 4 }}>
+          <div className="font-medium text-[13.5px] mb-1">
             {address.label}
             {address.label && address.isDefault ? " · Default" : !address.label && address.isDefault ? "Default" : ""}
           </div>
         )}
-        <p style={{ fontSize: 13.5, color: "oklch(0.5 0.02 60)", margin: 0, lineHeight: 1.6 }}>
+        <p className="text-[13.5px] text-muted-foreground m-0 leading-[1.6]">
           {address.line1}
           {address.line2 ? `, ${address.line2}` : ""}, {address.city}, {address.province} {address.postalCode}
         </p>
       </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+      <div className="flex gap-2 items-start">
         {!address.isDefault && (
           <form action={defaultAction}>
             <Button type="submit" variant="outline" size="sm" disabled={isSettingDefault}>
@@ -115,13 +105,13 @@ export function AddressManager({ addresses }: { addresses: AddressRow[] }) {
   const [adding, setAdding] = useState(false);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div className="flex flex-col gap-4">
       {addresses.map((a) => (
         <AddressCard key={a.id} address={a} />
       ))}
 
       {adding ? (
-        <div style={{ padding: 20, borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)" }}>
+        <div className="p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
           <AddressForm onSaved={() => setAdding(false)} />
           <Button type="button" variant="ghost" size="sm" onClick={() => setAdding(false)} className="mt-2">
             Cancel
