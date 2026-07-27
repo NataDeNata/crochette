@@ -48,7 +48,7 @@ export function AddressForm({ address, onSaved }: { address?: AddressRow; onSave
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm" style={{ color: "oklch(0.5 0.02 60)" }}>
+      <label className="flex items-center gap-2 text-sm text-muted-foreground">
         <input type="checkbox" name="isDefault" defaultChecked={address?.isDefault} />
         Set as default address
       </label>
