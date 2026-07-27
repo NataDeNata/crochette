@@ -28,14 +28,7 @@ export function SubmitButton({
               scale: { duration: 0.2 },
               rotate: { repeat: Infinity, duration: 0.7, ease: "linear" },
             }}
-            style={{
-              width: 14,
-              height: 14,
-              borderRadius: "50%",
-              border: "2px solid oklch(0.98 0.01 85 / 0.4)",
-              borderTopColor: "oklch(0.98 0.01 85)",
-              display: "inline-block",
-            }}
+            className="w-3.5 h-3.5 rounded-full border-2 border-[oklch(0.98_0.01_85/0.4)] border-t-[oklch(0.98_0.01_85)] inline-block"
           />
         )}
       </AnimatePresence>
