@@ -1,19 +1,12 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export function AccountIcon({ href, className }: { href: string; className?: string }) {
   return (
     <Link
       href={href}
-      className={className}
+      className={cn("inline-flex items-center justify-center w-11 h-11 rounded-[14px]", className)}
       aria-label="Account"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-      }}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21a8 8 0 0 0-16 0" />
