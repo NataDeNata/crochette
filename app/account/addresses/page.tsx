@@ -13,10 +13,8 @@ export default async function AccountAddressesPage() {
   const addresses = await listAddresses(session!.user.id);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 26, margin: 0 }}>
-        Saved addresses
-      </h1>
+    <div className="flex flex-col gap-5">
+      <h1 className="font-serif font-medium text-[26px] m-0">Saved addresses</h1>
       <AddressManager addresses={addresses} />
     </div>
   );
