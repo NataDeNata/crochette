@@ -77,19 +77,19 @@ export function CustomOrderForm({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          className="flex flex-col gap-3.5"
         >
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <Input name="name" placeholder="Your name" className={fieldClassName} />
             <FieldError error={fieldErrors.name?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <Input name="email" placeholder="Email address" type="email" className={fieldClassName} />
             <FieldError error={fieldErrors.email?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <motion.div layout className="flex flex-col gap-2">
             <PillGroup
               name="pieceType"
               options={PIECE_TYPES}
@@ -101,16 +101,16 @@ export function CustomOrderForm({
             <FieldError error={fieldErrors.pieceType?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <motion.div layout className="flex flex-col gap-2">
             <ColorSwatchPicker name="preferredColors" onValueChange={(v) => updatePreview({ preferredColors: v })} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ fontSize: 12.5, color: "oklch(0.45 0.02 60)" }}>Budget range (optional)</div>
+          <motion.div layout className="flex flex-col gap-2">
+            <div className="text-[12.5px] text-[oklch(0.45_0.02_60)]">Budget range (optional)</div>
             <PillGroup name="budgetRange" options={BUDGET_RANGES} layoutId="custom-budget" ariaLabel="Budget range" />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <Textarea
               name="description"
               placeholder="Describe your dream piece..."
@@ -120,7 +120,7 @@ export function CustomOrderForm({
             <FieldError error={fieldErrors.description?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <PhotoAttach name="photos" onValueChange={(urls) => updatePreview({ photoPreviewUrls: urls })} />
             <FieldError error={fieldErrors.photos?.[0]} />
           </motion.div>
