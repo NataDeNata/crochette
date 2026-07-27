@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const imageWrapClassName = "aspect-square rounded-[20px] overflow-hidden flex items-center justify-center relative";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, onDark = false }: { product: Product; onDark?: boolean }) {
   const reduceMotion = useReducedMotion();
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
@@ -122,8 +122,15 @@ export function ProductCard({ product }: { product: Product }) {
         </motion.div>
       )}
       <div className="flex justify-between items-baseline">
-        <span className="text-[15px] font-medium">{product.name}</span>
-        <span className="text-[15px] font-bold text-[oklch(0.5_0.09_20)]">
+        <span className={cn("text-[17px] font-medium", onDark && "text-[oklch(0.98_0.01_85)]")}>
+          {product.name}
+        </span>
+        <span
+          className={cn(
+            "text-[17px] font-bold",
+            onDark ? "text-[oklch(0.88_0.07_20)]" : "text-[oklch(0.5_0.09_20)]",
+          )}
+        >
           {formatPrice(product.priceCents)}
         </span>
       </div>

@@ -8,7 +8,7 @@ import type { Product } from "@/lib/data/products";
 
 const SPEED_PX_PER_SEC = 32;
 
-export function ShopMarquee({ products }: { products: Product[] }) {
+export function ShopMarquee({ products, onDark = false }: { products: Product[]; onDark?: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const [paused, setPaused] = useState(false);
@@ -35,7 +35,7 @@ export function ShopMarquee({ products }: { products: Product[] }) {
 
   return (
     <div
-      className={cn("overflow-hidden", dragging ? "cursor-grabbing" : "cursor-grab")}
+      className={cn("overflow-x-hidden py-3", dragging ? "cursor-grabbing" : "cursor-grab")}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -61,7 +61,7 @@ export function ShopMarquee({ products }: { products: Product[] }) {
             className={cn("w-[320px] shrink-0", dragging && "pointer-events-none")}
             aria-hidden={i >= products.length || undefined}
           >
-            <ProductCard product={p} />
+            <ProductCard product={p} onDark={onDark} />
           </div>
         ))}
       </motion.div>
