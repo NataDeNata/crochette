@@ -1,8 +1,9 @@
 "use client";
 
-import { createPortal } from "react-dom";
 import Image from "next/image";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import type { GalleryItem } from "@/lib/data/gallery";
 
 export function Lightbox({
@@ -17,96 +18,69 @@ export function Lightbox({
   const reduceMotion = useReducedMotion();
 
   const closeButton = (
-    <button
-      type="button"
-      onClick={onClose}
-      aria-label="Close"
-      style={{
-        position: "absolute",
-        top: -44,
-        right: 0,
-        background: "none",
-        border: "none",
-        color: "oklch(0.98 0.01 85)",
-        fontSize: 28,
-        lineHeight: 1,
-        cursor: "pointer",
-      }}
-    >
-      ×
-    </button>
+    <DialogPrimitive.Close asChild>
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute -top-11 right-0 bg-transparent border-0 text-[oklch(0.98_0.01_85)] text-[28px] leading-none cursor-pointer"
+      >
+        ×
+      </button>
+    </DialogPrimitive.Close>
   );
 
   const panelContent = item.image ? (
-    <Image src={item.image} alt={item.alt ?? ""} fill sizes="90vw" style={{ objectFit: "cover" }} />
+    <Image src={item.image} alt={item.alt ?? ""} fill sizes="90vw" className="object-cover" />
   ) : (
-    <span
-      style={{
-        fontFamily: "ui-monospace, monospace",
-        fontSize: 14,
-        color: "oklch(0.35 0.03 60)",
-        background: "oklch(1 0 0 / 0.7)",
-        padding: "8px 16px",
-        borderRadius: 8,
-        textAlign: "center",
-      }}
-    >
+    <span className="[font-family:ui-monospace,monospace] text-sm text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.7)] px-4 py-2 rounded-lg text-center">
       {item.placeholder}
     </span>
   );
 
-  const overlayBaseStyle = {
-    position: "fixed",
-    inset: 0,
-    zIndex: 100,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as const;
+  const panelClassName = cn(
+    "relative w-[min(640px,90vw)] aspect-[4/3] rounded-3xl overflow-hidden flex items-center justify-center",
+    item.image ? undefined : item.bgClassName,
+  );
 
-  const panelBaseStyle = {
-    position: "relative",
-    width: "min(640px,90vw)",
-    aspectRatio: "4/3",
-    borderRadius: 24,
-    overflow: "hidden",
-    background: item.image ? undefined : item.bg,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as const;
-
-  if (reduceMotion) {
-    return createPortal(
-      <div style={{ ...overlayBaseStyle, background: "oklch(0.2 0.02 60 / 0.7)" }} onClick={onClose}>
-        <div style={panelBaseStyle} onClick={(e) => e.stopPropagation()}>
-          {closeButton}
-          {panelContent}
-        </div>
-      </div>,
-      document.body,
-    );
-  }
-
-  return createPortal(
-    <div style={overlayBaseStyle}>
-      {/* No zIndex here — it must stay behind the panel below. Both are
-       * siblings in the same stacking context (the wrapper above), so an
-       * explicit zIndex here would outrank the panel's and paint the gray
-       * backdrop over the image instead of behind it. */}
-      <motion.div
-        style={{ position: "fixed", inset: 0, background: "oklch(0.2 0.02 60 / 0.7)" }}
-        onClick={onClose}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-      />
-      <motion.div layoutId={layoutId} style={{ ...panelBaseStyle, zIndex: 1 }} onClick={(e) => e.stopPropagation()}>
-        {closeButton}
-        {panelContent}
-      </motion.div>
-    </div>,
-    document.body,
+  // Root's `open` is hardcoded true: this component is only ever rendered
+  // (by GallerySection, via AnimatePresence) while the lightbox is open or
+  // mid-exit-animation, so Radix's own open/close transition isn't needed —
+  // AnimatePresence owns when this whole tree actually leaves the DOM.
+  return (
+    <DialogPrimitive.Root open onOpenChange={(open) => !open && onClose()}>
+      <DialogPrimitive.Portal forceMount>
+        <DialogPrimitive.Overlay asChild forceMount>
+          <motion.div
+            className="fixed inset-0 z-[100] bg-[oklch(0.2_0.02_60/0.7)]"
+            onClick={onClose}
+            initial={reduceMotion ? undefined : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        </DialogPrimitive.Overlay>
+        <DialogPrimitive.Content
+          asChild
+          forceMount
+          onOpenAutoFocus={(e) => reduceMotion && e.preventDefault()}
+        >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+            <DialogPrimitive.Title className="sr-only">{item.alt || "Gallery image"}</DialogPrimitive.Title>
+            <DialogPrimitive.Description className="sr-only">
+              Enlarged gallery image. Press Escape or click outside to close.
+            </DialogPrimitive.Description>
+            <motion.div
+              layoutId={layoutId}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(panelClassName, "pointer-events-auto")}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {closeButton}
+              {panelContent}
+            </motion.div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }

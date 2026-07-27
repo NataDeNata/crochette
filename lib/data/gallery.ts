@@ -1,20 +1,13 @@
+import { BG_CYCLE_CLASSES } from "./bg-cycle";
+
 export interface GalleryItem {
   placeholder: string;
-  bg: string;
+  bgClassName: string;
   span: number;
   /** Real photo URL. When present, tiles render this instead of the placeholder block. */
   image?: string;
   alt?: string;
 }
-
-const BG_CYCLE = [
-  "oklch(0.9 0.045 20)",
-  "oklch(0.9 0.05 150)",
-  "oklch(0.92 0.03 260)",
-  "oklch(0.9 0.05 60)",
-  "oklch(0.93 0.03 20)",
-  "oklch(0.91 0.04 150)",
-];
 
 const HOME_LABELS = [
   "studio workspace",
@@ -63,7 +56,7 @@ const FULL_SPANS = [2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1];
 function build(labels: string[], spans: number[], images?: string[]): GalleryItem[] {
   return labels.map((label, i) => ({
     placeholder: `gallery — ${label}`,
-    bg: BG_CYCLE[i % BG_CYCLE.length],
+    bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
     span: spans[i % spans.length],
     image: images?.[i],
     alt: images ? label : undefined,
