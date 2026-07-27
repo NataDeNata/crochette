@@ -5,8 +5,8 @@ import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
 import { OrderUpdateForm } from "@/components/admin/OrderUpdateForm";
 
-const fieldStyle = { fontSize: 13.5 } as const;
-const labelStyle = { fontSize: 12, color: "oklch(0.5 0.02 60)", marginBottom: 3 } as const;
+const fieldClass = "text-[13.5px]";
+const labelClass = "text-xs text-muted-foreground mb-[3px]";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,23 +16,21 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 900 }}>
+    <div className="flex flex-col gap-6 max-w-[900px]">
       <div>
-        <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: "0 0 4px" }}>
-          {order.customerName}
-        </h1>
-        <a href={`mailto:${order.customerEmail}`} style={{ fontSize: 13.5, color: "oklch(0.5 0.05 20)" }}>
+        <h1 className="font-serif font-medium text-3xl mb-1">{order.customerName}</h1>
+        <a href={`mailto:${order.customerEmail}`} className="text-[13.5px] text-[oklch(0.5_0.05_20)]">
           {order.customerEmail}
         </a>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 32, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: 24, borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)", background: "oklch(1 0 0)" }}>
+      <div className="grid grid-cols-[1.3fr_1fr] gap-8 items-start">
+        <div className="flex flex-col gap-5 p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
           <div>
-            <div style={labelStyle}>Items</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
+            <div className={labelClass}>Items</div>
+            <div className="flex flex-col gap-2 mt-1.5">
               {items.map((item) => (
-                <div key={item.id} style={{ display: "flex", justifyContent: "space-between", ...fieldStyle }}>
+                <div key={item.id} className={`flex justify-between ${fieldClass}`}>
                   <span>
                     {item.productName} × {item.quantity}
                   </span>
@@ -42,34 +40,34 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <div style={labelStyle}>Subtotal</div>
-              <div style={fieldStyle}>{formatPrice(order.subtotalCents)}</div>
+              <div className={labelClass}>Subtotal</div>
+              <div className={fieldClass}>{formatPrice(order.subtotalCents)}</div>
             </div>
             <div>
-              <div style={labelStyle}>Shipping</div>
-              <div style={fieldStyle}>{formatPrice(order.shippingCents)}</div>
+              <div className={labelClass}>Shipping</div>
+              <div className={fieldClass}>{formatPrice(order.shippingCents)}</div>
             </div>
             {order.discountCents > 0 && (
               <div>
-                <div style={labelStyle}>Discount</div>
-                <div style={{ ...fieldStyle, color: "oklch(0.55 0.12 150)" }}>−{formatPrice(order.discountCents)}</div>
+                <div className={labelClass}>Discount</div>
+                <div className={`${fieldClass} text-[oklch(0.55_0.12_150)]`}>−{formatPrice(order.discountCents)}</div>
               </div>
             )}
             <div>
-              <div style={labelStyle}>Total</div>
-              <div style={fieldStyle}>{formatPrice(order.totalCents)}</div>
+              <div className={labelClass}>Total</div>
+              <div className={fieldClass}>{formatPrice(order.totalCents)}</div>
             </div>
             <div>
-              <div style={labelStyle}>Payment status</div>
-              <div style={{ ...fieldStyle, textTransform: "capitalize" }}>{order.status}</div>
+              <div className={labelClass}>Payment status</div>
+              <div className={`${fieldClass} capitalize`}>{order.status}</div>
             </div>
           </div>
 
           <div>
-            <div style={labelStyle}>Shipping address</div>
-            <div style={{ ...fieldStyle, lineHeight: 1.6 }}>
+            <div className={labelClass}>Shipping address</div>
+            <div className={`${fieldClass} leading-[1.6]`}>
               {order.customerPhone && <div>{order.customerPhone}</div>}
               <div>{order.shippingLine1}</div>
               {order.shippingLine2 && <div>{order.shippingLine2}</div>}
@@ -79,13 +77,13 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             </div>
           </div>
 
-          <div style={{ fontSize: 12, color: "oklch(0.55 0.02 60)" }}>
+          <div className="text-xs text-[oklch(0.55_0.02_60)]">
             Placed {order.createdAt.toLocaleString()}
             {order.paidAt && <> · Paid {order.paidAt.toLocaleString()}</>}
           </div>
         </div>
 
-        <div style={{ padding: 24, borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)", background: "oklch(1 0 0)" }}>
+        <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
           <OrderUpdateForm id={order.id} status={order.status} />
         </div>
       </div>
