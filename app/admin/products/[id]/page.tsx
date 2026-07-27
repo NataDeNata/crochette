@@ -11,10 +11,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   if (!product) notFound();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: 0 }}>
-        Edit product
-      </h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="font-serif font-medium text-3xl m-0">Edit product</h1>
       <ProductForm
         action={updateProduct.bind(null, product.id)}
         submitLabel="Save changes"
