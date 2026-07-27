@@ -161,13 +161,9 @@ export function ProductCard({ product }: { product: Product }) {
           style={{ ...imageWrapStyle, background: product.bg }}
         >
           {tag}
-          <motion.div
-            variants={{ rest: { scale: 1 }, hover: { scale: 1.06 } }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            {placeholder}
-          </motion.div>
+          <span className="product-card-placeholder-caption" style={{ position: "absolute", bottom: 12, left: 12 }}>
+            {product.placeholder}
+          </span>
           {quickAddButton}
         </motion.div>
       )}
