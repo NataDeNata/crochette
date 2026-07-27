@@ -2,7 +2,7 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/lib/auth";
-import { getClientIp, isRateLimited, recordFailedAttempt } from "@/lib/security/rate-limit";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import type { AccountLoginState } from "@/lib/actions/account-login-types";
 
 export async function accountLogin(_prevState: AccountLoginState, formData: FormData): Promise<AccountLoginState> {
@@ -10,8 +10,7 @@ export async function accountLogin(_prevState: AccountLoginState, formData: Form
   const emailKey = typeof email === "string" ? email.trim().toLowerCase() : "";
 
   const ip = await getClientIp();
-  const rateLimitKey = `login:${ip}:${emailKey}`;
-  if (isRateLimited(rateLimitKey)) {
+  if (await isRateLimited("login", `${ip}:${emailKey}`)) {
     return {
       status: "error",
       message: "Too many attempts — please wait a few minutes and try again.",
@@ -28,7 +27,6 @@ export async function accountLogin(_prevState: AccountLoginState, formData: Form
     return { status: "idle" };
   } catch (error) {
     if (error instanceof AuthError) {
-      recordFailedAttempt(rateLimitKey);
       return { status: "error", message: "Incorrect email or password.", email: typeof email === "string" ? email : undefined };
     }
     // signIn() throws Next's internal redirect signal on success — rethrow

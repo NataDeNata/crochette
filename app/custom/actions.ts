@@ -8,6 +8,7 @@ import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validati
 import type { FormActionState } from "@/lib/actions/types";
 import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
 import { auth } from "@/lib/auth";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
@@ -40,6 +41,14 @@ export async function submitCustomOrder(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  const ip = await getClientIp();
+  if (await isRateLimited("custom-order", ip)) {
+    return {
+      status: "error",
+      message: "Too many attempts — please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = customOrderSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

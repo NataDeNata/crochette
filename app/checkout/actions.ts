@@ -10,6 +10,7 @@ import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { createPaymentSession } from "@/lib/payments/xendit";
 import { resolveDiscountCode } from "@/lib/db/discounts";
 import { auth } from "@/lib/auth";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import type { FormActionState } from "@/lib/actions/types";
 
 async function getSiteOrigin(): Promise<string> {
@@ -23,6 +24,14 @@ export async function submitCheckout(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  const ip = await getClientIp();
+  if (await isRateLimited("checkout", ip)) {
+    return {
+      status: "error",
+      message: "Too many attempts — please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = checkoutSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

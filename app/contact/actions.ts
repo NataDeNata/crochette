@@ -5,11 +5,20 @@ import { contactMessages } from "@/lib/db/schema";
 import { contactSchema } from "@/lib/validation/contact";
 import type { FormActionState } from "@/lib/actions/types";
 import { notifyContactMessageSubmitted } from "@/lib/email/notifications";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 
 export async function submitContactMessage(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  const ip = await getClientIp();
+  if (await isRateLimited("contact", ip)) {
+    return {
+      status: "error",
+      message: "Too many attempts — please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = contactSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

@@ -6,7 +6,7 @@ import { signIn } from "@/lib/auth";
 import { findCustomerByEmail, createCustomer } from "@/lib/db/accounts";
 import { signupSchema } from "@/lib/validation/account";
 import { notifyAccountCreated } from "@/lib/email/notifications";
-import { getClientIp, isRateLimited, recordFailedAttempt, clearAttempts } from "@/lib/security/rate-limit";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import type { AccountSignupState } from "@/lib/actions/account-signup-types";
 
 export async function signupAccount(_prevState: AccountSignupState, formData: FormData): Promise<AccountSignupState> {
@@ -31,8 +31,7 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
   }
 
   const ip = await getClientIp();
-  const rateLimitKey = `signup:${ip}:${parsed.data.email.toLowerCase()}`;
-  if (isRateLimited(rateLimitKey)) {
+  if (await isRateLimited("signup", `${ip}:${parsed.data.email.toLowerCase()}`)) {
     return {
       status: "error",
       message: "Too many attempts — please wait a few minutes and try again.",
@@ -43,7 +42,6 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
 
   const existing = await findCustomerByEmail(parsed.data.email);
   if (existing) {
-    recordFailedAttempt(rateLimitKey);
     return {
       status: "error",
       message: "Please check the fields below.",
@@ -55,7 +53,6 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
 
   const passwordHash = await hash(parsed.data.password, 12);
   await createCustomer({ email: parsed.data.email, passwordHash, name: parsed.data.name });
-  clearAttempts(rateLimitKey);
 
   await notifyAccountCreated({ email: parsed.data.email, name: parsed.data.name });
 
