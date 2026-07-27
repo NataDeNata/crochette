@@ -20,28 +20,17 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   if (session?.user?.role !== "customer") return <>{children}</>;
 
   return (
-    <section style={{ padding: "48px 48px 96px", maxWidth: 900, margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
-          marginBottom: 36,
-          paddingBottom: 20,
-          borderBottom: "1.5px solid oklch(0.9 0.02 60)",
-        }}
-      >
-        <nav style={{ display: "flex", gap: 24 }}>
+    <section className="pt-12 px-12 pb-24 max-w-[900px] mx-auto">
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-9 pb-5 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <nav className="flex gap-6">
           {NAV_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="nav-link" style={{ fontSize: 14 }}>
+            <Link key={l.href} href={l.href} className="nav-link text-sm">
               {l.label}
             </Link>
           ))}
         </nav>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 13, color: "oklch(0.5 0.02 60)" }}>{session.user.email}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-[13px] text-muted-foreground">{session.user.email}</span>
           <form action={accountSignOut}>
             <Button type="submit" variant="outline" size="sm">
               Sign out
