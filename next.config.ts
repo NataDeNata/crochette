@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
   // Dev-only — has no effect on production builds.
   allowedDevOrigins: ["*.ngrok-free.dev", "*.ngrok-free.app"],
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+    ],
   },
 };
 

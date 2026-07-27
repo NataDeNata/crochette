@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { ProductGallery } from "@/components/shop/ProductGallery";
 import { CATEGORIES, formatPrice, LOW_STOCK_THRESHOLD } from "@/lib/data/products";
 import { getProductBySlug, getProducts } from "@/lib/data/products.server";
 import { SITE_URL } from "@/lib/site";
@@ -30,6 +31,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.name} — Crochette`,
       description,
+      images: product.primaryImageUrl ? [{ url: product.primaryImageUrl }] : undefined,
     },
     twitter: {
       title: `${product.name} — Crochette`,
@@ -56,6 +58,7 @@ export default async function ProductPage({
     description: product.description ?? `${product.name}, handmade to order.`,
     category: categoryLabel,
     sku: product.id,
+    image: product.primaryImageUrl ? [product.primaryImageUrl] : undefined,
     offers: {
       "@type": "Offer",
       url: `${SITE_URL}/shop/${product.slug}`,
@@ -83,18 +86,13 @@ export default async function ProductPage({
 
       <section className="pt-8 px-12 pb-20 grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-14 max-w-[1100px] mx-auto items-center">
         <FadeIn>
-          <div
-            className={`relative aspect-square rounded-[28px] overflow-hidden flex items-center justify-center ${product.bgClassName}`}
-          >
-            {product.tag && (
-              <div className="absolute top-[18px] left-[18px] bg-[oklch(0.98_0.01_85/0.9)] py-1.5 px-3.5 rounded-[16px] text-xs tracking-[0.5px] uppercase font-semibold text-[oklch(0.5_0.09_20)]">
-                {product.tag}
-              </div>
-            )}
-            <span className="[font-family:ui-monospace,monospace] text-[13px] text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.6)] py-[7px] px-3.5 rounded-[8px] text-center">
-              {product.placeholder}
-            </span>
-          </div>
+          <ProductGallery
+            images={product.images}
+            productName={product.name}
+            tag={product.tag}
+            bgClassName={product.bgClassName}
+            placeholder={product.placeholder}
+          />
         </FadeIn>
 
         <FadeIn delay={0.08}>

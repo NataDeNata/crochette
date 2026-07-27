@@ -64,6 +64,25 @@ export const products = pgTable("products", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Multiple real photos per product, admin-managed. `galleryFeatured`/
+ * `galleryOrder` are independent of `position` — an image can be reordered
+ * within its own product without affecting its place (or presence) in the
+ * site-wide curated gallery at /gallery. */
+export const productImages = pgTable("product_images", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  position: integer("position").notNull().default(0),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  caption: text("caption"),
+  alt: text("alt"),
+  galleryFeatured: boolean("gallery_featured").notNull().default(false),
+  galleryOrder: integer("gallery_order"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const customOrderRequests = pgTable("custom_order_requests", {
   id: uuid("id").defaultRandom().primaryKey(),
   /** Nullable — set only when the customer was logged in when submitting.
@@ -178,6 +197,8 @@ export const contactMessages = pgTable("contact_messages", {
 
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
+export type ProductImageRow = typeof productImages.$inferSelect;
+export type NewProductImageRow = typeof productImages.$inferInsert;
 export type CustomOrderRequestRow = typeof customOrderRequests.$inferSelect;
 export type NewCustomOrderRequestRow = typeof customOrderRequests.$inferInsert;
 export type ContactMessageRow = typeof contactMessages.$inferSelect;

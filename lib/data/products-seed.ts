@@ -90,5 +90,6 @@ export function getSeedProducts(): Product[] {
     placeholder: `product shot — ${item.name.toLowerCase()}`,
     // Not written by the seed insert (see seed.ts) — the DB column's own default (0) applies on insert.
     stockQty: 0,
+    images: [],
   }));
 }

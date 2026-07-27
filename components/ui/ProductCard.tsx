@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, type MouseEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/data/products";
@@ -94,12 +95,23 @@ export function ProductCard({ product, onDark = false }: { product: Product; onD
     </span>
   );
 
+  const image = product.primaryImageUrl && (
+    <Image
+      src={product.primaryImageUrl}
+      alt={product.images.find((img) => img.isPrimary)?.alt || product.name}
+      fill
+      sizes="(max-width: 768px) 50vw, 25vw"
+      className="object-cover"
+    />
+  );
+
   return (
     <Link href={`/shop/${product.slug}`} className="flex flex-col gap-3.5">
       {reduceMotion ? (
         <div className={cn(imageWrapClassName, product.bgClassName)}>
+          {image}
           {tag}
-          {placeholder}
+          {!image && placeholder}
           {quickAddButton}
         </div>
       ) : (
@@ -114,10 +126,13 @@ export function ProductCard({ product, onDark = false }: { product: Product; onD
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className={cn(imageWrapClassName, product.bgClassName)}
         >
+          {image}
           {tag}
-          <span className="product-card-placeholder-caption absolute bottom-3 left-3">
-            {product.placeholder}
-          </span>
+          {!image && (
+            <span className="product-card-placeholder-caption absolute bottom-3 left-3">
+              {product.placeholder}
+            </span>
+          )}
           {quickAddButton}
         </motion.div>
       )}

@@ -64,6 +64,13 @@
       "when": 1785155689338,
       "tag": "0008_lean_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785159378852,
+      "tag": "0009_careless_serpent_society",
+      "breakpoints": true
     }
   ]
 }

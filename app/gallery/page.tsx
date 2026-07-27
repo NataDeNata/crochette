@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GalleryPage() {
-  const gallery = getFullGallery();
+export default async function GalleryPage() {
+  const gallery = await getFullGallery();
 
   return (
     <>
@@ -33,7 +33,11 @@ export default function GalleryPage() {
       </section>
 
       <section className="pt-5 px-12 pb-[100px]">
-        <GallerySection items={gallery} rowHeight={180} />
+        {gallery.length === 0 ? (
+          <p className="text-center text-sm text-[oklch(0.55_0.02_60)]">Photos coming soon.</p>
+        ) : (
+          <GallerySection items={gallery} rowHeight={180} />
+        )}
       </section>
 
       <FadeIn>

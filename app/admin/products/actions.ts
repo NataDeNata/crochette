@@ -3,8 +3,9 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { del } from "@vercel/blob";
 import { db } from "@/lib/db";
-import { products, orderItems } from "@/lib/db/schema";
+import { products, orderItems, productImages } from "@/lib/db/schema";
 import { productSchema } from "@/lib/validation/product";
 import type { FormActionState } from "@/lib/actions/types";
 
@@ -110,11 +111,26 @@ export async function deleteProduct(
     };
   }
 
+  const imagesToClean = await db
+    .select({ url: productImages.url })
+    .from(productImages)
+    .where(eq(productImages.productId, id));
+
   try {
     await db.delete(products).where(eq(products.id, id));
   } catch (err) {
     console.error("deleteProduct failed:", err);
     return { status: "error", message: "Couldn't delete the product — please try again." };
+  }
+
+  // product_images rows are gone via ON DELETE CASCADE — the Blob files
+  // themselves are external and need explicit cleanup, best-effort only.
+  if (imagesToClean.length) {
+    try {
+      await del(imagesToClean.map((i) => i.url));
+    } catch (err) {
+      console.error("deleteProduct: blob cleanup failed:", err);
+    }
   }
 
   revalidateStorefront(slug);

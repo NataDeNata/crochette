@@ -1,12 +1,14 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
-import { getFullGallery } from "@/lib/data/gallery";
+
+// getFullGallery() is now async/DB-driven (admin-curated gallery), so this
+// skeleton can no longer derive its span pattern from the real data — it
+// only needs to look similar, not match exactly, since the curated set's
+// length is admin-controlled and variable anyway.
+const SKELETON_SPANS = [2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2];
 
 export default function GalleryLoading() {
-  // Pure/sync — no I/O — reused only to keep the span pattern (2-col vs
-  // 1-col tiles) perfectly in sync with the real grid without duplicating
-  // the private span data in lib/data/gallery.ts.
-  const spans = getFullGallery().map((item) => item.span);
+  const spans = SKELETON_SPANS;
 
   return (
     <>

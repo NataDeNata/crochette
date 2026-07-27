@@ -1,5 +1,14 @@
 export type ProductCategory = "amigurumi" | "flowers" | "home-decor" | "baskets";
 
+export interface ProductImage {
+  id: string;
+  url: string;
+  position: number;
+  isPrimary: boolean;
+  caption?: string;
+  alt?: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -11,6 +20,10 @@ export interface Product {
   bgClassName: string;
   placeholder: string;
   stockQty: number;
+  /** Ordered by position asc. Empty until the admin uploads real photos. */
+  images: ProductImage[];
+  /** The `isPrimary` image's url, or images[0], or undefined when none exist. */
+  primaryImageUrl?: string;
 }
 
 /** At or below this many left, the product page shows a "Low on Stock" notice. */

@@ -8,7 +8,7 @@ import { getHomeGallery } from "@/lib/data/gallery";
 
 export default async function Home() {
   const products = await getProducts();
-  const gallery = getHomeGallery();
+  const gallery = await getHomeGallery();
 
   return (
     <>
@@ -176,19 +176,21 @@ export default async function Home() {
       </section>
 
       {/* GALLERY TEASER */}
-      <section className="pt-5 px-12 pb-27.5">
-        <div className="max-w-[1320px] mx-auto">
-          <FadeIn>
-            <div className="text-center mb-13">
-              <div className="text-[14px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-3">
-                Gallery
+      {gallery.length > 0 && (
+        <section className="pt-5 px-12 pb-27.5">
+          <div className="max-w-[1320px] mx-auto">
+            <FadeIn>
+              <div className="text-center mb-13">
+                <div className="text-[14px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-3">
+                  Gallery
+                </div>
+                <h2 className="font-serif font-medium text-[clamp(40px,5vw,52px)] m-0">A peek into the studio</h2>
               </div>
-              <h2 className="font-serif font-medium text-[clamp(40px,5vw,52px)] m-0">A peek into the studio</h2>
-            </div>
-          </FadeIn>
-          <GallerySection items={gallery} rowHeight={150} />
-        </div>
-      </section>
+            </FadeIn>
+            <GallerySection items={gallery} rowHeight={150} />
+          </div>
+        </section>
+      )}
     </>
   );
 }

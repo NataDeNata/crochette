@@ -5,18 +5,28 @@ import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validati
 
 type Attached = { file: File; previewUrl: string };
 
-/** Attaches reference photos to the custom-order form. Files stay in the
- * native file input's FileList (rebuilt via DataTransfer on add/remove) so
- * they submit as part of the same FormData the Server Action already reads
- * — the actual upload to Vercel Blob happens server-side on submit. This
- * component only produces local object-URL previews for the live summary
- * panel. */
+/** Attaches photos to a native form. Files stay in the native file input's
+ * FileList (rebuilt via DataTransfer on add/remove) so they submit as part
+ * of the same FormData the Server Action already reads — the actual upload
+ * to Vercel Blob happens server-side on submit. This component only
+ * produces local object-URL previews for the live summary panel.
+ *
+ * `maxPhotos`/`allowedTypes`/`maxBytes` default to the custom-order reference
+ * photo limits so the existing caller (CustomOrderForm) is unaffected. */
 export function PhotoAttach({
   name,
   onValueChange,
+  maxPhotos = MAX_PHOTOS,
+  allowedTypes = ALLOWED_PHOTO_TYPES,
+  maxBytes = MAX_PHOTO_BYTES,
+  helpText,
 }: {
   name: string;
   onValueChange?: (previewUrls: string[]) => void;
+  maxPhotos?: number;
+  allowedTypes?: readonly string[];
+  maxBytes?: number;
+  helpText?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const attachedRef = useRef<Attached[]>([]);
@@ -47,11 +57,11 @@ export function PhotoAttach({
     let rejected = false;
 
     for (const file of incoming) {
-      if (next.length >= MAX_PHOTOS) {
+      if (next.length >= maxPhotos) {
         rejected = true;
         break;
       }
-      if (!ALLOWED_PHOTO_TYPES.includes(file.type) || file.size > MAX_PHOTO_BYTES) {
+      if (!allowedTypes.includes(file.type) || file.size > maxBytes) {
         rejected = true;
         continue;
       }
@@ -61,7 +71,7 @@ export function PhotoAttach({
     setAttached(next);
     syncInputFiles(next);
     onValueChange?.(next.map((a) => a.previewUrl));
-    setError(rejected ? `Photos must be JPG, PNG, or WebP, up to 5MB — ${MAX_PHOTOS} max.` : undefined);
+    setError(rejected ? `Photos must be JPG, PNG, or WebP, up to ${Math.round(maxBytes / (1024 * 1024))}MB — ${maxPhotos} max.` : undefined);
   }
 
   function removeAt(index: number) {
@@ -80,7 +90,7 @@ export function PhotoAttach({
         ref={inputRef}
         type="file"
         name={name}
-        accept={ALLOWED_PHOTO_TYPES.join(",")}
+        accept={allowedTypes.join(",")}
         multiple
         onChange={handleChange}
         className="hidden"
@@ -104,7 +114,7 @@ export function PhotoAttach({
             </button>
           </div>
         ))}
-        {attached.length < MAX_PHOTOS && (
+        {attached.length < maxPhotos && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -116,7 +126,7 @@ export function PhotoAttach({
         )}
       </div>
       <div className="text-xs text-[oklch(0.45_0.02_60)]">
-        Optional — up to {MAX_PHOTOS} reference photos, JPG/PNG/WebP, 5MB each.
+        {helpText ?? `Optional — up to ${maxPhotos} reference photos, JPG/PNG/WebP, 5MB each.`}
       </div>
       {error && <span className="text-[12.5px] text-[oklch(0.5_0.18_25)]">{error}</span>}
     </div>
