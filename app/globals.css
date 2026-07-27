@@ -139,34 +139,6 @@
   background: oklch(0.92 0.025 75);
 }
 
-.quick-add-btn {
-  background: oklch(0.98 0.01 85 / 0.92);
-  color: oklch(0.28 0.02 60);
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.quick-add-btn:hover:not(:disabled),
-.quick-add-btn:focus-visible:not(:disabled) {
-  background: oklch(0.28 0.02 60);
-  color: oklch(0.98 0.01 85);
-}
-
-.pagination-btn {
-  background: transparent;
-  color: oklch(0.42 0.02 60);
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.pagination-btn:hover:not([data-active="true"]),
-.pagination-btn:focus-visible:not([data-active="true"]) {
-  background: oklch(0.9 0.02 60);
-}
-
-.pagination-btn[data-active="true"] {
-  background: oklch(0.28 0.02 60);
-  color: oklch(0.98 0.01 85);
-}
-
 .product-card-placeholder-caption {
   font-family: var(--font-work), ui-sans-serif, system-ui, sans-serif;
   font-size: 11px;
