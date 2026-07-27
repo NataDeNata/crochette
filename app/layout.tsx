@@ -76,7 +76,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={cn(cormorant.variable, workSans.variable, "font-sans")}>
       <body>
-        <div style={{ position: "relative" }}>
+        <div className="relative">
           <CartProvider>
             <SiteChrome session={session}>{children}</SiteChrome>
           </CartProvider>
