@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type PillOption = { value: string; label: string };
 
@@ -32,7 +33,7 @@ export function PillGroup({
   }
 
   return (
-    <div aria-label={ariaLabel} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+    <div aria-label={ariaLabel} className="flex gap-2.5 flex-wrap">
       <input type="hidden" name={name} value={selected} />
       {options.map((opt) => {
         const isActive = opt.value === selected;
@@ -42,41 +43,27 @@ export function PillGroup({
             type="button"
             aria-pressed={isActive}
             onClick={() => select(opt.value)}
-            style={{
-              position: "relative",
-              padding: "9px 16px",
-              borderRadius: 20,
-              border: `1.5px solid ${isActive && reduceMotion ? "oklch(0.28 0.02 60)" : isActive ? "transparent" : "oklch(0.75 0.03 20)"}`,
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: "pointer",
-              background: "oklch(0.98 0.01 85)",
-              fontFamily: "inherit",
-            }}
+            className={cn(
+              "relative py-[9px] px-4 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-card [font-family:inherit]",
+              isActive && reduceMotion
+                ? "border-[oklch(0.28_0.02_60)]"
+                : isActive
+                  ? "border-transparent"
+                  : "border-[oklch(0.75_0.03_20)]",
+            )}
           >
             {isActive && !reduceMotion && (
               <motion.span
                 layoutId={layoutId}
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: 20,
-                  background: "oklch(0.28 0.02 60)",
-                  zIndex: 0,
-                }}
+                className="absolute inset-0 rounded-[20px] bg-primary z-0"
               />
             )}
             <span
-              style={{
-                position: "relative",
-                zIndex: 1,
-                color: isActive
-                  ? reduceMotion
-                    ? "oklch(0.28 0.02 60)"
-                    : "oklch(0.98 0.01 85)"
-                  : "oklch(0.42 0.02 60)",
-              }}
+              className={cn(
+                "relative z-[1]",
+                isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-[oklch(0.42_0.02_60)]",
+              )}
             >
               {opt.label}
             </span>
