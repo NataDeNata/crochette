@@ -75,7 +75,7 @@ export function PhotoAttach({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="flex flex-col gap-2">
       <input
         ref={inputRef}
         type="file"
@@ -83,46 +83,22 @@ export function PhotoAttach({
         accept={ALLOWED_PHOTO_TYPES.join(",")}
         multiple
         onChange={handleChange}
-        style={{ display: "none" }}
+        className="hidden"
       />
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+      <div className="flex gap-2.5 flex-wrap items-center">
         {attached.map((a, i) => (
-          <div key={a.previewUrl} style={{ position: "relative", width: 56, height: 56 }}>
+          <div key={a.previewUrl} className="relative w-14 h-14">
             {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview, next/image can't optimize it */}
             <img
               src={a.previewUrl}
               alt=""
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 10,
-                objectFit: "cover",
-                border: "1.5px solid oklch(0.75 0.03 20)",
-                display: "block",
-              }}
+              className="w-14 h-14 rounded-[10px] object-cover border-[1.5px] border-[oklch(0.75_0.03_20)] block"
             />
             <button
               type="button"
               onClick={() => removeAt(i)}
               aria-label="Remove photo"
-              style={{
-                position: "absolute",
-                top: -6,
-                right: -6,
-                width: 20,
-                height: 20,
-                borderRadius: "50%",
-                border: "none",
-                background: "oklch(0.28 0.02 60)",
-                color: "oklch(0.98 0.01 85)",
-                fontSize: 12,
-                lineHeight: 1,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-              }}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full border-0 bg-primary text-card text-xs leading-none cursor-pointer flex items-center justify-center p-0"
             >
               ×
             </button>
@@ -133,26 +109,16 @@ export function PhotoAttach({
             type="button"
             onClick={() => inputRef.current?.click()}
             aria-label="Attach photos"
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 10,
-              border: "1.5px dashed oklch(0.75 0.03 20)",
-              background: "oklch(0.98 0.01 85)",
-              cursor: "pointer",
-              fontSize: 20,
-              color: "oklch(0.5 0.05 20)",
-              fontFamily: "inherit",
-            }}
+            className="w-14 h-14 rounded-[10px] border-[1.5px] border-dashed border-[oklch(0.75_0.03_20)] bg-card cursor-pointer text-xl text-[oklch(0.5_0.05_20)] [font-family:inherit]"
           >
             +
           </button>
         )}
       </div>
-      <div style={{ fontSize: 12, color: "oklch(0.45 0.02 60)" }}>
+      <div className="text-xs text-[oklch(0.45_0.02_60)]">
         Optional — up to {MAX_PHOTOS} reference photos, JPG/PNG/WebP, 5MB each.
       </div>
-      {error && <span style={{ fontSize: 12.5, color: "oklch(0.5 0.18 25)" }}>{error}</span>}
+      {error && <span className="text-[12.5px] text-[oklch(0.5_0.18_25)]">{error}</span>}
     </div>
   );
 }
