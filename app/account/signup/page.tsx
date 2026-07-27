@@ -14,33 +14,14 @@ export default async function AccountSignupPage() {
   if (session?.user?.role === "customer") redirect("/account");
 
   return (
-    <section style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          padding: 40,
-          borderRadius: 24,
-          background: "oklch(0.98 0.01 85)",
-          border: "1.5px solid oklch(0.9 0.02 60)",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-cormorant), serif",
-            fontWeight: 500,
-            fontSize: 26,
-            textAlign: "center",
-            margin: "0 0 6px",
-          }}
-        >
-          Create your account
-        </div>
-        <p style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", textAlign: "center", margin: "0 0 28px" }}>
+    <section className="min-h-[60vh] flex items-center justify-center p-6">
+      <div className="w-full max-w-[380px] p-10 rounded-[24px] bg-card border-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <div className="font-serif font-medium text-[26px] text-center mb-1.5">Create your account</div>
+        <p className="text-[13px] text-muted-foreground text-center mb-7">
           Save addresses and track your orders
         </p>
         <SignupForm />
-        <p style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", textAlign: "center", marginTop: 20 }}>
+        <p className="text-[13px] text-muted-foreground text-center mt-5">
           Already have an account? <Link href="/account/login">Sign in</Link>
         </p>
       </div>
