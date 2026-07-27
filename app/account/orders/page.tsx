@@ -14,22 +14,20 @@ export default async function AccountOrdersPage() {
   const orders = await getCustomerOrders(session!.user.id);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 26, margin: 0 }}>
-        Order history
-      </h1>
+    <div className="flex flex-col gap-5">
+      <h1 className="font-serif font-medium text-[26px] m-0">Order history</h1>
 
       {orders.length === 0 ? (
-        <p style={{ fontSize: 14, color: "oklch(0.55 0.02 60)" }}>
+        <p className="text-sm text-[oklch(0.55_0.02_60)]">
           No orders yet — <Link href="/shop">browse the shop</Link>.
         </p>
       ) : (
-        <div style={{ borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+        <div className="rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] overflow-hidden">
+          <table className="w-full border-collapse text-[13.5px]">
             <thead>
-              <tr style={{ textAlign: "left", background: "oklch(0.97 0.01 60)" }}>
+              <tr className="text-left bg-[oklch(0.97_0.01_60)]">
                 {["Order", "Placed", "Status", "Total"].map((h) => (
-                  <th key={h} style={{ padding: "12px 16px", fontWeight: 600, color: "oklch(0.45 0.02 60)" }}>
+                  <th key={h} className="py-3 px-4 font-semibold text-[oklch(0.45_0.02_60)]">
                     {h}
                   </th>
                 ))}
@@ -37,15 +35,15 @@ export default async function AccountOrdersPage() {
             </thead>
             <tbody>
               {orders.map((o) => (
-                <tr key={o.id} style={{ borderTop: "1px solid oklch(0.93 0.01 60)" }}>
-                  <td style={{ padding: "12px 16px" }}>
-                    <Link href={`/order/${o.id}`} style={{ color: "inherit" }}>
+                <tr key={o.id} className="border-t border-[oklch(0.93_0.01_60)]">
+                  <td className="py-3 px-4">
+                    <Link href={`/order/${o.id}`} className="text-inherit">
                       {o.id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "oklch(0.55 0.02 60)" }}>{o.createdAt.toLocaleDateString()}</td>
-                  <td style={{ padding: "12px 16px", textTransform: "capitalize" }}>{o.status}</td>
-                  <td style={{ padding: "12px 16px", color: "oklch(0.5 0.02 60)" }}>{formatPrice(o.totalCents)}</td>
+                  <td className="py-3 px-4 text-[oklch(0.55_0.02_60)]">{o.createdAt.toLocaleDateString()}</td>
+                  <td className="py-3 px-4 capitalize">{o.status}</td>
+                  <td className="py-3 px-4 text-muted-foreground">{formatPrice(o.totalCents)}</td>
                 </tr>
               ))}
             </tbody>
