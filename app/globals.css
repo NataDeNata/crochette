@@ -67,12 +67,28 @@
 }
 
 /*
- * Inline styles (used throughout this codebase for base look) always beat CSS
- * class rules for the same property, even during :hover/:focus-visible — a
- * pseudo-class doesn't raise a selector's specificity above inline. So these
- * classes must own their base value too, not just the hover value, for any
- * property that changes on hover; components using them must NOT also set
- * that property inline.
+ * As of the 2026-07 inline-style removal, base styling sitewide is Tailwind
+ * classes (see Cro_Documentation.md) — inline `style={{}}` is gone except for
+ * a few narrow, deliberate exceptions (genuinely dynamic per-instance values
+ * driving a Framer Motion prop or a CSS custom property; see components/motion/
+ * FadeIn.tsx and Float.tsx's pass-through `style` prop, ShopMarquee.tsx's
+ * drag-x MotionValue, and GallerySection.tsx's --row-h variable).
+ *
+ * The handful of small hand-written classes below (.nav-link, .footer-link,
+ * .footer-admin-link, .cart-icon-link, .account-icon-link) are a *different*,
+ * still-live exception: kept deliberately instead of being folded into
+ * Tailwind, because a plain CSS class is the simplest way to share one
+ * base+hover(+active) color rule across multiple consumers.
+ *
+ * A pseudo-class never raises a selector's specificity above inline, so an
+ * inline style always wins over a class rule for the same property — even
+ * one set only on :hover/:focus-visible. That means these classes must own
+ * their base value too, not just the hover value, and any component using
+ * one of them must NOT also set that same property inline. Nav.tsx used to
+ * violate exactly this (see .nav-link[data-active="true"] below) — its
+ * inline `color` silently defeated .nav-link's own :hover/:focus-visible
+ * rules on that element. Fixed by moving the active-state color into a real
+ * CSS rule instead.
  *
  * Buttons (solid/outline pill CTAs) use components/ui/Button.tsx's Tailwind
  * classes instead of a CSS class here, for the same reason — Tailwind classes
