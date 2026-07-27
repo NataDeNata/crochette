@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/lib/cart/CartContext";
+import { cn } from "@/lib/utils";
 
 export function CartIcon({ className }: { className?: string }) {
   const { count } = useCart();
@@ -9,17 +10,8 @@ export function CartIcon({ className }: { className?: string }) {
   return (
     <Link
       href="/cart"
-      className={className}
+      className={cn("relative inline-flex items-center justify-center w-11 h-11 rounded-[14px]", className)}
       aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
-      style={{
-        position: "relative",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-      }}
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="9" cy="21" r="1" />
@@ -27,25 +19,7 @@ export function CartIcon({ className }: { className?: string }) {
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
       {count > 0 && (
-        <span
-          style={{
-            position: "absolute",
-            top: 2,
-            right: 2,
-            minWidth: 17,
-            height: 17,
-            padding: "0 3px",
-            borderRadius: 9,
-            background: "oklch(0.55 0.09 20)",
-            color: "oklch(0.98 0.01 85)",
-            fontSize: 10,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            lineHeight: 1,
-          }}
-        >
+        <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-0.75 rounded-[9px] bg-[oklch(0.55_0.09_20)] text-[oklch(0.98_0.01_85)] text-[10px] font-semibold flex items-center justify-center leading-none">
           {count > 99 ? "99+" : count}
         </span>
       )}
