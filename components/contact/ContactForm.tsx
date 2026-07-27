@@ -28,21 +28,21 @@ export function ContactForm() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          className="flex flex-col gap-3.5"
         >
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <Input name="name" placeholder="Your name" className={fieldClassName} />
             <FieldError error={fieldErrors.name?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <Input name="email" placeholder="Email address" type="email" className={fieldClassName} />
             <FieldError error={fieldErrors.email?.[0]} />
           </motion.div>
 
           <Input name="subject" placeholder="Subject" className={fieldClassName} />
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <Textarea name="message" placeholder="Your message..." rows={5} className={`${fieldClassName} resize-y`} />
             <FieldError error={fieldErrors.message?.[0]} />
           </motion.div>
