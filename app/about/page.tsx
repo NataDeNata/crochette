@@ -15,97 +15,51 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section style={{ padding: "80px 48px 64px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+      <section className="pt-20 px-12 pb-16 grid grid-cols-2 gap-16 items-center">
         <FadeIn>
           <div>
-            <div
-              style={{
-                fontSize: 13,
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                color: "oklch(0.5 0.05 20)",
-                marginBottom: 14,
-              }}
-            >
+            <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-3.5">
               About
             </div>
-            <h1
-              style={{
-                fontFamily: "var(--font-cormorant), serif",
-                fontWeight: 500,
-                fontSize: "clamp(34px,4.4vw,50px)",
-                margin: "0 0 22px",
-                lineHeight: 1.12,
-              }}
-            >
+            <h1 className="font-serif font-medium text-[clamp(34px,4.4vw,50px)] mb-[22px] leading-[1.12]">
               A small studio, made from yarn and patience
             </h1>
-            <p style={{ fontSize: 16, lineHeight: 1.75, color: "oklch(0.4 0.02 60)", margin: "0 0 16px" }}>
+            <p className="text-base leading-[1.75] text-[oklch(0.4_0.02_60)] mb-4">
               Crochette began as a way to slow down — turning simple skeins into bears, blossoms, and little
               companions for cozy homes.
             </p>
-            <p style={{ fontSize: 16, lineHeight: 1.75, color: "oklch(0.4 0.02 60)", margin: 0 }}>
+            <p className="text-base leading-[1.75] text-[oklch(0.4_0.02_60)] m-0">
               What started as a hobby on quiet evenings grew into a small studio, still run the same way: one hook,
               one skein, one piece at a time.
             </p>
           </div>
         </FadeIn>
         <FadeIn delay={0.1}>
-          <div
-            style={{
-              aspectRatio: "4/5",
-              borderRadius: 32,
-              overflow: "hidden",
-              background:
-                "repeating-linear-gradient(115deg, oklch(0.88 0.04 150) 0 18px, oklch(0.92 0.03 150) 18px 36px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "ui-monospace, monospace",
-                fontSize: 13,
-                color: "oklch(0.35 0.03 150)",
-                background: "oklch(0.98 0.01 85 / 0.8)",
-                padding: "8px 16px",
-                borderRadius: 8,
-              }}
-            >
+          <div className="aspect-[4/5] rounded-[32px] overflow-hidden bg-[repeating-linear-gradient(115deg,oklch(0.88_0.04_150)_0_18px,oklch(0.92_0.03_150)_18px_36px)] flex items-center justify-center">
+            <span className="[font-family:ui-monospace,monospace] text-[13px] text-[oklch(0.35_0.03_150)] bg-[oklch(0.98_0.01_85/0.8)] px-4 py-2 rounded-[8px]">
               maker photo — hands crocheting
             </span>
           </div>
         </FadeIn>
       </section>
 
-      <section style={{ padding: "20px 48px 100px" }}>
+      <section className="pt-5 px-12 pb-[100px]">
         <FadeIn>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div
-              style={{
-                fontSize: 13,
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                color: "oklch(0.5 0.05 20)",
-                marginBottom: 12,
-              }}
-            >
+          <div className="text-center mb-12">
+            <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-3">
               Our values
             </div>
-            <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 34, margin: 0 }}>
-              What we believe in
-            </h2>
+            <h2 className="font-serif font-medium text-[34px] m-0">What we believe in</h2>
           </div>
         </FadeIn>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 32 }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-8">
           {VALUES.map((v, i) => (
             <FadeIn key={v.title} delay={i * 0.08}>
-              <div style={{ padding: "36px 28px", borderRadius: 24, background: v.bg }}>
-                <div style={{ fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", fontSize: 26, marginBottom: 12 }}>
+              <div className={`py-9 px-7 rounded-[24px] ${v.bgClassName}`}>
+                <div className="font-serif italic text-[26px] mb-3">
                   {v.title}
                 </div>
-                <p style={{ fontSize: 14, lineHeight: 1.65, color: "oklch(0.35 0.03 60)", margin: 0 }}>{v.body}</p>
+                <p className="text-sm leading-[1.65] text-[oklch(0.35_0.03_60)] m-0">{v.body}</p>
               </div>
             </FadeIn>
           ))}
@@ -113,22 +67,14 @@ export default function AboutPage() {
       </section>
 
       <FadeIn>
-        <section
-          style={{
-            margin: "0 32px 100px",
-            padding: "56px 48px",
-            borderRadius: 36,
-            background: "oklch(0.9 0.045 20)",
-            textAlign: "center",
-          }}
-        >
-          <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: "0 0 14px" }}>
+        <section className="mx-8 mb-[100px] py-14 px-12 rounded-[36px] bg-accent text-center">
+          <h2 className="font-serif font-medium text-3xl mb-3.5">
             Want to see it in your home?
           </h2>
-          <p style={{ fontSize: 15, color: "oklch(0.32 0.03 20)", margin: "0 0 24px" }}>
+          <p className="text-[15px] text-[oklch(0.32_0.03_20)] mb-6">
             Browse the collection or tell us what you&apos;re dreaming up.
           </p>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
+          <div className="flex gap-4 justify-center">
             <Button href="/shop">Shop the collection</Button>
             <Button href="/custom" variant="outline">
               Request custom order
