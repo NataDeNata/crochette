@@ -4,4 +4,6 @@ import { z } from "zod";
  * admin form only ever moves an order forward through fulfillment. */
 export const orderUpdateSchema = z.object({
   status: z.enum(["shipped", "completed", "cancelled"]),
+  trackingNumber: z.string().trim().max(100).optional().or(z.literal("")),
+  carrier: z.string().trim().max(60).optional().or(z.literal("")),
 });

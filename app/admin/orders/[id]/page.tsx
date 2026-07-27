@@ -80,11 +80,18 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <div className="text-xs text-[oklch(0.55_0.02_60)]">
             Placed {order.createdAt.toLocaleString()}
             {order.paidAt && <> · Paid {order.paidAt.toLocaleString()}</>}
+            {order.shippedAt && <> · Shipped {order.shippedAt.toLocaleString()}</>}
+            {order.completedAt && <> · Completed {order.completedAt.toLocaleString()}</>}
           </div>
         </div>
 
         <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-          <OrderUpdateForm id={order.id} status={order.status} />
+          <OrderUpdateForm
+            id={order.id}
+            status={order.status}
+            trackingNumber={order.trackingNumber}
+            carrier={order.carrier}
+          />
         </div>
       </div>
     </div>

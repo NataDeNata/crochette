@@ -106,8 +106,12 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").notNull().default("pending"),
   xenditPaymentSessionId: text("xendit_payment_session_id"),
   xenditPaymentId: text("xendit_payment_id"),
+  trackingNumber: text("tracking_number"),
+  carrier: text("carrier"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
+  shippedAt: timestamp("shipped_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
 export const orderItems = pgTable("order_items", {

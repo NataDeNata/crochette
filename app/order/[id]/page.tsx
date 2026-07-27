@@ -91,6 +91,13 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               {order.shippingLine2 ? `, ${order.shippingLine2}` : ""}, {order.shippingCity}, {order.shippingProvince}{" "}
               {order.shippingPostalCode}
             </div>
+            {(order.carrier || order.trackingNumber) && (
+              <div className="mt-2 text-[13px] text-muted-foreground">
+                {order.carrier && <>Carrier: {order.carrier}</>}
+                {order.carrier && order.trackingNumber && " · "}
+                {order.trackingNumber && <>Tracking number: {order.trackingNumber}</>}
+              </div>
+            )}
           </div>
         </FadeIn>
       )}

@@ -5,11 +5,22 @@ import { IDLE_STATE } from "@/lib/actions/types";
 import { updateOrder } from "@/app/admin/orders/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FORWARD_STATUSES = ["shipped", "completed", "cancelled"];
 
-export function OrderUpdateForm({ id, status }: { id: string; status: string }) {
+export function OrderUpdateForm({
+  id,
+  status,
+  trackingNumber,
+  carrier,
+}: {
+  id: string;
+  status: string;
+  trackingNumber: string | null;
+  carrier: string | null;
+}) {
   const action = updateOrder.bind(null, id);
   const [state, formAction, isPending] = useActionState(action, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
@@ -39,6 +50,22 @@ export function OrderUpdateForm({ id, status }: { id: string; status: string }) 
           </SelectContent>
         </Select>
         <FieldError error={fieldErrors.status?.[0]} />
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="carrier">
+          Carrier (optional)
+        </label>
+        <Input id="carrier" name="carrier" defaultValue={carrier ?? ""} placeholder="e.g. J&T Express" />
+        <FieldError error={fieldErrors.carrier?.[0]} />
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="trackingNumber">
+          Tracking number (optional)
+        </label>
+        <Input id="trackingNumber" name="trackingNumber" defaultValue={trackingNumber ?? ""} />
+        <FieldError error={fieldErrors.trackingNumber?.[0]} />
       </div>
 
       <FieldError error={state.status === "error" ? state.message : undefined} />

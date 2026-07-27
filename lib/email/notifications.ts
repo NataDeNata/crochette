@@ -164,6 +164,54 @@ export async function notifyOrderPaid(order: {
   ]);
 }
 
+export async function notifyOrderShipped(order: {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  trackingNumber: string | null;
+  carrier: string | null;
+}) {
+  const safeName = escapeHtml(order.customerName);
+
+  await sendEmailSafe(
+    {
+      to: order.customerEmail,
+      subject: "Your Crochette order has shipped!",
+      html: wrapEmail(`
+        <p>Hi ${safeName},</p>
+        <p>Good news — your order is on its way!</p>
+        ${detailList([
+          ["Carrier", order.carrier],
+          ["Tracking number", order.trackingNumber],
+        ])}
+        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
+      `),
+    },
+    "order shipped notice"
+  );
+}
+
+export async function notifyOrderDelivered(order: {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+}) {
+  const safeName = escapeHtml(order.customerName);
+
+  await sendEmailSafe(
+    {
+      to: order.customerEmail,
+      subject: "Your Crochette order is complete",
+      html: wrapEmail(`
+        <p>Hi ${safeName},</p>
+        <p>Your order is marked complete — we hope you love your piece! If anything's not quite right, just reply and let us know.</p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
+      `),
+    },
+    "order delivered notice"
+  );
+}
+
 export async function notifyAccountCreated(data: { email: string; name: string }) {
   const safeName = escapeHtml(data.name);
 
