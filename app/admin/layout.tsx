@@ -28,30 +28,20 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (session?.user?.role !== "admin") return <>{children}</>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "oklch(0.98 0.01 85)" }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "18px 32px",
-          borderBottom: "1.5px solid oklch(0.9 0.02 60)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          <span style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 20 }}>
-            Crochette admin
-          </span>
-          <nav style={{ display: "flex", gap: 20 }}>
+    <div className="min-h-screen bg-card">
+      <header className="flex items-center justify-between py-[18px] px-8 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <div className="flex items-center gap-8">
+          <span className="font-serif font-medium text-xl">Crochette admin</span>
+          <nav className="flex gap-5">
             {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} style={{ fontSize: 13.5, color: "oklch(0.4 0.02 60)" }}>
+              <Link key={l.href} href={l.href} className="text-[13.5px] text-[oklch(0.4_0.02_60)]">
                 {l.label}
               </Link>
             ))}
           </nav>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 13, color: "oklch(0.5 0.02 60)" }}>{session.user.email}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-[13px] text-muted-foreground">{session.user.email}</span>
           <form action={adminSignOut}>
             <Button type="submit" variant="outline" size="sm">
               Sign out
@@ -59,7 +49,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </form>
         </div>
       </header>
-      <main style={{ padding: "32px" }}>{children}</main>
+      <main className="p-8">{children}</main>
     </div>
   );
 }
