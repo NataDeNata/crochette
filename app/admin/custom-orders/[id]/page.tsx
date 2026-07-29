@@ -4,8 +4,8 @@ import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { CustomOrderUpdateForm } from "@/components/admin/CustomOrderUpdateForm";
 
-const fieldStyle = { fontSize: 13.5 } as const;
-const labelStyle = { fontSize: 12, color: "oklch(0.5 0.02 60)", marginBottom: 3 } as const;
+const fieldClass = "text-[14.5px]";
+const labelClass = "text-[13px] text-muted-foreground mb-[3px]";
 
 export default async function CustomOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,68 +13,66 @@ export default async function CustomOrderDetailPage({ params }: { params: Promis
   if (!r) notFound();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 900 }}>
+    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
       <div>
-        <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: "0 0 4px" }}>
-          {r.name}
-        </h1>
-        <a href={`mailto:${r.email}`} style={{ fontSize: 13.5, color: "oklch(0.5 0.05 20)" }}>
+        <h1 className="font-serif font-medium text-3xl mb-1">{r.name}</h1>
+        <a href={`mailto:${r.email}`} className="text-[14.5px] text-[oklch(0.5_0.05_20)]">
           {r.email}
         </a>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 32, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: 24, borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)", background: "oklch(1 0 0)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid grid-cols-[1.3fr_1fr] gap-8 items-start">
+        <div className="flex flex-col gap-5 p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <div style={labelStyle}>Piece type</div>
-              <div style={fieldStyle}>{r.pieceType}</div>
+              <div className={labelClass}>Piece type</div>
+              <div className={fieldClass}>{r.pieceType}</div>
             </div>
             <div>
-              <div style={labelStyle}>Size</div>
-              <div style={fieldStyle}>{r.preferredSize || "—"}</div>
+              <div className={labelClass}>Size</div>
+              <div className={fieldClass}>{r.preferredSize || "—"}</div>
             </div>
             <div>
-              <div style={labelStyle}>Colors</div>
-              <div style={fieldStyle}>{r.preferredColors || "—"}</div>
+              <div className={labelClass}>Colors</div>
+              <div className={fieldClass}>{r.preferredColors || "—"}</div>
             </div>
             <div>
-              <div style={labelStyle}>Budget</div>
-              <div style={fieldStyle}>{r.budgetRange || "—"}</div>
+              <div className={labelClass}>Budget</div>
+              <div className={fieldClass}>{r.budgetRange || "—"}</div>
             </div>
           </div>
 
           <div>
-            <div style={labelStyle}>Description</div>
-            <div style={{ ...fieldStyle, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{r.description}</div>
+            <div className={labelClass}>Description</div>
+            <div className={`${fieldClass} leading-[1.6] whitespace-pre-wrap`}>{r.description}</div>
           </div>
 
           <div>
-            <div style={labelStyle}>Reference photos</div>
+            <div className={labelClass}>Reference photos</div>
             {r.referenceImageUrls && r.referenceImageUrls.length > 0 ? (
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+              <div className="flex gap-2.5 flex-wrap mt-1.5">
                 {r.referenceImageUrls.map((url) => (
                   <a key={url} href={url} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element -- external Vercel Blob URL */}
                     <img
                       src={url}
                       alt="Reference"
-                      style={{ width: 96, height: 96, borderRadius: 10, objectFit: "cover", border: "1.5px solid oklch(0.9 0.02 60)" }}
+                      className="w-24 h-24 rounded-[10px] object-cover border-[1.5px] border-[oklch(0.9_0.02_60)]"
                     />
                   </a>
                 ))}
               </div>
             ) : (
-              <div style={fieldStyle}>None attached.</div>
+              <div className={fieldClass}>None attached.</div>
             )}
           </div>
 
-          <div style={{ fontSize: 12, color: "oklch(0.55 0.02 60)" }}>
+          <div className="text-[13px] text-[oklch(0.55_0.02_60)]">
             Submitted {r.createdAt.toLocaleString()}
           </div>
         </div>
 
-        <div style={{ padding: 24, borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)", background: "oklch(1 0 0)" }}>
+        <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
           <CustomOrderUpdateForm
             id={r.id}
             status={r.status}

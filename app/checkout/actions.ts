@@ -5,9 +5,15 @@ import { headers } from "next/headers";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products, orders, orderItems } from "@/lib/db/schema";
-import { checkoutSchema, cartPayloadSchema } from "@/lib/validation/checkout";
+import { checkoutSchema } from "@/lib/validation/checkout";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
+import { resolveCartId } from "@/lib/cart/resolve";
+import { clearCart, getRawCartItems } from "@/lib/db/cart";
 import { createPaymentSession } from "@/lib/payments/xendit";
+import { resolveDiscountCode } from "@/lib/db/discounts";
+import { auth } from "@/lib/auth";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
+import { logError, logWarn } from "@/lib/observability/log";
 import type { FormActionState } from "@/lib/actions/types";
 
 async function getSiteOrigin(): Promise<string> {
@@ -21,6 +27,14 @@ export async function submitCheckout(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  const ip = await getClientIp();
+  if (await isRateLimited("checkout", ip)) {
+    return {
+      status: "error",
+      message: "Too many attempts — please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = checkoutSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -30,6 +44,7 @@ export async function submitCheckout(
     shippingCity: formData.get("shippingCity"),
     shippingProvince: formData.get("shippingProvince"),
     shippingPostalCode: formData.get("shippingPostalCode"),
+    discountCode: formData.get("discountCode") || undefined,
   });
 
   if (!parsed.success) {
@@ -40,13 +55,19 @@ export async function submitCheckout(
     };
   }
 
-  let cart;
-  try {
-    cart = cartPayloadSchema.parse(JSON.parse(String(formData.get("cart") || "[]")));
-  } catch {
+  // The cart is read from the DATABASE, not from the submitted form. It used to
+  // arrive as a JSON blob in formData, which meant the server took the client's
+  // word for which products and quantities were being bought — prices were
+  // always recomputed server-side, but the line items themselves were not
+  // verified. Now the client cannot influence what is purchased at all.
+  const cartId = await resolveCartId({ create: false });
+  const cart = cartId ? await getRawCartItems(cartId) : [];
+
+  if (cart.length === 0) {
+    logWarn("checkout.empty_cart", { hasCart: Boolean(cartId) });
     return {
       status: "error",
-      message: "Your cart looks empty or invalid — please go back to your cart and try again.",
+      message: "Your cart is empty — please add something before checking out.",
     };
   }
 
@@ -82,11 +103,28 @@ export async function submitCheckout(
   }
 
   const subtotalCents = lineItems.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
-  const totalCents = subtotalCents + SHIPPING_CENTS;
+
+  const { discount, error: discountError } = await resolveDiscountCode(parsed.data.discountCode ?? "", subtotalCents);
+  if (discountError) {
+    return {
+      status: "error",
+      message: "Please check the fields below.",
+      fieldErrors: { discountCode: [discountError] },
+    };
+  }
+
+  const discountCents = discount?.discountCents ?? 0;
+  const totalCents = subtotalCents + SHIPPING_CENTS - discountCents;
+
+  // Links the order to the account when logged in — guest checkout (no
+  // session, or an admin session) leaves this null, unaffected either way.
+  const authSession = await auth();
+  const customerId = authSession?.user?.role === "customer" ? authSession.user.id : null;
 
   const [order] = await db
     .insert(orders)
     .values({
+      customerId,
       customerName: parsed.data.name,
       customerEmail: parsed.data.email,
       customerPhone: parsed.data.phone || null,
@@ -97,6 +135,8 @@ export async function submitCheckout(
       shippingPostalCode: parsed.data.shippingPostalCode,
       subtotalCents,
       shippingCents: SHIPPING_CENTS,
+      discountCents,
+      discountCodeId: discount?.id ?? null,
       totalCents,
       status: "pending",
     })
@@ -122,13 +162,22 @@ export async function submitCheckout(
       items: [
         ...lineItems.map((item) => ({ name: item.name, amountCents: item.unitPriceCents, quantity: item.quantity })),
         { name: "Shipping", amountCents: SHIPPING_CENTS, quantity: 1 },
+        ...(discountCents > 0 ? [{ name: `Discount (${parsed.data.discountCode?.trim().toUpperCase()})`, amountCents: -discountCents, quantity: 1 }] : []),
       ],
       customer: { name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone || undefined },
       successUrl: `${origin}/order/${order.id}`,
       cancelUrl: `${origin}/cart`,
     });
   } catch (err) {
-    console.error("createPaymentSession failed:", err);
+    // orderId correlates the log line with the orders row this then marks
+    // "failed" — currently the only durable artifact of a failure anywhere in
+    // the app. Customer name/email/phone are in scope here and deliberately
+    // not logged.
+    logError("checkout.payment_session_failed", err, {
+      orderId: order.id,
+      totalCents,
+      itemCount: lineItems.length,
+    });
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, order.id));
     return {
       status: "error",
@@ -137,6 +186,12 @@ export async function submitCheckout(
   }
 
   await db.update(orders).set({ xenditPaymentSessionId: session.id }).where(eq(orders.id, order.id));
+
+  // Emptied only once the payment session actually exists. Clearing any earlier
+  // would lose the cart if Xendit failed above, stranding the customer with
+  // nothing to retry from. The order row already records the line items, so a
+  // failed payment can still be resumed from /order/[id].
+  if (cartId) await clearCart(cartId);
 
   redirect(session.paymentLinkUrl);
 }

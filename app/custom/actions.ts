@@ -7,6 +7,9 @@ import { customOrderSchema } from "@/lib/validation/custom-order";
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
 import type { FormActionState } from "@/lib/actions/types";
 import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
+import { auth } from "@/lib/auth";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
+import { logError } from "@/lib/observability/log";
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
@@ -39,6 +42,14 @@ export async function submitCustomOrder(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  const ip = await getClientIp();
+  if (await isRateLimited("custom-order", ip)) {
+    return {
+      status: "error",
+      message: "Too many attempts — please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = customOrderSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -68,8 +79,12 @@ export async function submitCustomOrder(
     };
   }
 
+  const session = await auth();
+  const customerId = session?.user?.role === "customer" ? session.user.id : null;
+
   try {
     await db.insert(customOrderRequests).values({
+      customerId,
       name: parsed.data.name,
       email: parsed.data.email,
       pieceType: parsed.data.pieceType,
@@ -80,7 +95,10 @@ export async function submitCustomOrder(
       description: parsed.data.description,
     });
   } catch (err) {
-    console.error("submitCustomOrder failed:", err);
+    logError("custom_order.submit_failed", err, {
+      photoCount: uploadResult.urls.length,
+      pieceType: parsed.data.pieceType,
+    });
     return {
       status: "error",
       message: "We couldn't send your request right now — please try again in a moment.",

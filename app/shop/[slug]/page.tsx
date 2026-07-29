@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { ProductGallery } from "@/components/shop/ProductGallery";
 import { CATEGORIES, formatPrice, LOW_STOCK_THRESHOLD } from "@/lib/data/products";
 import { getProductBySlug, getProducts } from "@/lib/data/products.server";
 import { SITE_URL } from "@/lib/site";
@@ -30,6 +31,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.name} — Crochette`,
       description,
+      images: product.primaryImageUrl ? [{ url: product.primaryImageUrl }] : undefined,
     },
     twitter: {
       title: `${product.name} — Crochette`,
@@ -56,6 +58,7 @@ export default async function ProductPage({
     description: product.description ?? `${product.name}, handmade to order.`,
     category: categoryLabel,
     sku: product.id,
+    image: product.primaryImageUrl ? [product.primaryImageUrl] : undefined,
     offers: {
       "@type": "Offer",
       url: `${SITE_URL}/shop/${product.slug}`,
@@ -73,124 +76,52 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
-      <section style={{ padding: "36px 48px 0" }}>
+      <section className="pt-9 px-12 pb-0">
         <FadeIn>
-          <Link
-            href="/shop"
-            style={{
-              fontSize: 13,
-              color: "oklch(0.5 0.05 20)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
+          <Link href="/shop" className="text-[13px] text-[oklch(0.5_0.05_20)] inline-flex items-center gap-1.5">
             ← Back to shop
           </Link>
         </FadeIn>
       </section>
 
-      <section
-        style={{
-          padding: "32px 48px 80px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-          gap: 56,
-          maxWidth: 1100,
-          margin: "0 auto",
-          alignItems: "center",
-        }}
-      >
+      <section className="pt-8 px-12 pb-20 grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-14 max-w-[1100px] mx-auto items-center">
         <FadeIn>
-          <div
-            style={{
-              position: "relative",
-              aspectRatio: "1",
-              borderRadius: 28,
-              overflow: "hidden",
-              background: product.bg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {product.tag && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 18,
-                  left: 18,
-                  background: "oklch(0.98 0.01 85 / 0.9)",
-                  padding: "6px 14px",
-                  borderRadius: 16,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: 0.5,
-                  textTransform: "uppercase",
-                  color: "oklch(0.5 0.09 20)",
-                }}
-              >
-                {product.tag}
-              </div>
-            )}
-            <span
-              style={{
-                fontFamily: "ui-monospace, monospace",
-                fontSize: 13,
-                color: "oklch(0.35 0.03 60)",
-                background: "oklch(1 0 0 / 0.6)",
-                padding: "7px 14px",
-                borderRadius: 8,
-                textAlign: "center",
-              }}
-            >
-              {product.placeholder}
-            </span>
-          </div>
+          <ProductGallery
+            images={product.images}
+            productName={product.name}
+            tag={product.tag}
+            bgClassName={product.bgClassName}
+            placeholder={product.placeholder}
+          />
         </FadeIn>
 
         <FadeIn delay={0.08}>
-          <div
-            style={{
-              fontSize: 13,
-              letterSpacing: 2,
-              textTransform: "uppercase",
-              color: "oklch(0.5 0.05 20)",
-              marginBottom: 14,
-            }}
-          >
+          <div className="text-[13px] tracking-[2px] uppercase text-[oklch(0.5_0.05_20)] mb-3.5">
             {categoryLabel}
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              fontWeight: 500,
-              fontSize: "clamp(32px,4vw,46px)",
-              margin: "0 0 14px",
-            }}
-          >
+          <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-3.5">
             {product.name}
           </h1>
-          <div style={{ fontSize: 22, color: "oklch(0.4 0.05 20)", marginBottom: 8 }}>
+          <div className="text-[22px] text-[oklch(0.4_0.05_20)] mb-2">
             {formatPrice(product.priceCents)}
           </div>
           {product.stockQty <= 0 ? (
-            <div style={{ fontSize: 13, fontWeight: 600, color: "oklch(0.5 0.05 20)", marginBottom: 22 }}>
+            <div className="text-[13px] font-semibold text-[oklch(0.5_0.05_20)] mb-[22px]">
               Out of stock
             </div>
           ) : product.stockQty <= LOW_STOCK_THRESHOLD ? (
-            <div style={{ fontSize: 13, fontWeight: 600, color: "oklch(0.55 0.15 40)", marginBottom: 22 }}>
+            <div className="text-[13px] font-semibold text-[oklch(0.55_0.15_40)] mb-[22px]">
               Low on Stock — only {product.stockQty} left
             </div>
           ) : (
-            <div style={{ marginBottom: 22 }} />
+            <div className="mb-[22px]" />
           )}
           {product.description && (
-            <p style={{ fontSize: 15.5, lineHeight: 1.75, color: "oklch(0.4 0.02 60)", maxWidth: 440, margin: "0 0 32px" }}>
+            <p className="text-[15.5px] leading-[1.75] text-[oklch(0.4_0.02_60)] max-w-[440px] mb-8">
               {product.description}
             </p>
           )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div className="flex flex-col gap-[18px]">
             <AddToCartButton
               product={{
                 id: product.id,
@@ -200,11 +131,11 @@ export default async function ProductPage({
                 stockQty: product.stockQty,
               }}
             />
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <div className="flex gap-3.5 flex-wrap">
               <Button href="/custom" variant="outline" size="md">
                 Request it personalized
               </Button>
-              <Link href="/contact" style={{ fontSize: 13, color: "oklch(0.5 0.05 20)", alignSelf: "center" }}>
+              <Link href="/contact" className="text-[13px] text-[oklch(0.5_0.05_20)] self-center">
                 Have a question? Contact us
               </Link>
             </div>

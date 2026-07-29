@@ -1,21 +1,27 @@
 import Link from "next/link";
 import { count, eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { products, customOrderRequests, orders } from "@/lib/db/schema";
-
-const cardStyle = {
-  padding: 24,
-  borderRadius: 20,
-  background: "oklch(1 0 0)",
-  border: "1.5px solid oklch(0.9 0.02 60)",
-} as const;
+import { products, customOrderRequests, orders, discountCodes } from "@/lib/db/schema";
+import { lowStockCondition } from "@/lib/db/inventory";
+import { Card, CardContent } from "@/components/ui/card";
+import { LOW_STOCK_TEXT_CLASS } from "@/components/admin/LowStockBadge";
 
 export default async function AdminDashboardPage() {
-  const [[{ productCount }], [{ activeProductCount }], [{ newRequestCount }], [{ newOrderCount }], recentRequests] = await Promise.all([
+  const [
+    [{ productCount }],
+    [{ activeProductCount }],
+    [{ lowStockCount }],
+    [{ newRequestCount }],
+    [{ newOrderCount }],
+    [{ activeDiscountCount }],
+    recentRequests,
+  ] = await Promise.all([
     db.select({ productCount: count() }).from(products),
     db.select({ activeProductCount: count() }).from(products).where(eq(products.status, "active")),
+    db.select({ lowStockCount: count() }).from(products).where(lowStockCondition),
     db.select({ newRequestCount: count() }).from(customOrderRequests).where(eq(customOrderRequests.status, "new")),
     db.select({ newOrderCount: count() }).from(orders).where(eq(orders.status, "paid")),
+    db.select({ activeDiscountCount: count() }).from(discountCodes).where(eq(discountCodes.active, true)),
     db
       .select({
         id: customOrderRequests.id,
@@ -30,66 +36,97 @@ export default async function AdminDashboardPage() {
   ]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28, maxWidth: 960 }}>
-      <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: 0 }}>
-        Dashboard
-      </h1>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-7">
+      <h1 className="font-serif text-3xl font-medium">Dashboard</h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 18 }}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", marginBottom: 6 }}>Products</div>
-          <div style={{ fontSize: 30, fontWeight: 500 }}>{productCount}</div>
-          <div style={{ fontSize: 12.5, color: "oklch(0.55 0.02 60)" }}>{activeProductCount} active</div>
-        </div>
-        <Link href="/admin/custom-orders" style={{ ...cardStyle, display: "block" }}>
-          <div style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", marginBottom: 6 }}>New custom order requests</div>
-          <div style={{ fontSize: 30, fontWeight: 500, color: newRequestCount > 0 ? "oklch(0.5 0.18 25)" : undefined }}>
-            {newRequestCount}
-          </div>
-          <div style={{ fontSize: 12.5, color: "oklch(0.55 0.02 60)" }}>awaiting review</div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+        <Link href="/admin/products">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Products</div>
+              <div className="text-3xl font-medium">{productCount}</div>
+              <div className="text-[13px] text-muted-foreground">{activeProductCount} active</div>
+            </CardContent>
+          </Card>
         </Link>
-        <Link href="/admin/orders" style={{ ...cardStyle, display: "block" }}>
-          <div style={{ fontSize: 13, color: "oklch(0.5 0.02 60)", marginBottom: 6 }}>Paid orders awaiting fulfillment</div>
-          <div style={{ fontSize: 30, fontWeight: 500, color: newOrderCount > 0 ? "oklch(0.5 0.18 25)" : undefined }}>
-            {newOrderCount}
-          </div>
-          <div style={{ fontSize: 12.5, color: "oklch(0.55 0.02 60)" }}>not yet shipped</div>
+
+        <Link href="/admin/products?stock=low">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Products running low</div>
+              {/* Amber, not text-destructive: the two tiles below mean "a customer
+                  is waiting on you", this one means "plan a restock" — a different
+                  urgency, matching the row badge on /admin/products. */}
+              <div className={`text-3xl font-medium ${lowStockCount > 0 ? LOW_STOCK_TEXT_CLASS : ""}`}>
+                {lowStockCount}
+              </div>
+              <div className="text-[13px] text-muted-foreground">at or below their alert level</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/custom-orders">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">New custom order requests</div>
+              <div className={`text-3xl font-medium ${newRequestCount > 0 ? "text-destructive" : ""}`}>
+                {newRequestCount}
+              </div>
+              <div className="text-[13px] text-muted-foreground">awaiting review</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/orders">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Paid orders awaiting fulfillment</div>
+              <div className={`text-3xl font-medium ${newOrderCount > 0 ? "text-destructive" : ""}`}>{newOrderCount}</div>
+              <div className="text-[13px] text-muted-foreground">not yet shipped</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/discounts">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Active discount codes</div>
+              <div className="text-3xl font-medium">{activeDiscountCount}</div>
+              <div className="text-[13px] text-muted-foreground">currently redeemable</div>
+            </CardContent>
+          </Card>
         </Link>
       </div>
 
-      <div style={cardStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Recent custom order requests</h2>
-          <Link href="/admin/custom-orders" style={{ fontSize: 13, color: "oklch(0.5 0.05 20)" }}>
-            View all →
-          </Link>
-        </div>
-        {recentRequests.length === 0 ? (
-          <p style={{ fontSize: 13.5, color: "oklch(0.5 0.02 60)" }}>No requests yet.</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {recentRequests.map((r) => (
-              <Link
-                key={r.id}
-                href={`/admin/custom-orders/${r.id}`}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "10px 4px",
-                  borderBottom: "1px solid oklch(0.93 0.01 60)",
-                  fontSize: 13.5,
-                }}
-              >
-                <span>
-                  <strong style={{ fontWeight: 500 }}>{r.name}</strong>
-                  <span style={{ color: "oklch(0.5 0.02 60)" }}> — {r.pieceType}</span>
-                </span>
-                <span style={{ color: "oklch(0.5 0.02 60)", textTransform: "capitalize" }}>{r.status}</span>
-              </Link>
-            ))}
+      <Card>
+        <CardContent>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold">Recent custom order requests</h2>
+            <Link href="/admin/custom-orders" className="text-[13.5px] text-[oklch(0.5_0.05_20)]">
+              View all →
+            </Link>
           </div>
-        )}
-      </div>
+          {recentRequests.length === 0 ? (
+            <p className="text-[13.5px] text-muted-foreground">No requests yet.</p>
+          ) : (
+            <div className="flex flex-col gap-0.5">
+              {recentRequests.map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/admin/custom-orders/${r.id}`}
+                  className="flex justify-between border-b border-border/60 py-2.5 text-[14.5px] last:border-b-0"
+                >
+                  <span>
+                    <strong className="font-medium">{r.name}</strong>
+                    <span className="text-muted-foreground"> — {r.pieceType}</span>
+                  </span>
+                  <span className="capitalize text-muted-foreground">{r.status}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

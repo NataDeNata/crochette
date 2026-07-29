@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { GallerySection } from "@/components/gallery/GallerySection";
 import { getFullGallery } from "@/lib/data/gallery";
@@ -13,58 +13,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GalleryPage() {
-  const gallery = getFullGallery();
+export default async function GalleryPage() {
+  const gallery = await getFullGallery();
 
   return (
     <>
-      <section style={{ padding: "72px 48px 48px", textAlign: "center" }}>
+      <section className="pt-[72px] px-12 pb-12 text-center">
         <FadeIn>
-          <div
-            style={{
-              fontSize: 13,
-              letterSpacing: 3,
-              textTransform: "uppercase",
-              color: "oklch(0.5 0.05 20)",
-              marginBottom: 16,
-            }}
-          >
+          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
             Gallery
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              fontWeight: 500,
-              fontSize: "clamp(38px,5vw,58px)",
-              margin: "0 0 16px",
-            }}
-          >
+          <h1 className="font-serif font-medium text-[clamp(38px,5vw,58px)] mb-4">
             A peek into the studio
           </h1>
-          <p style={{ fontSize: 16, color: "oklch(0.42 0.02 60)", maxWidth: 460, margin: "0 auto", lineHeight: 1.6 }}>
+          <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
             Works in progress, finished pieces, and the little moments in between.
           </p>
         </FadeIn>
       </section>
 
-      <section style={{ padding: "20px 48px 100px" }}>
-        <GallerySection items={gallery} rowHeight={180} />
+      <section className="pt-5 px-12 pb-[100px]">
+        {gallery.length === 0 ? (
+          <p className="text-center text-sm text-[oklch(0.55_0.02_60)]">Photos coming soon.</p>
+        ) : (
+          <GallerySection items={gallery} rowHeight={180} />
+        )}
       </section>
 
       <FadeIn>
-        <section
-          style={{
-            margin: "0 32px 100px",
-            padding: "56px 48px",
-            borderRadius: 36,
-            background: "oklch(0.91 0.04 150)",
-            textAlign: "center",
-          }}
-        >
-          <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: "0 0 14px" }}>
+        <section className="mx-8 mb-[100px] py-14 px-12 rounded-[36px] bg-[oklch(0.91_0.04_150)] text-center">
+          <h2 className="font-serif font-medium text-3xl mb-3.5">
             Follow along on Instagram
           </h2>
-          <p style={{ fontSize: 15, color: "oklch(0.3 0.03 150)", margin: "0 0 24px" }}>
+          <p className="text-[15px] text-[oklch(0.3_0.03_150)] mb-6">
             New pieces, works in progress, and behind-the-scenes.
           </p>
           <Button href="https://instagram.com">@crochette.studio</Button>

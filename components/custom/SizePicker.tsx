@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const SIZE_PRESETS = [
   { value: "S", label: "S", detail: "Mini amigurumi · approx. 4–6 in" },
@@ -10,14 +11,8 @@ const SIZE_PRESETS = [
   { value: "XL", label: "XL", detail: "Statement piece · approx. 15+ in" },
 ];
 
-const inputStyle = {
-  padding: "12px 16px",
-  borderRadius: 12,
-  border: "1.5px solid oklch(0.75 0.03 20)",
-  background: "oklch(0.98 0.01 85)",
-  fontSize: 14,
-  fontFamily: "inherit",
-} as const;
+const inputClassName =
+  "py-3 px-4 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
 
 function pillLabel(preset: (typeof SIZE_PRESETS)[number]) {
   return `${preset.label} — ${preset.detail}`;
@@ -61,9 +56,9 @@ export function SizePicker({
     selected === "custom" ? "Describe your own size" : SIZE_PRESETS.find((p) => p.value === selected)?.detail;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="flex flex-col gap-2">
       <input type="hidden" name={name} value={postedValue} />
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <div className="flex gap-2.5 flex-wrap">
         {SIZE_PRESETS.map((preset) => {
           const isActive = selected === preset.value;
           return (
@@ -72,42 +67,27 @@ export function SizePicker({
               type="button"
               aria-pressed={isActive}
               onClick={() => selectPreset(preset)}
-              style={{
-                position: "relative",
-                width: 44,
-                padding: "9px 0",
-                borderRadius: 20,
-                border: `1.5px solid ${isActive && reduceMotion ? "oklch(0.28 0.02 60)" : isActive ? "transparent" : "oklch(0.75 0.03 20)"}`,
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: "pointer",
-                background: "oklch(0.98 0.01 85)",
-                fontFamily: "inherit",
-              }}
+              className={cn(
+                "relative w-11 py-[9px] rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-card [font-family:inherit]",
+                isActive && reduceMotion
+                  ? "border-[oklch(0.28_0.02_60)]"
+                  : isActive
+                    ? "border-transparent"
+                    : "border-[oklch(0.75_0.03_20)]",
+              )}
             >
               {isActive && !reduceMotion && (
                 <motion.span
                   layoutId="custom-size-active"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: 20,
-                    background: "oklch(0.28 0.02 60)",
-                    zIndex: 0,
-                  }}
+                  className="absolute inset-0 rounded-[20px] bg-primary z-0"
                 />
               )}
               <span
-                style={{
-                  position: "relative",
-                  zIndex: 1,
-                  color: isActive
-                    ? reduceMotion
-                      ? "oklch(0.28 0.02 60)"
-                      : "oklch(0.98 0.01 85)"
-                    : "oklch(0.42 0.02 60)",
-                }}
+                className={cn(
+                  "relative z-[1]",
+                  isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-[oklch(0.42_0.02_60)]",
+                )}
               >
                 {preset.label}
               </span>
@@ -118,28 +98,21 @@ export function SizePicker({
           type="button"
           aria-pressed={selected === "custom"}
           onClick={selectCustom}
-          style={{
-            padding: "9px 16px",
-            borderRadius: 20,
-            border: `1.5px solid ${selected === "custom" ? "oklch(0.28 0.02 60)" : "oklch(0.75 0.03 20)"}`,
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer",
-            background: selected === "custom" ? "oklch(0.28 0.02 60)" : "oklch(0.98 0.01 85)",
-            color: selected === "custom" ? "oklch(0.98 0.01 85)" : "oklch(0.42 0.02 60)",
-            fontFamily: "inherit",
-          }}
+          className={cn(
+            "py-[9px] px-4 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer [font-family:inherit]",
+            selected === "custom" ? "border-primary bg-primary text-card" : "border-[oklch(0.75_0.03_20)] bg-card text-[oklch(0.42_0.02_60)]",
+          )}
         >
           Custom…
         </button>
       </div>
-      {activeDetail && <div style={{ fontSize: 12.5, color: "oklch(0.45 0.02 60)" }}>{activeDetail}</div>}
+      {activeDetail && <div className="text-[12.5px] text-[oklch(0.45_0.02_60)]">{activeDetail}</div>}
       {selected === "custom" && (
         <input
           placeholder="Describe your size…"
           value={customText}
           onChange={(e) => handleCustomText(e.target.value)}
-          style={inputStyle}
+          className={inputClassName}
         />
       )}
     </div>

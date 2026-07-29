@@ -5,18 +5,28 @@ import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validati
 
 type Attached = { file: File; previewUrl: string };
 
-/** Attaches reference photos to the custom-order form. Files stay in the
- * native file input's FileList (rebuilt via DataTransfer on add/remove) so
- * they submit as part of the same FormData the Server Action already reads
- * — the actual upload to Vercel Blob happens server-side on submit. This
- * component only produces local object-URL previews for the live summary
- * panel. */
+/** Attaches photos to a native form. Files stay in the native file input's
+ * FileList (rebuilt via DataTransfer on add/remove) so they submit as part
+ * of the same FormData the Server Action already reads — the actual upload
+ * to Vercel Blob happens server-side on submit. This component only
+ * produces local object-URL previews for the live summary panel.
+ *
+ * `maxPhotos`/`allowedTypes`/`maxBytes` default to the custom-order reference
+ * photo limits so the existing caller (CustomOrderForm) is unaffected. */
 export function PhotoAttach({
   name,
   onValueChange,
+  maxPhotos = MAX_PHOTOS,
+  allowedTypes = ALLOWED_PHOTO_TYPES,
+  maxBytes = MAX_PHOTO_BYTES,
+  helpText,
 }: {
   name: string;
   onValueChange?: (previewUrls: string[]) => void;
+  maxPhotos?: number;
+  allowedTypes?: readonly string[];
+  maxBytes?: number;
+  helpText?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const attachedRef = useRef<Attached[]>([]);
@@ -47,11 +57,11 @@ export function PhotoAttach({
     let rejected = false;
 
     for (const file of incoming) {
-      if (next.length >= MAX_PHOTOS) {
+      if (next.length >= maxPhotos) {
         rejected = true;
         break;
       }
-      if (!ALLOWED_PHOTO_TYPES.includes(file.type) || file.size > MAX_PHOTO_BYTES) {
+      if (!allowedTypes.includes(file.type) || file.size > maxBytes) {
         rejected = true;
         continue;
       }
@@ -61,7 +71,7 @@ export function PhotoAttach({
     setAttached(next);
     syncInputFiles(next);
     onValueChange?.(next.map((a) => a.previewUrl));
-    setError(rejected ? `Photos must be JPG, PNG, or WebP, up to 5MB — ${MAX_PHOTOS} max.` : undefined);
+    setError(rejected ? `Photos must be JPG, PNG, or WebP, up to ${Math.round(maxBytes / (1024 * 1024))}MB — ${maxPhotos} max.` : undefined);
   }
 
   function removeAt(index: number) {
@@ -75,84 +85,50 @@ export function PhotoAttach({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="flex flex-col gap-2">
       <input
         ref={inputRef}
         type="file"
         name={name}
-        accept={ALLOWED_PHOTO_TYPES.join(",")}
+        accept={allowedTypes.join(",")}
         multiple
         onChange={handleChange}
-        style={{ display: "none" }}
+        className="hidden"
       />
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+      <div className="flex gap-2.5 flex-wrap items-center">
         {attached.map((a, i) => (
-          <div key={a.previewUrl} style={{ position: "relative", width: 56, height: 56 }}>
+          <div key={a.previewUrl} className="relative w-14 h-14">
             {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview, next/image can't optimize it */}
             <img
               src={a.previewUrl}
               alt=""
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 10,
-                objectFit: "cover",
-                border: "1.5px solid oklch(0.75 0.03 20)",
-                display: "block",
-              }}
+              className="w-14 h-14 rounded-[10px] object-cover border-[1.5px] border-[oklch(0.75_0.03_20)] block"
             />
             <button
               type="button"
               onClick={() => removeAt(i)}
               aria-label="Remove photo"
-              style={{
-                position: "absolute",
-                top: -6,
-                right: -6,
-                width: 20,
-                height: 20,
-                borderRadius: "50%",
-                border: "none",
-                background: "oklch(0.28 0.02 60)",
-                color: "oklch(0.98 0.01 85)",
-                fontSize: 12,
-                lineHeight: 1,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-              }}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full border-0 bg-primary text-card text-xs leading-none cursor-pointer flex items-center justify-center p-0"
             >
               ×
             </button>
           </div>
         ))}
-        {attached.length < MAX_PHOTOS && (
+        {attached.length < maxPhotos && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             aria-label="Attach photos"
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 10,
-              border: "1.5px dashed oklch(0.75 0.03 20)",
-              background: "oklch(0.98 0.01 85)",
-              cursor: "pointer",
-              fontSize: 20,
-              color: "oklch(0.5 0.05 20)",
-              fontFamily: "inherit",
-            }}
+            className="w-14 h-14 rounded-[10px] border-[1.5px] border-dashed border-[oklch(0.75_0.03_20)] bg-card cursor-pointer text-xl text-[oklch(0.5_0.05_20)] [font-family:inherit]"
           >
             +
           </button>
         )}
       </div>
-      <div style={{ fontSize: 12, color: "oklch(0.45 0.02 60)" }}>
-        Optional — up to {MAX_PHOTOS} reference photos, JPG/PNG/WebP, 5MB each.
+      <div className="text-xs text-[oklch(0.45_0.02_60)]">
+        {helpText ?? `Optional — up to ${maxPhotos} reference photos, JPG/PNG/WebP, 5MB each.`}
       </div>
-      {error && <span style={{ fontSize: 12.5, color: "oklch(0.5 0.18 25)" }}>{error}</span>}
+      {error && <span className="text-[12.5px] text-[oklch(0.5_0.18_25)]">{error}</span>}
     </div>
   );
 }

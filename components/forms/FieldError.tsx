@@ -2,16 +2,13 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-const errorStyle = {
-  fontSize: 12.5,
-  color: "oklch(0.5 0.18 25)",
-} as const;
+const errorClassName = "text-[12.5px] text-[oklch(0.5_0.18_25)]";
 
 export function FieldError({ error }: { error?: string }) {
   const reduceMotion = useReducedMotion();
 
   if (reduceMotion) {
-    return error ? <span style={errorStyle}>{error}</span> : null;
+    return error ? <span className={errorClassName}>{error}</span> : null;
   }
 
   return (
@@ -23,7 +20,7 @@ export function FieldError({ error }: { error?: string }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.15 }}
-          style={errorStyle}
+          className={errorClassName}
         >
           {error}
         </motion.span>

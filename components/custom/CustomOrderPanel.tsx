@@ -13,11 +13,7 @@ export function CustomOrderPanel() {
   return (
     <>
       <div>
-        <h2
-          style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 28, margin: "0 0 22px" }}
-        >
-          Start your request
-        </h2>
+        <h2 className="font-serif font-medium text-[28px] mb-[22px]">Start your request</h2>
         <CustomOrderForm onPreviewChange={setPreview} />
       </div>
       <LiveRequestPreview {...preview} />

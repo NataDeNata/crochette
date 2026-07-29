@@ -12,15 +12,10 @@ import { ColorSwatchPicker } from "@/components/custom/ColorSwatchPicker";
 import { SizePicker } from "@/components/custom/SizePicker";
 import { PhotoAttach } from "@/components/custom/PhotoAttach";
 import { EMPTY_PREVIEW, type PreviewData } from "@/components/custom/LiveRequestPreview";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-const inputStyle = {
-  padding: "14px 18px",
-  borderRadius: 12,
-  border: "1.5px solid oklch(0.75 0.03 20)",
-  background: "oklch(0.98 0.01 85)",
-  fontSize: 14,
-  fontFamily: "inherit",
-} as const;
+const fieldClassName = "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
 
 const PIECE_TYPES = [
   { value: "Amigurumi character", label: "Amigurumi character" },
@@ -82,19 +77,19 @@ export function CustomOrderForm({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          className="flex flex-col gap-3.5"
         >
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <input name="name" placeholder="Your name" style={inputStyle} />
+          <motion.div layout className="flex flex-col gap-1.5">
+            <Input name="name" placeholder="Your name" className={fieldClassName} />
             <FieldError error={fieldErrors.name?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <input name="email" placeholder="Email address" type="email" style={inputStyle} />
+          <motion.div layout className="flex flex-col gap-1.5">
+            <Input name="email" placeholder="Email address" type="email" className={fieldClassName} />
             <FieldError error={fieldErrors.email?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <motion.div layout className="flex flex-col gap-2">
             <PillGroup
               name="pieceType"
               options={PIECE_TYPES}
@@ -106,26 +101,26 @@ export function CustomOrderForm({
             <FieldError error={fieldErrors.pieceType?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <motion.div layout className="flex flex-col gap-2">
             <ColorSwatchPicker name="preferredColors" onValueChange={(v) => updatePreview({ preferredColors: v })} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ fontSize: 12.5, color: "oklch(0.45 0.02 60)" }}>Budget range (optional)</div>
+          <motion.div layout className="flex flex-col gap-2">
+            <div className="text-[12.5px] text-[oklch(0.45_0.02_60)]">Budget range (optional)</div>
             <PillGroup name="budgetRange" options={BUDGET_RANGES} layoutId="custom-budget" ariaLabel="Budget range" />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <textarea
+          <motion.div layout className="flex flex-col gap-1.5">
+            <Textarea
               name="description"
               placeholder="Describe your dream piece..."
               rows={4}
-              style={{ ...inputStyle, resize: "vertical" }}
+              className={`${fieldClassName} resize-y`}
             />
             <FieldError error={fieldErrors.description?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <motion.div layout className="flex flex-col gap-1.5">
             <PhotoAttach name="photos" onValueChange={(urls) => updatePreview({ photoPreviewUrls: urls })} />
             <FieldError error={fieldErrors.photos?.[0]} />
           </motion.div>

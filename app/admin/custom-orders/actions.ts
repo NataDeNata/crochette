@@ -2,10 +2,12 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { customOrderUpdateSchema } from "@/lib/validation/custom-order-admin";
 import type { FormActionState } from "@/lib/actions/types";
+import { logError } from "@/lib/observability/log";
 
 export async function updateCustomOrder(
   id: string,
@@ -35,12 +37,12 @@ export async function updateCustomOrder(
       })
       .where(eq(customOrderRequests.id, id));
   } catch (err) {
-    console.error("updateCustomOrder failed:", err);
+    logError("admin.custom_order.update_failed", err, { customOrderId: id });
     return { status: "error", message: "Couldn't save changes — please try again." };
   }
 
   revalidatePath(`/admin/custom-orders/${id}`);
   revalidatePath("/admin/custom-orders");
   revalidatePath("/admin");
-  return { status: "success", message: "Saved." };
+  redirect("/admin/custom-orders");
 }

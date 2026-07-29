@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ShopGrid } from "@/components/shop/ShopGrid";
 import { getProducts } from "@/lib/data/products.server";
@@ -18,30 +18,15 @@ export default async function ShopPage() {
 
   return (
     <>
-      <section style={{ padding: "72px 48px 40px", textAlign: "center" }}>
+      <section className="pt-[72px] px-12 pb-10 text-center">
         <FadeIn>
-          <div
-            style={{
-              fontSize: 13,
-              letterSpacing: 3,
-              textTransform: "uppercase",
-              color: "oklch(0.5 0.05 20)",
-              marginBottom: 16,
-            }}
-          >
+          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
             Shop
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              fontWeight: 500,
-              fontSize: "clamp(38px,5vw,58px)",
-              margin: "0 0 16px",
-            }}
-          >
+          <h1 className="font-serif font-medium text-[clamp(38px,5vw,58px)] mb-4">
             The full collection
           </h1>
-          <p style={{ fontSize: 16, color: "oklch(0.42 0.02 60)", maxWidth: 460, margin: "0 auto", lineHeight: 1.6 }}>
+          <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
             Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.
           </p>
         </FadeIn>
@@ -50,19 +35,11 @@ export default async function ShopPage() {
       <ShopGrid products={products} />
 
       <FadeIn>
-        <section
-          style={{
-            margin: "0 32px 100px",
-            padding: "56px 48px",
-            borderRadius: 36,
-            background: "oklch(0.9 0.045 20)",
-            textAlign: "center",
-          }}
-        >
-          <h2 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: "0 0 14px" }}>
+        <section className="mx-8 mb-[100px] py-14 px-12 rounded-[36px] bg-accent text-center">
+          <h2 className="font-serif font-medium text-3xl mb-3.5">
             Don&apos;t see quite what you want?
           </h2>
-          <p style={{ fontSize: 15, color: "oklch(0.32 0.03 20)", margin: "0 0 24px" }}>
+          <p className="text-[15px] text-[oklch(0.32_0.03_20)] mb-6">
             We make custom pieces too — any color, size, or character.
           </p>
           <Button href="/custom">Request a custom order</Button>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import type { GalleryItem } from "@/lib/data/gallery";
 
 export function GalleryTile({
@@ -21,38 +22,22 @@ export function GalleryTile({
       alt={item.alt ?? ""}
       fill
       sizes="(max-width: 760px) 100vw, 33vw"
-      style={{ objectFit: "cover" }}
+      className="object-cover"
     />
   ) : (
-    <span
-      style={{
-        fontFamily: "ui-monospace, monospace",
-        fontSize: 11,
-        color: "oklch(0.35 0.03 60)",
-        background: "oklch(1 0 0 / 0.6)",
-        padding: "5px 10px",
-        borderRadius: 6,
-        textAlign: "center",
-      }}
-    >
+    <span className="[font-family:ui-monospace,monospace] text-[11px] text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.6)] px-2.5 py-[5px] rounded-[6px] text-center">
       {item.placeholder}
     </span>
   );
 
-  const baseStyle = {
-    height: "100%",
-    borderRadius: 18,
-    overflow: "hidden",
-    position: "relative",
-    background: item.image ? undefined : item.bg,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as const;
+  const baseClassName = cn(
+    "h-full rounded-[18px] overflow-hidden relative flex items-center justify-center",
+    item.image ? undefined : item.bgClassName,
+  );
 
   if (reduceMotion) {
     return (
-      <div style={{ ...baseStyle, cursor: onClick ? "pointer" : undefined }} onClick={onClick}>
+      <div className={cn(baseClassName, onClick && "cursor-pointer")} onClick={onClick}>
         {content}
       </div>
     );
@@ -65,7 +50,7 @@ export function GalleryTile({
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      style={{ ...baseStyle, cursor: onClick ? "pointer" : undefined }}
+      className={cn(baseClassName, onClick && "cursor-pointer")}
     >
       {content}
     </motion.div>

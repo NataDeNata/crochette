@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart/CartContext";
+import { cn } from "@/lib/utils";
 
 export function AddToCartButton({
   product,
@@ -19,33 +20,29 @@ export function AddToCartButton({
   const maxQuantity = Math.min(20, product.stockQty);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+    <div className="flex items-center gap-3.5 flex-wrap">
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          border: "1.5px solid oklch(0.85 0.02 60)",
-          borderRadius: 30,
-          overflow: "hidden",
-          opacity: outOfStock ? 0.5 : 1,
-        }}
+        className={cn(
+          "flex items-center border-[1.5px] border-[oklch(0.85_0.02_60)] rounded-[30px] overflow-hidden",
+          outOfStock ? "opacity-50" : "opacity-100",
+        )}
       >
         <button
           type="button"
           disabled={outOfStock}
           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
           aria-label="Decrease quantity"
-          style={{ padding: "12px 16px", background: "none", border: "none", cursor: outOfStock ? "not-allowed" : "pointer", fontSize: 15 }}
+          className={cn("py-3 px-4 bg-transparent border-0 text-[15px]", outOfStock ? "cursor-not-allowed" : "cursor-pointer")}
         >
           −
         </button>
-        <span style={{ fontSize: 14, minWidth: 18, textAlign: "center" }}>{quantity}</span>
+        <span className="text-sm min-w-4.5 text-center">{quantity}</span>
         <button
           type="button"
           disabled={outOfStock}
           onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
           aria-label="Increase quantity"
-          style={{ padding: "12px 16px", background: "none", border: "none", cursor: outOfStock ? "not-allowed" : "pointer", fontSize: 15 }}
+          className={cn("py-3 px-4 bg-transparent border-0 text-[15px]", outOfStock ? "cursor-not-allowed" : "cursor-pointer")}
         >
           +
         </button>
@@ -70,7 +67,7 @@ export function AddToCartButton({
             animate={{ opacity: 1, y: 0 }}
             exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            style={{ display: "inline-block" }}
+            className="inline-block"
           >
             {outOfStock ? "Out of stock" : added ? "Added to cart ✓" : "Add to cart"}
           </motion.span>

@@ -6,15 +6,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 const THREAD_PATH = "M 33 22 C 55 4, 78 40, 100 22 S 145 4, 167 22";
 const KNOTS = [33, 100, 167];
 
-const wrapperStyle = {
-  position: "absolute",
-  left: 48,
-  right: 48,
-  top: 0,
-  height: 44,
-  pointerEvents: "none",
-  zIndex: -1,
-} as const;
+const wrapperClassName = "step-thread absolute left-12 right-12 top-0 h-11 pointer-events-none z-[-1]";
 
 /** Self-drawing thread connecting the 3 "how it works" step badges, echoing
  * the home hero's yarn-line motif. Purely decorative; hidden on narrow
@@ -26,8 +18,7 @@ export function StepThread() {
   if (reduceMotion) {
     return (
       <svg
-        className="step-thread"
-        style={wrapperStyle}
+        className={wrapperClassName}
         width="100%"
         height={44}
         viewBox="0 0 200 44"
@@ -43,8 +34,7 @@ export function StepThread() {
 
   return (
     <svg
-      className="step-thread"
-      style={wrapperStyle}
+      className={wrapperClassName}
       width="100%"
       height={44}
       viewBox="0 0 200 44"

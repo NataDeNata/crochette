@@ -1,19 +1,12 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import type { Product, ProductCategory } from "./products";
+import { products, productImages } from "@/lib/db/schema";
+import type { Product, ProductCategory, ProductImage } from "./products";
+import { BG_CYCLE_CLASSES } from "./bg-cycle";
 
-const BG_CYCLE = [
-  "oklch(0.9 0.045 20)",
-  "oklch(0.9 0.05 150)",
-  "oklch(0.92 0.03 260)",
-  "oklch(0.9 0.05 60)",
-  "oklch(0.93 0.03 20)",
-  "oklch(0.91 0.04 150)",
-];
-
-/** `bg`/`placeholder` aren't real columns — there's no product photography yet,
- * so they're derived here the same way the old mock catalog derived them. */
+/** `bg`/`placeholder` are the pre-photography fallback — derived here the
+ * same way the old mock catalog derived them, and still used whenever a
+ * product has zero uploaded images. */
 async function fetchActiveProducts(): Promise<Product[]> {
   const rows = await db
     .select()
@@ -21,18 +14,45 @@ async function fetchActiveProducts(): Promise<Product[]> {
     .where(eq(products.status, "active"))
     .orderBy(asc(products.createdAt));
 
-  return rows.map((row, i) => ({
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    description: row.description ?? undefined,
-    priceCents: row.priceCents,
-    category: row.category as ProductCategory,
-    tag: row.tag ?? undefined,
-    bg: BG_CYCLE[i % BG_CYCLE.length],
-    placeholder: `product shot — ${row.name.toLowerCase()}`,
-    stockQty: row.stockQty,
-  }));
+  const imageRows = rows.length
+    ? await db
+        .select()
+        .from(productImages)
+        .where(inArray(productImages.productId, rows.map((r) => r.id)))
+        .orderBy(asc(productImages.position))
+    : [];
+
+  const imagesByProduct = new Map<string, ProductImage[]>();
+  for (const row of imageRows) {
+    const list = imagesByProduct.get(row.productId) ?? [];
+    list.push({
+      id: row.id,
+      url: row.url,
+      position: row.position,
+      isPrimary: row.isPrimary,
+      caption: row.caption ?? undefined,
+      alt: row.alt ?? undefined,
+    });
+    imagesByProduct.set(row.productId, list);
+  }
+
+  return rows.map((row, i) => {
+    const images = imagesByProduct.get(row.id) ?? [];
+    return {
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      description: row.description ?? undefined,
+      priceCents: row.priceCents,
+      category: row.category as ProductCategory,
+      tag: row.tag ?? undefined,
+      bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
+      placeholder: `product shot — ${row.name.toLowerCase()}`,
+      stockQty: row.stockQty,
+      images,
+      primaryImageUrl: images.find((img) => img.isPrimary)?.url ?? images[0]?.url,
+    };
+  });
 }
 
 /** Full catalog — used by the Shop page and the Home page's sliding showcase.

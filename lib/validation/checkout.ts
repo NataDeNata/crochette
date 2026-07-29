@@ -9,17 +9,11 @@ export const checkoutSchema = z.object({
   shippingCity: z.string().trim().min(1, "Please enter your city").max(120),
   shippingProvince: z.string().trim().min(1, "Please enter your province").max(120),
   shippingPostalCode: z.string().trim().min(1, "Please enter your postal code").max(20),
+  discountCode: z.string().trim().max(40).optional().or(z.literal("")),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 
-export const cartPayloadSchema = z
-  .array(
-    z.object({
-      productId: z.string().uuid(),
-      quantity: z.number().int().min(1).max(20),
-    })
-  )
-  .min(1, "Your cart is empty");
-
-export type CartPayload = z.infer<typeof cartPayloadSchema>;
+// cartPayloadSchema was removed when the cart moved into the database: the
+// checkout form no longer submits its contents, so there is no client payload
+// left to validate. submitCheckout reads the cart from Postgres instead.

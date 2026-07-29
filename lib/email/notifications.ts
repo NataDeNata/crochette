@@ -1,6 +1,7 @@
 import { sendEmail } from "./resend";
 import { formatPrice } from "@/lib/data/products";
 import { SITE_URL } from "@/lib/site";
+import { logError } from "@/lib/observability/log";
 
 const STUDIO_NOTIFY_EMAIL = process.env.STUDIO_NOTIFY_EMAIL;
 
@@ -8,7 +9,19 @@ async function sendEmailSafe(params: { to: string; subject: string; html: string
   try {
     await sendEmail(params);
   } catch (err) {
-    console.error(`${context} email failed:`, err);
+    // Deliberately swallowed — a failed notification must never fail a
+    // submission whose DB write already succeeded. That makes this the single
+    // most important thing in the app to report: all 10 notification call
+    // sites funnel through here, including the paid-order receipt fired from
+    // the Xendit webhook, and `sendEmail` also throws when RESEND_API_KEY is
+    // unset — so a missing env var would otherwise drop every transactional
+    // email forever with nothing but a stdout line.
+    //
+    // `emailContext` is the caller's label as a queryable field rather than
+    // string-interpolated, which turns 10 sites into one filterable dimension.
+    // The recipient address is deliberately NOT logged (and Resend's own error
+    // message, which often contains it, is scrubbed by the logger).
+    logError("email.send_failed", err, { emailContext: context });
   }
 }
 
@@ -108,6 +121,7 @@ export async function notifyOrderPaid(order: {
   shippingPostalCode: string;
   subtotalCents: number;
   shippingCents: number;
+  discountCents: number;
   totalCents: number;
 }, items: Array<{ productName: string; unitPriceCents: number; quantity: number }>) {
   const safeName = escapeHtml(order.customerName);
@@ -134,6 +148,7 @@ export async function notifyOrderPaid(order: {
           ${detailList([
             ["Subtotal", formatPrice(order.subtotalCents)],
             ["Shipping", formatPrice(order.shippingCents)],
+            ["Discount", order.discountCents > 0 ? `-${formatPrice(order.discountCents)}` : null],
             ["Total", formatPrice(order.totalCents)],
             ["Shipping to", address],
           ])}
@@ -160,6 +175,71 @@ export async function notifyOrderPaid(order: {
         )
       : Promise.resolve(),
   ]);
+}
+
+export async function notifyOrderShipped(order: {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  trackingNumber: string | null;
+  carrier: string | null;
+}) {
+  const safeName = escapeHtml(order.customerName);
+
+  await sendEmailSafe(
+    {
+      to: order.customerEmail,
+      subject: "Your Crochette order has shipped!",
+      html: wrapEmail(`
+        <p>Hi ${safeName},</p>
+        <p>Good news — your order is on its way!</p>
+        ${detailList([
+          ["Carrier", order.carrier],
+          ["Tracking number", order.trackingNumber],
+        ])}
+        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
+      `),
+    },
+    "order shipped notice"
+  );
+}
+
+export async function notifyOrderDelivered(order: {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+}) {
+  const safeName = escapeHtml(order.customerName);
+
+  await sendEmailSafe(
+    {
+      to: order.customerEmail,
+      subject: "Your Crochette order is complete",
+      html: wrapEmail(`
+        <p>Hi ${safeName},</p>
+        <p>Your order is marked complete — we hope you love your piece! If anything's not quite right, just reply and let us know.</p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
+      `),
+    },
+    "order delivered notice"
+  );
+}
+
+export async function notifyAccountCreated(data: { email: string; name: string }) {
+  const safeName = escapeHtml(data.name);
+
+  await sendEmailSafe(
+    {
+      to: data.email,
+      subject: "Welcome to Crochette",
+      html: wrapEmail(`
+        <p>Hi ${safeName},</p>
+        <p>Your account is ready — you can now save shipping addresses and see your order history any time you're signed in.</p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/account">Go to your account</a></p>
+      `),
+    },
+    "account welcome"
+  );
 }
 
 export async function notifyContactMessageSubmitted(data: {

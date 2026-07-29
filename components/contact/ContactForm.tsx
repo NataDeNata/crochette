@@ -7,15 +7,10 @@ import { IDLE_STATE } from "@/lib/actions/types";
 import { FormSuccessMessage } from "@/components/forms/FormSuccessMessage";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-const inputStyle = {
-  padding: "14px 18px",
-  borderRadius: 12,
-  border: "1.5px solid oklch(0.75 0.03 20)",
-  background: "oklch(0.98 0.01 85)",
-  fontSize: 14,
-  fontFamily: "inherit",
-} as const;
+const fieldClassName = "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
 
 export function ContactForm() {
   const [state, formAction, isPending] = useActionState(submitContactMessage, IDLE_STATE);
@@ -33,22 +28,22 @@ export function ContactForm() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          className="flex flex-col gap-3.5"
         >
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <input name="name" placeholder="Your name" style={inputStyle} />
+          <motion.div layout className="flex flex-col gap-1.5">
+            <Input name="name" placeholder="Your name" className={fieldClassName} />
             <FieldError error={fieldErrors.name?.[0]} />
           </motion.div>
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <input name="email" placeholder="Email address" type="email" style={inputStyle} />
+          <motion.div layout className="flex flex-col gap-1.5">
+            <Input name="email" placeholder="Email address" type="email" className={fieldClassName} />
             <FieldError error={fieldErrors.email?.[0]} />
           </motion.div>
 
-          <input name="subject" placeholder="Subject" style={inputStyle} />
+          <Input name="subject" placeholder="Subject" className={fieldClassName} />
 
-          <motion.div layout style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <textarea name="message" placeholder="Your message..." rows={5} style={{ ...inputStyle, resize: "vertical" }} />
+          <motion.div layout className="flex flex-col gap-1.5">
+            <Textarea name="message" placeholder="Your message..." rows={5} className={`${fieldClassName} resize-y`} />
             <FieldError error={fieldErrors.message?.[0]} />
           </motion.div>
 

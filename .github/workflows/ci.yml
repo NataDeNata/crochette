@@ -1,0 +1,92 @@
+name: CI
+
+# No job uses a repository secret. That is deliberate: this repository is
+# public, so a workflow that needed the real DATABASE_URL could not safely run
+# on a pull request from a fork. The integration job brings its own throwaway
+# Postgres instead, which is the same reason the local suite uses a container.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  verify:
+    name: Lint, types, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm run test:unit
+
+  integration:
+    name: Integration tests and build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crochette_test
+        # 55432 on the host, matching .env.test, so the committed connection
+        # string works unchanged here and locally.
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crochette_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # Applies drizzle/ to the service container and runs the suite. The
+      # connection string comes from the committed .env.test; the safety check
+      # in tests/setup/env.ts passes because the service is published on
+      # localhost.
+      - name: Integration tests
+        run: npm run test:integration
+
+      # Belongs in this job specifically: app/sitemap.ts queries the database at
+      # build time, so a build without one fails for reasons unrelated to the
+      # change under test.
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:55432/crochette_test
+          AUTH_SECRET: ci-build-secret-not-used-at-runtime
+          # lib/security/rate-limit.ts constructs its Upstash client at module
+          # scope and throws on an undefined url, so the module has to be
+          # importable for the build to collect page data. Nothing is ever sent.
+          KV_REST_API_URL: http://localhost:1/upstash-not-used-in-ci
+          KV_REST_API_TOKEN: ci-token-not-used

@@ -2,12 +2,24 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/lib/auth";
+import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import type { AdminLoginState } from "@/lib/actions/admin-login-types";
 
 export async function adminLogin(_prevState: AdminLoginState, formData: FormData): Promise<AdminLoginState> {
   const email = formData.get("email");
+  const emailKey = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+  const ip = await getClientIp();
+  if (await isRateLimited("admin-login", `${ip}:${emailKey}`)) {
+    return {
+      status: "error",
+      message: "Too many attempts — please wait a few minutes and try again.",
+      email: typeof email === "string" ? email : undefined,
+    };
+  }
+
   try {
-    await signIn("credentials", {
+    await signIn("admin", {
       email,
       password: formData.get("password"),
       redirectTo: "/admin",

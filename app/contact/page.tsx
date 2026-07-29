@@ -19,49 +19,25 @@ const DETAILS = [
 
 export default function ContactPage() {
   return (
-    <section style={{ padding: "80px 48px 90px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}>
+    <section className="pt-20 px-12 pb-[90px] grid grid-cols-2 gap-16">
       <FadeIn>
         <div>
-          <div
-            style={{
-              fontSize: 13,
-              letterSpacing: 3,
-              textTransform: "uppercase",
-              color: "oklch(0.5 0.05 20)",
-              marginBottom: 14,
-            }}
-          >
+          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-3.5">
             Contact
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              fontWeight: 500,
-              fontSize: "clamp(34px,4.4vw,50px)",
-              margin: "0 0 22px",
-              lineHeight: 1.12,
-            }}
-          >
+          <h1 className="font-serif font-medium text-[clamp(34px,4.4vw,50px)] mb-[22px] leading-[1.12]">
             Let&apos;s get in touch
           </h1>
-          <p style={{ fontSize: 16, lineHeight: 1.75, color: "oklch(0.4 0.02 60)", margin: "0 0 32px", maxWidth: 420 }}>
+          <p className="text-base leading-[1.75] text-[oklch(0.4_0.02_60)] mb-8 max-w-[420px]">
             Questions about an order, shipping, or just want to say hello? We&apos;d love to hear from you.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div className="flex flex-col gap-5">
             {DETAILS.map((d) => (
               <div key={d.label}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                    color: "oklch(0.5 0.04 20)",
-                    marginBottom: 4,
-                  }}
-                >
+                <div className="text-xs tracking-[1px] uppercase text-[oklch(0.5_0.04_20)] mb-1">
                   {d.label}
                 </div>
-                <div style={{ fontSize: 16 }}>{d.value}</div>
+                <div className="text-base">{d.value}</div>
               </div>
             ))}
           </div>
@@ -69,7 +45,7 @@ export default function ContactPage() {
       </FadeIn>
 
       <FadeIn delay={0.1}>
-        <div style={{ padding: 40, borderRadius: 32, background: "oklch(0.9 0.045 20)" }}>
+        <div className="p-10 rounded-[32px] bg-accent">
           <ContactForm />
         </div>
       </FadeIn>

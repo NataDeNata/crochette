@@ -1,81 +1,133 @@
-import Link from "next/link";
-import { desc } from "drizzle-orm";
+import { desc, count, and, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { lowStockCondition, isLowStock } from "@/lib/db/inventory";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { LowStockBadge } from "@/components/admin/LowStockBadge";
 
-const STATUS_COLORS: Record<string, string> = {
-  active: "oklch(0.55 0.12 150)",
-  draft: "oklch(0.55 0.02 60)",
-  sold_out: "oklch(0.5 0.18 25)",
+const STATUS_VARIANT: Record<string, "default" | "outline" | "destructive"> = {
+  active: "default",
+  draft: "outline",
+  sold_out: "destructive",
 };
 
-export default async function AdminProductsPage() {
-  const rows = await db.select().from(products).orderBy(desc(products.createdAt));
+const PAGE_SIZE = 20;
+
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; stock?: string }>;
+}) {
+  const sp = await searchParams;
+  const stock = sp.stock === "low" ? "low" : "";
+  const rawPage = Math.max(1, Number(sp.page) || 1);
+
+  const conditions: SQL[] = [];
+  if (stock === "low") conditions.push(lowStockCondition);
+  const where = conditions.length ? and(...conditions) : undefined;
+
+  // The second count is unfiltered on purpose — it powers the "Low stock (N)"
+  // toggle below, so the filter is discoverable from this page and not only by
+  // arriving from the dashboard tile.
+  const [[{ total }], [{ lowStockCount }]] = await Promise.all([
+    db.select({ total: count() }).from(products).where(where),
+    db.select({ lowStockCount: count() }).from(products).where(lowStockCondition),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(rawPage, totalPages);
+
+  const rows = await db
+    .select()
+    .from(products)
+    .where(where)
+    .orderBy(desc(products.createdAt))
+    .limit(PAGE_SIZE)
+    .offset((page - 1) * PAGE_SIZE);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 1100 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontFamily: "var(--font-cormorant), serif", fontWeight: 500, fontSize: 30, margin: 0 }}>
-          Products
-        </h1>
-        <Link
-          href="/admin/products/new"
-          style={{
-            background: "oklch(0.28 0.02 60)",
-            color: "oklch(0.98 0.01 85)",
-            padding: "11px 22px",
-            borderRadius: 24,
-            fontSize: 13.5,
-            fontWeight: 500,
-          }}
-        >
-          + New product
-        </Link>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <h1 className="font-serif text-3xl font-medium">Products</h1>
+        <div className="flex items-center gap-2">
+          {stock === "low" ? (
+            <Button href="/admin/products" variant="outline" size="md">
+              Show all
+            </Button>
+          ) : (
+            lowStockCount > 0 && (
+              <Button href="/admin/products?stock=low" variant="outline" size="md">
+                Low stock ({lowStockCount})
+              </Button>
+            )
+          )}
+          <Button href="/admin/products/new" size="md">
+            + New product
+          </Button>
+        </div>
       </div>
 
-      <div style={{ borderRadius: 16, border: "1.5px solid oklch(0.9 0.02 60)", overflow: "hidden", background: "oklch(1 0 0)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-          <thead>
-            <tr style={{ textAlign: "left", background: "oklch(0.97 0.01 60)" }}>
-              {["Name", "Category", "Price", "Stock", "Status", ""].map((h) => (
-                <th key={h} style={{ padding: "12px 16px", fontWeight: 600, color: "oklch(0.45 0.02 60)" }}>
-                  {h}
-                </th>
+      <Card className="p-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell className="text-muted-foreground capitalize">{p.category.replace("-", " ")}</TableCell>
+                  <TableCell>{formatPrice(p.priceCents)}</TableCell>
+                  <TableCell className={p.stockQty === 0 ? "text-destructive" : undefined}>
+                    <span className="inline-flex items-center gap-2">
+                      {p.stockQty}
+                      {isLowStock(p) && <LowStockBadge threshold={p.lowStockThreshold} />}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={STATUS_VARIANT[p.status] ?? "outline"}>{p.status.replace("_", " ")}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <Button href={`/admin/products/${p.id}`} variant="ghost" size="sm">
+                      Edit
+                    </Button>
+                    <DeleteProductButton id={p.id} slug={p.slug} name={p.name} />
+                  </TableCell>
+                </TableRow>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.id} style={{ borderTop: "1px solid oklch(0.93 0.01 60)" }}>
-                <td style={{ padding: "12px 16px" }}>{p.name}</td>
-                <td style={{ padding: "12px 16px", color: "oklch(0.5 0.02 60)" }}>{p.category}</td>
-                <td style={{ padding: "12px 16px" }}>{formatPrice(p.priceCents)}</td>
-                <td style={{ padding: "12px 16px" }}>{p.stockQty}</td>
-                <td style={{ padding: "12px 16px" }}>
-                  <span style={{ color: STATUS_COLORS[p.status] ?? "inherit", textTransform: "capitalize" }}>
-                    {p.status.replace("_", " ")}
-                  </span>
-                </td>
-                <td style={{ padding: "12px 16px", display: "flex", gap: 14, justifyContent: "flex-end" }}>
-                  <Link href={`/admin/products/${p.id}`} style={{ color: "oklch(0.5 0.05 20)" }}>
-                    Edit
-                  </Link>
-                  <DeleteProductButton id={p.id} slug={p.slug} name={p.name} />
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={6} style={{ padding: "24px 16px", textAlign: "center", color: "oklch(0.5 0.02 60)" }}>
-                  No products yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              {rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                    {stock === "low" ? "No products are running low right now." : "No products yet."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={total}
+        basePath="/admin/products"
+        params={{ stock: stock || undefined }}
+      />
     </div>
   );
 }

@@ -5,52 +5,70 @@ import { IDLE_STATE } from "@/lib/actions/types";
 import { updateOrder } from "@/app/admin/orders/actions";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
-
-const inputStyle = {
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "1.5px solid oklch(0.85 0.02 60)",
-  background: "oklch(1 0 0)",
-  fontSize: 14,
-  fontFamily: "inherit",
-  width: "100%",
-} as const;
-
-const labelStyle = { fontSize: 12.5, color: "oklch(0.45 0.02 60)", marginBottom: 6, display: "block" } as const;
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FORWARD_STATUSES = ["shipped", "completed", "cancelled"];
 
-export function OrderUpdateForm({ id, status }: { id: string; status: string }) {
+export function OrderUpdateForm({
+  id,
+  status,
+  trackingNumber,
+  carrier,
+}: {
+  id: string;
+  status: string;
+  trackingNumber: string | null;
+  carrier: string | null;
+}) {
   const action = updateOrder.bind(null, id);
   const [state, formAction, isPending] = useActionState(action, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
   const defaultValue = FORWARD_STATUSES.includes(status) ? status : "shipped";
 
   return (
-    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <label style={labelStyle} htmlFor="status">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="status">
           Fulfillment status
         </label>
         {(status === "pending" || status === "failed") && (
-          <div style={{ fontSize: 12, color: "oklch(0.5 0.02 60)", marginBottom: 8 }}>
+          <div className="mb-2 text-[13px] text-muted-foreground">
             Current status is <strong>{status}</strong> — set automatically by the payment flow, not editable here.
           </div>
         )}
-        <select id="status" name="status" defaultValue={defaultValue} style={inputStyle}>
-          {FORWARD_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+        <Select name="status" defaultValue={defaultValue}>
+          <SelectTrigger id="status" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FORWARD_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <FieldError error={fieldErrors.status?.[0]} />
       </div>
 
+      <div>
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="carrier">
+          Carrier (optional)
+        </label>
+        <Input id="carrier" name="carrier" defaultValue={carrier ?? ""} placeholder="e.g. J&T Express" />
+        <FieldError error={fieldErrors.carrier?.[0]} />
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="trackingNumber">
+          Tracking number (optional)
+        </label>
+        <Input id="trackingNumber" name="trackingNumber" defaultValue={trackingNumber ?? ""} />
+        <FieldError error={fieldErrors.trackingNumber?.[0]} />
+      </div>
+
       <FieldError error={state.status === "error" ? state.message : undefined} />
-      {state.status === "success" && (
-        <span style={{ fontSize: 12.5, color: "oklch(0.55 0.12 150)" }}>{state.message}</span>
-      )}
 
       <SubmitButton isPending={isPending} label="Save" pendingLabel="Saving…" />
     </form>

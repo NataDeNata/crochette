@@ -3,13 +3,12 @@
 import { useRef, useState } from "react";
 import { motion, useAnimationFrame, useMotionValue, useReducedMotion } from "framer-motion";
 import { ProductCard } from "@/components/ui/ProductCard";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/data/products";
 
-const CARD_WIDTH = 320;
-const GAP = 36;
 const SPEED_PX_PER_SEC = 32;
 
-export function ShopMarquee({ products }: { products: Product[] }) {
+export function ShopMarquee({ products, onDark = false }: { products: Product[]; onDark?: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const [paused, setPaused] = useState(false);
@@ -36,7 +35,7 @@ export function ShopMarquee({ products }: { products: Product[] }) {
 
   return (
     <div
-      style={{ overflow: "hidden", cursor: dragging ? "grabbing" : "grab" }}
+      className={cn("overflow-x-hidden py-3", dragging ? "cursor-grabbing" : "cursor-grab")}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -51,15 +50,18 @@ export function ShopMarquee({ products }: { products: Product[] }) {
           setDragging(false);
           wrap();
         }}
-        style={{ display: "flex", gap: GAP, width: "max-content", x }}
+        className="flex gap-9 w-max"
+        style={{ x }}
       >
         {[...products, ...products].map((p, i) => (
           <div
             key={`${p.id}-${i}`}
-            style={{ width: CARD_WIDTH, flexShrink: 0, pointerEvents: dragging ? "none" : undefined }}
+            // CARD_WIDTH must stay a literal `w-[320px]` here (not interpolated)
+            // so Tailwind's content scanner can see the class at build time.
+            className={cn("w-[320px] shrink-0", dragging && "pointer-events-none")}
             aria-hidden={i >= products.length || undefined}
           >
-            <ProductCard product={p} />
+            <ProductCard product={p} onDark={onDark} />
           </div>
         ))}
       </motion.div>
