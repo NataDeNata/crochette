@@ -34,18 +34,21 @@ export function CheckoutForm({
   defaultEmail?: string;
 }) {
   const router = useRouter();
-  const { items, subtotalCents } = useCart();
+  const { items, subtotalCents, loaded } = useCart();
   const [state, formAction, isPending] = useActionState(submitCheckout, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   // A direct nav to /checkout with nothing in the cart has nothing to buy.
+  // Gated on `loaded`: the cart now lives on the server, and React runs this
+  // child effect before CartProvider's hydrate effect, so without the guard an
+  // empty first render bounced every checkout straight back to /cart.
   useEffect(() => {
-    if (items.length === 0 && !isPending) router.replace("/cart");
-  }, [items.length, isPending, router]);
+    if (loaded && items.length === 0 && !isPending) router.replace("/cart");
+  }, [loaded, items.length, isPending, router]);
 
-  if (items.length === 0) return null;
+  if (loaded && items.length === 0) return null;
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-12 max-w-[900px] mx-auto">
@@ -56,7 +59,10 @@ export function CheckoutForm({
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col gap-3.5"
       >
-        <input type="hidden" name="cart" value={JSON.stringify(items.map((i) => ({ productId: i.productId, quantity: i.quantity })))} />
+        {/* The cart is no longer submitted with the form — submitCheckout reads
+            it from the database, so the client can't influence what is bought.
+            `items` is still used above for the order summary and the
+            empty-cart redirect. */}
 
         <h2 className="font-serif font-medium text-[22px] mb-1">Contact</h2>
         <div className="flex flex-col gap-1.5">

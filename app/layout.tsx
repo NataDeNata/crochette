@@ -7,6 +7,7 @@ import { SITE_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth";
+import { getCart } from "@/app/cart/actions";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -73,11 +74,19 @@ export default async function RootLayout({
   // never render Nav/Footer — see SiteChrome's /admin special-case).
   const session = await auth();
 
+  // Read the cart during render so the nav badge is correct on the very first
+  // frame instead of painting 0 and popping. This costs nothing in rendering
+  // strategy: `auth()` above already reads cookies, so the layout — and with
+  // it every page — is dynamic regardless. getCart() is the read-only path and
+  // never creates a cart or sets a cookie, which it could not do here anyway
+  // (Next forbids setting cookies during render).
+  const initialCart = await getCart();
+
   return (
     <html lang="en" className={cn(cormorant.variable, workSans.variable, "font-sans")}>
       <body>
         <div className="relative">
-          <CartProvider>
+          <CartProvider initialCart={initialCart}>
             <SiteChrome session={session}>{children}</SiteChrome>
           </CartProvider>
         </div>

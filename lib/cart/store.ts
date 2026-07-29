@@ -6,6 +6,7 @@ import {
   addToCart,
   emptyCart,
   getCart,
+  importLegacyCart,
   removeFromCart,
   setCartItemQuantity,
 } from "@/app/cart/actions";
@@ -37,6 +38,8 @@ export type CartState = {
 
   hydrate: (view: CartView) => void;
   refresh: () => Promise<void>;
+  /** One-time import of a pre-database cart left in localStorage. */
+  importLegacy: () => Promise<void>;
   add: (line: Omit<CartLine, "quantity">, quantity: number) => Promise<void>;
   setQuantity: (productId: string, quantity: number) => Promise<void>;
   remove: (productId: string) => Promise<void>;
@@ -86,6 +89,45 @@ export const useCartStore = create<CartState>((set, get) => {
     hydrate: (view) => set({ lines: view.lines, ...totals(view.lines), loaded: true }),
 
     refresh: () => sync(() => getCart()),
+
+    importLegacy: async () => {
+      // Key used by the pre-database CartProvider.
+      const LEGACY_KEY = "crochette-cart";
+
+      let legacy: unknown;
+      try {
+        const raw = window.localStorage.getItem(LEGACY_KEY);
+        if (!raw) return;
+        legacy = JSON.parse(raw);
+      } catch {
+        // Corrupt or unavailable storage — nothing recoverable, and the key is
+        // removed below so this can't retry forever.
+        try {
+          window.localStorage.removeItem(LEGACY_KEY);
+        } catch {}
+        return;
+      }
+
+      const items = Array.isArray(legacy)
+        ? legacy
+            .filter(
+              (i): i is { productId: string; quantity: number } =>
+                typeof i?.productId === "string" && Number.isFinite(Number(i?.quantity)),
+            )
+            .map((i) => ({ productId: i.productId, quantity: Number(i.quantity) }))
+        : [];
+
+      // Remove the key BEFORE the network call, not after. If the import fails
+      // or the tab closes mid-flight, retrying on next load risks importing
+      // twice and doubling quantities; losing an already-abandoned localStorage
+      // cart is the cheaper failure.
+      try {
+        window.localStorage.removeItem(LEGACY_KEY);
+      } catch {}
+
+      if (items.length === 0) return;
+      await sync(() => importLegacyCart(items));
+    },
 
     add: async (line, quantity) => {
       const lines = [...get().lines];

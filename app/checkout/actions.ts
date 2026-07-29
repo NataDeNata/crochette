@@ -5,8 +5,10 @@ import { headers } from "next/headers";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products, orders, orderItems } from "@/lib/db/schema";
-import { checkoutSchema, cartPayloadSchema } from "@/lib/validation/checkout";
+import { checkoutSchema } from "@/lib/validation/checkout";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
+import { resolveCartId } from "@/lib/cart/resolve";
+import { clearCart, getRawCartItems } from "@/lib/db/cart";
 import { createPaymentSession } from "@/lib/payments/xendit";
 import { resolveDiscountCode } from "@/lib/db/discounts";
 import { auth } from "@/lib/auth";
@@ -53,20 +55,19 @@ export async function submitCheckout(
     };
   }
 
-  let cart;
-  try {
-    cart = cartPayloadSchema.parse(JSON.parse(String(formData.get("cart") || "[]")));
-  } catch (err) {
-    // Was a bare `catch {}`. The customer sees a clear message either way, but
-    // without this there's no way to tell "empty cart" apart from "CartContext
-    // is emitting malformed JSON after a schema change". Cart contents are
-    // never logged.
-    logWarn("checkout.cart_payload_invalid", {
-      reason: err instanceof Error ? err.name : "unknown",
-    });
+  // The cart is read from the DATABASE, not from the submitted form. It used to
+  // arrive as a JSON blob in formData, which meant the server took the client's
+  // word for which products and quantities were being bought — prices were
+  // always recomputed server-side, but the line items themselves were not
+  // verified. Now the client cannot influence what is purchased at all.
+  const cartId = await resolveCartId({ create: false });
+  const cart = cartId ? await getRawCartItems(cartId) : [];
+
+  if (cart.length === 0) {
+    logWarn("checkout.empty_cart", { hasCart: Boolean(cartId) });
     return {
       status: "error",
-      message: "Your cart looks empty or invalid — please go back to your cart and try again.",
+      message: "Your cart is empty — please add something before checking out.",
     };
   }
 
@@ -185,6 +186,12 @@ export async function submitCheckout(
   }
 
   await db.update(orders).set({ xenditPaymentSessionId: session.id }).where(eq(orders.id, order.id));
+
+  // Emptied only once the payment session actually exists. Clearing any earlier
+  // would lose the cart if Xendit failed above, stranding the customer with
+  // nothing to retry from. The order row already records the line items, so a
+  // failed payment can still be resumed from /order/[id].
+  if (cartId) await clearCart(cartId);
 
   redirect(session.paymentLinkUrl);
 }

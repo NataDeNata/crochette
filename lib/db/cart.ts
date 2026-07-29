@@ -113,6 +113,28 @@ export async function getCartView(cartId: string, exec: Executor = db): Promise<
   };
 }
 
+/**
+ * The stored lines exactly as written, WITHOUT clamping to stock or filtering
+ * to active products.
+ *
+ * Checkout needs this rather than `getCartView`. The view silently clamps a
+ * quantity down to available stock, which is right for display but wrong at
+ * purchase: checkout deliberately refuses with "Only 2 left" instead of quietly
+ * charging for 2 when the shopper asked for 5. Clamping before that check would
+ * make the check unreachable — the same shape of bug as the webhook's
+ * unreachable 400.
+ */
+export async function getRawCartItems(
+  cartId: string,
+  exec: Executor = db,
+): Promise<{ productId: string; quantity: number }[]> {
+  return exec
+    .select({ productId: cartItems.productId, quantity: cartItems.quantity })
+    .from(cartItems)
+    .where(eq(cartItems.cartId, cartId))
+    .orderBy(cartItems.addedAt);
+}
+
 /** Add to a cart, or increase an existing line.
  *
  * The upsert is a single statement so two tabs adding the same product can't

@@ -38,6 +38,15 @@ type CartContextValue = {
   clear: () => void;
   subtotalCents: number;
   count: number;
+  /**
+   * False until the cart has been read at least once.
+   *
+   * Callers that act on an EMPTY cart must gate on this. React runs child
+   * effects before parent effects, so a child sees the store still empty on
+   * first render even though CartProvider is about to hydrate it — /checkout
+   * bounced straight back to /cart because of exactly that.
+   */
+  loaded: boolean;
 };
 
 /**
@@ -57,6 +66,7 @@ export function CartProvider({
 }) {
   const hydrate = useCartStore((s) => s.hydrate);
   const refresh = useCartStore((s) => s.refresh);
+  const importLegacy = useCartStore((s) => s.importLegacy);
 
   useEffect(() => {
     // Server-rendered cart is preferred: it paints the badge correctly on the
@@ -66,6 +76,13 @@ export function CartProvider({
     else void refresh();
   }, [initialCart, hydrate, refresh]);
 
+  // Separate effect, and deliberately not merged with the one above: this runs
+  // once per browser ever, while the hydrate effect re-runs whenever the
+  // server-rendered cart changes.
+  useEffect(() => {
+    void importLegacy();
+  }, [importLegacy]);
+
   return <>{children}</>;
 }
 
@@ -73,6 +90,7 @@ export function useCart(): CartContextValue {
   const lines = useCartStore((s) => s.lines);
   const subtotalCents = useCartStore((s) => s.subtotalCents);
   const count = useCartStore((s) => s.count);
+  const loaded = useCartStore((s) => s.loaded);
   const add = useCartStore((s) => s.add);
   const setQuantityInStore = useCartStore((s) => s.setQuantity);
   const removeInStore = useCartStore((s) => s.remove);
@@ -83,6 +101,7 @@ export function useCart(): CartContextValue {
       items: lines,
       subtotalCents,
       count,
+      loaded,
       addItem: (product, quantity) => {
         void add(
           {
@@ -99,6 +118,6 @@ export function useCart(): CartContextValue {
       setQuantity: (productId, quantity) => void setQuantityInStore(productId, quantity),
       clear: () => void clearInStore(),
     }),
-    [lines, subtotalCents, count, add, setQuantityInStore, removeInStore, clearInStore],
+    [lines, subtotalCents, count, loaded, add, setQuantityInStore, removeInStore, clearInStore],
   );
 }
