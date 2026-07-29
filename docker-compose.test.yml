@@ -1,0 +1,26 @@
+# Disposable Postgres for the integration test suite.
+#
+# Port 55432, deliberately not 5432, so it cannot collide with a Postgres
+# installed on the host later. The data directory is a tmpfs: the whole
+# database lives in RAM, which makes the TRUNCATE between every test
+# effectively free and guarantees nothing survives `down`.
+#
+#   npm run db:test:up     start it
+#   npm run db:test:down   stop and destroy it
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: crochette-test-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crochette_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d crochette_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15

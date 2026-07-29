@@ -37,6 +37,9 @@ devserver*.log
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+# Committed on purpose: it only ever addresses a local throwaway container, and
+# the test suite refuses to run without it. Nothing secret may go in it.
+!.env.test
 
 # vercel
 .vercel
@@ -47,3 +50,4 @@ next-env.d.ts
 
 .vercel
 .env*
+!.env.test
