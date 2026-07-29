@@ -7,7 +7,14 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 /** Mirrors tsconfig's `"@/*": ["./*"]`. A regex `find` is used rather than a
  * bare `"@"` prefix so `@/lib/x` maps to `<root>/lib/x` without a doubled
  * separator, and so a package that merely starts with "@" is never rewritten. */
-const alias = [{ find: /^@\/(.*)/, replacement: path.join(rootDir, "$1") }];
+const alias = [
+  { find: /^@\/(.*)/, replacement: path.join(rootDir, "$1") },
+  // `server-only` is a bundler-time guard with no runtime meaning, and it isn't
+  // a direct dependency — it resolved locally only because a transitive install
+  // hoisted it, and vanished on a clean CI install. Stubbing it keeps the guard
+  // in the source untouched.
+  { find: /^server-only$/, replacement: path.join(rootDir, "tests/setup/server-only-stub.ts") },
+];
 
 export default defineConfig({
   test: {

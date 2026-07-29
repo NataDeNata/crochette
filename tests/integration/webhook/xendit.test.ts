@@ -52,7 +52,10 @@ async function pendingOrder(overrides: Parameters<typeof makeOrder>[0] = {}) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  // mockReset, not clearAllMocks: `clear` only drops recorded calls, so a
+  // mockRejectedValue set by the post-commit tests survived into later ones and
+  // made an unrelated test fail. Reset restores the original implementation.
+  notifyOrderPaid.mockReset();
   process.env.XENDIT_WEBHOOK_TOKEN = TOKEN;
 });
 
