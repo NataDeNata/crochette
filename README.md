@@ -45,10 +45,48 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
+| `npm run test` | Every test (unit + integration) |
+| `npm run test:unit` | Unit tests only — no database, no network |
+| `npm run test:integration` | Integration tests — requires the test database below |
+| `npm run test:watch` | Unit tests in watch mode |
+| `npm run db:test:up` | Start the throwaway test Postgres (needs Docker) |
+| `npm run db:test:down` | Stop and destroy it |
 | `npm run db:generate` | Generate a Drizzle migration from schema changes |
 | `npm run db:migrate` | Apply migrations to `DATABASE_URL` |
 | `npm run db:studio` | Open Drizzle Studio against `DATABASE_URL` |
 | `npm run db:seed` | Seed the `products` table from `lib/data/products.ts` |
+
+## Testing
+
+Vitest, in two projects.
+
+**Unit** (`tests/unit/`) covers pure logic — the Sentry PII scrubbers, the
+Postgres error discriminator, the cart store's optimistic/debounce behaviour,
+the Zod schemas, email templates. No database, no network:
+
+```bash
+npm run test:unit
+```
+
+**Integration** (`tests/integration/`) runs against a real Postgres, because
+most of what it covers only exists in SQL: the cart's `LEAST`/`GREATEST` clamps,
+the webhook's row-locking idempotency, `lowStockCondition`. It needs Docker:
+
+```bash
+npm run db:test:up      # postgres:17 on 55432, data in tmpfs
+npm run test:integration
+npm run db:test:down
+```
+
+Migrations from `drizzle/` are applied automatically on the first run, so the
+schema under test is the schema production runs.
+
+**The suite cannot touch a real database.** It loads `.env.test` and only
+`.env.test` — never `.env.local`, which holds the live Supabase, Xendit, Resend
+and Upstash credentials — and `tests/setup/env.ts` refuses to connect unless the
+host is loopback and the database name ends in `_test`. Integration tests
+`TRUNCATE` every table between cases, so that check is what makes them safe;
+it has its own tests in `tests/unit/setup/safety-rail.test.ts`.
 
 ## Project structure
 
@@ -69,6 +107,11 @@ Open [http://localhost:3000](http://localhost:3000).
   /db             Drizzle schema, client, seed script
   /validation     Zod schemas for form input
 /drizzle          generated SQL migrations
+/tests
+  /unit           pure logic, no database
+  /integration    real Postgres, TRUNCATE between tests
+  /setup          env loading, the disposable-database guard, migrations
+  /fixtures       case tables shared between the two projects
 ```
 
 ## Status
