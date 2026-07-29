@@ -7,6 +7,7 @@ import { orders, orderItems } from "@/lib/db/schema";
 import { decrementStockForOrder, getOrderProductSlugs } from "@/lib/db/inventory";
 import { incrementDiscountUsage } from "@/lib/db/discounts";
 import { notifyOrderPaid } from "@/lib/email/notifications";
+import { isInvalidTextRepresentation } from "@/lib/db/errors";
 import { logError, logInfo, logWarn, flushTelemetry } from "@/lib/observability/log";
 
 /**
@@ -15,11 +16,19 @@ import { logError, logInfo, logWarn, flushTelemetry } from "@/lib/observability/
  * log at all — "order marked paid", "duplicate delivery", and "event ignored"
  * were indistinguishable from each other in production.
  *
- * Control flow is deliberately UNCHANGED: every return still yields the same
- * status and body it did before. The known behavioural bugs this logging makes
- * visible (silent 200 on unknown event; the post-commit gap below) are recorded
- * in Cro_Documentation.md rather than fixed here — changing payment control flow
- * blind is how a rare bug becomes a common one.
+ * That pass deliberately left control flow untouched. One bug it exposed has
+ * since been fixed:
+ *
+ * 2026-07-29 — a non-uuid `reference_id` used to 500, and because Xendit retries
+ * a 500, a malformed id retried forever. It is now recognised (SQLSTATE 22P02)
+ * and answered with the same terminal 400 as an unknown order. Genuine database
+ * failures still 500 and are still retried; see lib/db/errors.ts for why the two
+ * can be distinguished safely.
+ *
+ * Still recorded-not-fixed, both in Cro_Documentation.md: the silent 200 on an
+ * unknown event, and the post-commit gap below (a throw after the order commits
+ * as paid means the confirmation email is never sent, because the retry
+ * short-circuits on the idempotency fast path).
  */
 
 function isValidCallbackToken(received: string | null): boolean {
@@ -93,18 +102,29 @@ export async function POST(req: Request) {
     [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
   } catch (err) {
     // `orders.id` is a uuid column, so a reference_id that isn't uuid-shaped
-    // makes Postgres raise 22P02 (invalid input syntax) instead of returning
-    // zero rows — which means the `order_not_found` 400 below is UNREACHABLE
-    // for malformed ids, and the request 500s. Xendit retries a 500, so a
-    // permanently-bad reference_id retries forever.
+    // makes Postgres raise 22P02 instead of returning zero rows. That used to
+    // fall through to the generic rethrow below and 500 — and because Xendit
+    // retries a 500, a permanently-bad reference_id retried forever.
     //
-    // Left as a 500 on purpose: this same catch also sees genuine DB outages,
-    // where retrying IS correct, and telling the two apart by SQLSTATE is a
-    // payment control-flow change. Recorded in Cro_Documentation.md §12.
+    // A malformed id is terminal: no order can ever match it, so this is the
+    // same condition as `order_not_found` below and gets the same 400 response,
+    // which stops the retry loop. Genuine failures (an outage, a timeout) still
+    // fall through to the rethrow and are still retried, because 22P02 is a
+    // parse error on the literal we sent and cannot be raised by connectivity
+    // problems — see lib/db/errors.ts for why that distinction is sound.
+    if (isInvalidTextRepresentation(err)) {
+      logError("webhook.xendit.order_id_malformed", err, {
+        orderId,
+        detail:
+          "reference_id is not uuid-shaped so no order can match it; returning 400 (terminal) so Xendit stops retrying a request that would fail identically forever",
+      });
+      await flushTelemetry();
+      return NextResponse.json({ error: "order not found" }, { status: 400 });
+    }
+
     logError("webhook.xendit.order_lookup_failed", err, {
       orderId,
-      detail:
-        "order lookup threw instead of returning no rows; if this is SQLSTATE 22P02 the reference_id is not uuid-shaped and every Xendit retry will fail identically",
+      detail: "order lookup failed for a reason other than a malformed id — retrying is correct, so this stays a 500",
     });
     await flushTelemetry();
     throw err;
