@@ -2,6 +2,16 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/data/products";
 
+/**
+ * Lives in the (list) route group so it covers /shop only.
+ *
+ * At app/shop/loading.tsx it was also the nearest ancestor for /shop/[slug],
+ * which wrapped every product page in a Suspense boundary — making a missing
+ * slug stream a 200 instead of a 404, and flashing a grid of card skeletons
+ * while loading a single product. The group scopes it to the listing;
+ * /shop is unchanged as a URL.
+ */
+
 // ShopGrid.tsx's PAGE_SIZE — the first page always renders this many cards.
 const CARD_COUNT = 9;
 
