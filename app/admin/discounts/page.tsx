@@ -15,6 +15,15 @@ function formatValue(row: { type: "percentage" | "fixed"; value: number }) {
 
 export default async function AdminDiscountsPage() {
   const rows = await db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt));
+  // Read once per request rather than once per row, so every row in a table is
+  // judged against the same instant.
+  //
+  // The purity rule guards against a value changing unpredictably between
+  // re-renders. This is an async Server Component: it runs once per request and
+  // never re-renders, and "has this code expired?" is inherently a question
+  // about now, so there is no hazard here for the rule to prevent.
+  // eslint-disable-next-line react-hooks/purity -- async Server Component, see above
+  const now = Date.now();
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
@@ -39,7 +48,7 @@ export default async function AdminDiscountsPage() {
             </TableHeader>
             <TableBody>
               {rows.map((row) => {
-                const expired = row.expiresAt ? row.expiresAt.getTime() < Date.now() : false;
+                const expired = row.expiresAt ? row.expiresAt.getTime() < now : false;
                 const exhausted = row.maxUses != null && row.usedCount >= row.maxUses;
                 return (
                   <TableRow key={row.id}>
