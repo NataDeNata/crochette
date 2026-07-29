@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, pgEnum, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, pgEnum, uuid, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const productCategoryEnum = pgEnum("product_category", [
   "amigurumi",
@@ -202,6 +202,59 @@ export const contactMessages = pgTable("contact_messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Server-owned shopping cart, replacing the localStorage-only cart.
+ *
+ * `customerId` is NULLABLE and that is the whole anonymity mechanism: a guest's
+ * cart is simply a row nobody has claimed yet, addressed by a signed httpOnly
+ * cookie holding this id. No second identity system is involved — see
+ * lib/cart/cookie.ts. On login the guest cart is merged into the customer's and
+ * deleted (`mergeCarts` in lib/db/cart.ts).
+ *
+ * A customer has at most one cart, enforced by a unique index rather than by
+ * convention, so a merge race can't leave two live carts behind. Postgres
+ * treats NULLs as distinct in a unique index, so this constrains logged-in
+ * carts only and leaves any number of guest carts alone — which is exactly
+ * what's wanted. */
+export const carts = pgTable(
+  "carts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("carts_customer_id_unique").on(t.customerId)],
+);
+
+/** A line in a cart.
+ *
+ * Deliberately stores ONLY product_id and quantity. The old client-side
+ * CartItem also carried name/slug/priceCents/stockQty, which are snapshots that
+ * go stale the moment a product is edited — a cart could show a price checkout
+ * would then refuse. Display data is joined from `products` on read instead.
+ * Same rule checkout already enforces: the client never supplies prices.
+ *
+ * Contrast `order_items`, which DOES snapshot name and price. That is correct
+ * there and wrong here: an order must record what was actually charged.
+ *
+ * The (cart_id, product_id) unique constraint makes "add to cart" a real upsert
+ * rather than a read-then-write, which would race against a second tab. */
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    cartId: uuid("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").notNull(),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("cart_items_cart_id_product_id_unique").on(t.cartId, t.productId)],
+);
+
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
 export type ProductImageRow = typeof productImages.$inferSelect;
@@ -222,3 +275,7 @@ export type OrderItemRow = typeof orderItems.$inferSelect;
 export type NewOrderItemRow = typeof orderItems.$inferInsert;
 export type DiscountCodeRow = typeof discountCodes.$inferSelect;
 export type NewDiscountCodeRow = typeof discountCodes.$inferInsert;
+export type CartRow = typeof carts.$inferSelect;
+export type NewCartRow = typeof carts.$inferInsert;
+export type CartItemRow = typeof cartItems.$inferSelect;
+export type NewCartItemRow = typeof cartItems.$inferInsert;
