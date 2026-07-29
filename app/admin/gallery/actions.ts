@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { productImages } from "@/lib/db/schema";
 import type { FormActionState } from "@/lib/actions/types";
+import { logError } from "@/lib/observability/log";
 
 function revalidateGallery() {
   revalidatePath("/");
@@ -28,7 +29,7 @@ export async function addToGallery(
       .set({ galleryFeatured: true, galleryOrder: (maxOrder ?? -1) + 1 })
       .where(eq(productImages.id, imageId));
   } catch (err) {
-    console.error("addToGallery failed:", err);
+    logError("admin.gallery.add_failed", err, { imageId });
     return { status: "error", message: "Couldn't add that photo to the gallery — please try again." };
   }
 
@@ -47,7 +48,7 @@ export async function removeFromGallery(
       .set({ galleryFeatured: false, galleryOrder: null })
       .where(eq(productImages.id, imageId));
   } catch (err) {
-    console.error("removeFromGallery failed:", err);
+    logError("admin.gallery.remove_failed", err, { imageId });
     return { status: "error", message: "Couldn't remove that photo — please try again." };
   }
 
@@ -88,7 +89,7 @@ export async function reorderGalleryImage(
         .where(eq(productImages.id, neighbor.id));
     });
   } catch (err) {
-    console.error("reorderGalleryImage failed:", err);
+    logError("admin.gallery.reorder_failed", err, { imageId, direction });
     return { status: "error", message: "Couldn't reorder — please try again." };
   }
 

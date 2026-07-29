@@ -8,6 +8,7 @@ import { products, productImages } from "@/lib/db/schema";
 import { productImageMetaSchema, MAX_PRODUCT_IMAGES } from "@/lib/validation/product-images";
 import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
 import type { FormActionState } from "@/lib/actions/types";
+import { logError } from "@/lib/observability/log";
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
@@ -65,7 +66,7 @@ export async function uploadProductImages(
       )
     );
   } catch (err) {
-    console.error("uploadProductImages: blob upload failed:", err);
+    logError("admin.product_image.blob_upload_failed", err, { productId });
     return { status: "error", message: "Couldn't upload those photos — please try again." };
   }
 
@@ -82,7 +83,7 @@ export async function uploadProductImages(
       }))
     );
   } catch (err) {
-    console.error("uploadProductImages: db insert failed:", err);
+    logError("admin.product_image.db_insert_failed", err, { productId });
     return { status: "error", message: "Photos uploaded but couldn't be saved — please try again." };
   }
 
@@ -124,7 +125,7 @@ export async function deleteProductImage(
       }
     });
   } catch (err) {
-    console.error("deleteProductImage: db delete failed:", err);
+    logError("admin.product_image.db_delete_failed", err, { imageId });
     return { status: "error", message: "Couldn't delete that photo — please try again." };
   }
 
@@ -133,7 +134,7 @@ export async function deleteProductImage(
   } catch (err) {
     // DB is the source of truth for what renders — a stray orphaned blob is
     // just wasted storage, never a user-facing failure.
-    console.error("deleteProductImage: blob cleanup failed:", err);
+    logError("admin.product_image.blob_cleanup_failed", err, { imageId });
   }
 
   const slug = await getProductSlug(row.productId);
@@ -178,7 +179,7 @@ export async function reorderProductImage(
       await tx.update(productImages).set({ position: current.position }).where(eq(productImages.id, neighbor.id));
     });
   } catch (err) {
-    console.error("reorderProductImage failed:", err);
+    logError("admin.product_image.reorder_failed", err, { imageId, direction });
     return { status: "error", message: "Couldn't reorder that photo — please try again." };
   }
 
@@ -211,7 +212,7 @@ export async function setPrimaryProductImage(
       await tx.update(productImages).set({ isPrimary: true }).where(eq(productImages.id, imageId));
     });
   } catch (err) {
-    console.error("setPrimaryProductImage failed:", err);
+    logError("admin.product_image.set_primary_failed", err, { imageId });
     return { status: "error", message: "Couldn't update the cover photo — please try again." };
   }
 
@@ -254,7 +255,7 @@ export async function updateProductImageMeta(
       .set({ caption: parsed.data.caption || null, alt: parsed.data.alt || null })
       .where(eq(productImages.id, imageId));
   } catch (err) {
-    console.error("updateProductImageMeta failed:", err);
+    logError("admin.product_image.meta_update_failed", err, { imageId });
     return { status: "error", message: "Couldn't save changes — please try again." };
   }
 

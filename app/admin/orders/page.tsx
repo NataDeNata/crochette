@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { desc, count } from "drizzle-orm";
+import { desc, count, eq, ilike, or, and, inArray, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 
 const STATUS_TEXT_CLASSES: Record<string, string> = {
   pending: "text-[oklch(0.55_0.12_60)]",
@@ -13,20 +15,59 @@ const STATUS_TEXT_CLASSES: Record<string, string> = {
   cancelled: "text-[oklch(0.5_0.02_60)]",
 };
 
-export default async function AdminOrdersPage() {
-  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
-  const itemCounts = await db
-    .select({ orderId: orderItems.orderId, itemCount: count() })
-    .from(orderItems)
-    .groupBy(orderItems.orderId);
+const ORDER_STATUSES = ["pending", "paid", "failed", "shipped", "completed", "cancelled"] as const;
+const PAGE_SIZE = 20;
+
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; q?: string; status?: string }>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const status = ORDER_STATUSES.includes(sp.status as (typeof ORDER_STATUSES)[number]) ? sp.status! : "";
+  const rawPage = Math.max(1, Number(sp.page) || 1);
+
+  const conditions: SQL[] = [];
+  if (q) conditions.push(or(ilike(orders.customerName, `%${q}%`), ilike(orders.customerEmail, `%${q}%`))!);
+  if (status) conditions.push(eq(orders.status, status as (typeof ORDER_STATUSES)[number]));
+  const where = conditions.length ? and(...conditions) : undefined;
+
+  const [{ total }] = await db.select({ total: count() }).from(orders).where(where);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(rawPage, totalPages);
+
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(where)
+    .orderBy(desc(orders.createdAt))
+    .limit(PAGE_SIZE)
+    .offset((page - 1) * PAGE_SIZE);
+
+  const itemCounts = rows.length
+    ? await db
+        .select({ orderId: orderItems.orderId, itemCount: count() })
+        .from(orderItems)
+        .where(inArray(orderItems.orderId, rows.map((r) => r.id)))
+        .groupBy(orderItems.orderId)
+    : [];
   const countByOrder = new Map(itemCounts.map((r) => [r.orderId, r.itemCount]));
 
   return (
-    <div className="flex flex-col gap-5 max-w-[1100px]">
-      <h1 className="font-serif font-medium text-3xl m-0">Orders</h1>
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5">
+      <h1 className="m-0 font-serif text-3xl font-medium">Orders</h1>
 
-      <div className="rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] overflow-hidden bg-white">
-        <table className="w-full border-collapse text-[13.5px]">
+      <AdminSearchBar
+        basePath="/admin/orders"
+        q={q}
+        status={status}
+        statusOptions={ORDER_STATUSES.map((s) => ({ value: s, label: s }))}
+        searchPlaceholder="Search by customer name or email…"
+      />
+
+      <div className="overflow-hidden rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
+        <table className="w-full border-collapse text-[14.5px]">
           <thead>
             <tr className="text-left bg-[oklch(0.97_0.01_60)]">
               {["Customer", "Items", "Total", "Status", "Placed"].map((h) => (
@@ -42,7 +83,7 @@ export default async function AdminOrdersPage() {
                 <td className="py-3 px-4">
                   <Link href={`/admin/orders/${r.id}`} className="text-inherit">
                     <strong className="font-medium">{r.customerName}</strong>
-                    <div className="text-xs text-[oklch(0.55_0.02_60)]">{r.customerEmail}</div>
+                    <div className="text-sm text-[oklch(0.55_0.02_60)]">{r.customerEmail}</div>
                   </Link>
                 </td>
                 <td className="py-3 px-4 text-muted-foreground">{countByOrder.get(r.id) ?? 0}</td>
@@ -60,13 +101,21 @@ export default async function AdminOrdersPage() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-6 px-4 text-center text-muted-foreground">
-                  No orders yet.
+                  {q || status ? "No orders match your search." : "No orders yet."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={total}
+        basePath="/admin/orders"
+        params={{ q: q || undefined, status: status || undefined }}
+      />
     </div>
   );
 }

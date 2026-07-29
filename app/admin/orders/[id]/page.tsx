@@ -5,8 +5,8 @@ import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
 import { OrderUpdateForm } from "@/components/admin/OrderUpdateForm";
 
-const fieldClass = "text-[13.5px]";
-const labelClass = "text-xs text-muted-foreground mb-[3px]";
+const fieldClass = "text-[14.5px]";
+const labelClass = "text-[13px] text-muted-foreground mb-[3px]";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,10 +16,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
 
   return (
-    <div className="flex flex-col gap-6 max-w-[900px]">
+    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
       <div>
         <h1 className="font-serif font-medium text-3xl mb-1">{order.customerName}</h1>
-        <a href={`mailto:${order.customerEmail}`} className="text-[13.5px] text-[oklch(0.5_0.05_20)]">
+        <a href={`mailto:${order.customerEmail}`} className="text-[14.5px] text-[oklch(0.5_0.05_20)]">
           {order.customerEmail}
         </a>
       </div>
@@ -77,7 +77,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             </div>
           </div>
 
-          <div className="text-xs text-[oklch(0.55_0.02_60)]">
+          <div className="text-[13px] text-[oklch(0.55_0.02_60)]">
             Placed {order.createdAt.toLocaleString()}
             {order.paidAt && <> · Paid {order.paidAt.toLocaleString()}</>}
             {order.shippedAt && <> · Shipped {order.shippedAt.toLocaleString()}</>}

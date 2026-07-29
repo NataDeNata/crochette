@@ -4,8 +4,8 @@ import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { CustomOrderUpdateForm } from "@/components/admin/CustomOrderUpdateForm";
 
-const fieldClass = "text-[13.5px]";
-const labelClass = "text-xs text-muted-foreground mb-[3px]";
+const fieldClass = "text-[14.5px]";
+const labelClass = "text-[13px] text-muted-foreground mb-[3px]";
 
 export default async function CustomOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,10 +13,10 @@ export default async function CustomOrderDetailPage({ params }: { params: Promis
   if (!r) notFound();
 
   return (
-    <div className="flex flex-col gap-6 max-w-[900px]">
+    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
       <div>
         <h1 className="font-serif font-medium text-3xl mb-1">{r.name}</h1>
-        <a href={`mailto:${r.email}`} className="text-[13.5px] text-[oklch(0.5_0.05_20)]">
+        <a href={`mailto:${r.email}`} className="text-[14.5px] text-[oklch(0.5_0.05_20)]">
           {r.email}
         </a>
       </div>
@@ -67,7 +67,7 @@ export default async function CustomOrderDetailPage({ params }: { params: Promis
             )}
           </div>
 
-          <div className="text-xs text-[oklch(0.55_0.02_60)]">
+          <div className="text-[13px] text-[oklch(0.55_0.02_60)]">
             Submitted {r.createdAt.toLocaleString()}
           </div>
         </div>

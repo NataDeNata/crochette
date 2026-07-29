@@ -1,6 +1,7 @@
 import { sendEmail } from "./resend";
 import { formatPrice } from "@/lib/data/products";
 import { SITE_URL } from "@/lib/site";
+import { logError } from "@/lib/observability/log";
 
 const STUDIO_NOTIFY_EMAIL = process.env.STUDIO_NOTIFY_EMAIL;
 
@@ -8,7 +9,19 @@ async function sendEmailSafe(params: { to: string; subject: string; html: string
   try {
     await sendEmail(params);
   } catch (err) {
-    console.error(`${context} email failed:`, err);
+    // Deliberately swallowed — a failed notification must never fail a
+    // submission whose DB write already succeeded. That makes this the single
+    // most important thing in the app to report: all 10 notification call
+    // sites funnel through here, including the paid-order receipt fired from
+    // the Xendit webhook, and `sendEmail` also throws when RESEND_API_KEY is
+    // unset — so a missing env var would otherwise drop every transactional
+    // email forever with nothing but a stdout line.
+    //
+    // `emailContext` is the caller's label as a queryable field rather than
+    // string-interpolated, which turns 10 sites into one filterable dimension.
+    // The recipient address is deliberately NOT logged (and Resend's own error
+    // message, which often contains it, is scrubbed by the logger).
+    logError("email.send_failed", err, { emailContext: context });
   }
 }
 

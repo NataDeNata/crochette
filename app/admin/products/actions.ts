@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { products, orderItems, productImages } from "@/lib/db/schema";
 import { productSchema } from "@/lib/validation/product";
 import type { FormActionState } from "@/lib/actions/types";
+import { logError } from "@/lib/observability/log";
 
 function parseProductForm(formData: FormData) {
   return productSchema.safeParse({
@@ -19,6 +20,7 @@ function parseProductForm(formData: FormData) {
     tag: formData.get("tag") || undefined,
     status: formData.get("status"),
     stockQty: formData.get("stockQty"),
+    lowStockThreshold: formData.get("lowStockThreshold"),
   });
 }
 
@@ -44,9 +46,10 @@ export async function createProduct(_prevState: FormActionState, formData: FormD
       tag: parsed.data.tag || null,
       status: parsed.data.status,
       stockQty: parsed.data.stockQty,
+      lowStockThreshold: parsed.data.lowStockThreshold,
     });
   } catch (err) {
-    console.error("createProduct failed:", err);
+    logError("admin.product.create_failed", err, { slug: parsed.data.slug });
     const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't create the product — please try again.";
     return { status: "error", message };
   }
@@ -77,10 +80,11 @@ export async function updateProduct(
         tag: parsed.data.tag || null,
         status: parsed.data.status,
         stockQty: parsed.data.stockQty,
+        lowStockThreshold: parsed.data.lowStockThreshold,
       })
       .where(eq(products.id, id));
   } catch (err) {
-    console.error("updateProduct failed:", err);
+    logError("admin.product.update_failed", err, { productId: id, slug: parsed.data.slug });
     const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't save the product — please try again.";
     return { status: "error", message };
   }
@@ -119,7 +123,7 @@ export async function deleteProduct(
   try {
     await db.delete(products).where(eq(products.id, id));
   } catch (err) {
-    console.error("deleteProduct failed:", err);
+    logError("admin.product.delete_failed", err, { productId: id, slug });
     return { status: "error", message: "Couldn't delete the product — please try again." };
   }
 
@@ -129,7 +133,7 @@ export async function deleteProduct(
     try {
       await del(imagesToClean.map((i) => i.url));
     } catch (err) {
-      console.error("deleteProduct: blob cleanup failed:", err);
+      logError("admin.product.blob_cleanup_failed", err, { productId: id, blobCount: imagesToClean.length });
     }
   }
 

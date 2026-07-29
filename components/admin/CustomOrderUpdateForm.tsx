@@ -29,7 +29,7 @@ export function CustomOrderUpdateForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="status">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="status">
           Status
         </label>
         <Select name="status" defaultValue={status}>
@@ -48,7 +48,7 @@ export function CustomOrderUpdateForm({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="quotedPriceDollars">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="quotedPriceDollars">
           Quoted price (₱, optional)
         </label>
         <Input
@@ -63,7 +63,7 @@ export function CustomOrderUpdateForm({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="adminNotes">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="adminNotes">
           Admin notes (internal only)
         </label>
         <Textarea id="adminNotes" name="adminNotes" defaultValue={adminNotes} rows={4} />
@@ -71,9 +71,6 @@ export function CustomOrderUpdateForm({
       </div>
 
       <FieldError error={state.status === "error" ? state.message : undefined} />
-      {state.status === "success" && (
-        <span className="text-xs text-[oklch(0.55_0.12_150)]">{state.message}</span>
-      )}
 
       <SubmitButton isPending={isPending} label="Save" pendingLabel="Saving…" />
     </form>

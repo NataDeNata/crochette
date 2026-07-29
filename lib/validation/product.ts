@@ -2,6 +2,12 @@ import { z } from "zod";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Mirrors the `products.low_stock_threshold` column default in
+ * lib/db/schema.ts. Duplicated as a plain literal rather than imported from
+ * the schema so client components (ProductForm) can use it without pulling
+ * the Drizzle schema into the browser bundle — keep the two in sync. */
+export const DEFAULT_LOW_STOCK_THRESHOLD = 3;
+
 export const productSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   slug: z
@@ -16,6 +22,10 @@ export const productSchema = z.object({
   tag: z.string().trim().max(40).optional().or(z.literal("")),
   status: z.enum(["active", "draft", "sold_out"]),
   stockQty: z.coerce.number().int().min(0).max(100000),
+  /** min(0) is intentional — 0 is the "never alert me about this one" escape
+   * hatch. No cross-field check against stockQty: a threshold above current
+   * stock is exactly the state that should be firing the alert. */
+  lowStockThreshold: z.coerce.number().int().min(0).max(100000),
 });
 
 /** z.coerce fields give distinct input/output shapes — see DiscountForm.tsx's

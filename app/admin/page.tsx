@@ -2,12 +2,15 @@ import Link from "next/link";
 import { count, eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products, customOrderRequests, orders, discountCodes } from "@/lib/db/schema";
+import { lowStockCondition } from "@/lib/db/inventory";
 import { Card, CardContent } from "@/components/ui/card";
+import { LOW_STOCK_TEXT_CLASS } from "@/components/admin/LowStockBadge";
 
 export default async function AdminDashboardPage() {
   const [
     [{ productCount }],
     [{ activeProductCount }],
+    [{ lowStockCount }],
     [{ newRequestCount }],
     [{ newOrderCount }],
     [{ activeDiscountCount }],
@@ -15,6 +18,7 @@ export default async function AdminDashboardPage() {
   ] = await Promise.all([
     db.select({ productCount: count() }).from(products),
     db.select({ activeProductCount: count() }).from(products).where(eq(products.status, "active")),
+    db.select({ lowStockCount: count() }).from(products).where(lowStockCondition),
     db.select({ newRequestCount: count() }).from(customOrderRequests).where(eq(customOrderRequests.status, "new")),
     db.select({ newOrderCount: count() }).from(orders).where(eq(orders.status, "paid")),
     db.select({ activeDiscountCount: count() }).from(discountCodes).where(eq(discountCodes.active, true)),
@@ -32,26 +36,43 @@ export default async function AdminDashboardPage() {
   ]);
 
   return (
-    <div className="flex max-w-4xl flex-col gap-7">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-7">
       <h1 className="font-serif text-3xl font-medium">Dashboard</h1>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-        <Card>
-          <CardContent>
-            <div className="mb-1.5 text-[13px] text-muted-foreground">Products</div>
-            <div className="text-3xl font-medium">{productCount}</div>
-            <div className="text-xs text-muted-foreground">{activeProductCount} active</div>
-          </CardContent>
-        </Card>
+        <Link href="/admin/products">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Products</div>
+              <div className="text-3xl font-medium">{productCount}</div>
+              <div className="text-[13px] text-muted-foreground">{activeProductCount} active</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/products?stock=low">
+          <Card className="transition-shadow hover:shadow-sm">
+            <CardContent>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Products running low</div>
+              {/* Amber, not text-destructive: the two tiles below mean "a customer
+                  is waiting on you", this one means "plan a restock" — a different
+                  urgency, matching the row badge on /admin/products. */}
+              <div className={`text-3xl font-medium ${lowStockCount > 0 ? LOW_STOCK_TEXT_CLASS : ""}`}>
+                {lowStockCount}
+              </div>
+              <div className="text-[13px] text-muted-foreground">at or below their alert level</div>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/admin/custom-orders">
           <Card className="transition-shadow hover:shadow-sm">
             <CardContent>
-              <div className="mb-1.5 text-[13px] text-muted-foreground">New custom order requests</div>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">New custom order requests</div>
               <div className={`text-3xl font-medium ${newRequestCount > 0 ? "text-destructive" : ""}`}>
                 {newRequestCount}
               </div>
-              <div className="text-xs text-muted-foreground">awaiting review</div>
+              <div className="text-[13px] text-muted-foreground">awaiting review</div>
             </CardContent>
           </Card>
         </Link>
@@ -59,9 +80,9 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/orders">
           <Card className="transition-shadow hover:shadow-sm">
             <CardContent>
-              <div className="mb-1.5 text-[13px] text-muted-foreground">Paid orders awaiting fulfillment</div>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Paid orders awaiting fulfillment</div>
               <div className={`text-3xl font-medium ${newOrderCount > 0 ? "text-destructive" : ""}`}>{newOrderCount}</div>
-              <div className="text-xs text-muted-foreground">not yet shipped</div>
+              <div className="text-[13px] text-muted-foreground">not yet shipped</div>
             </CardContent>
           </Card>
         </Link>
@@ -69,9 +90,9 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/discounts">
           <Card className="transition-shadow hover:shadow-sm">
             <CardContent>
-              <div className="mb-1.5 text-[13px] text-muted-foreground">Active discount codes</div>
+              <div className="mb-1.5 text-[13.5px] text-muted-foreground">Active discount codes</div>
               <div className="text-3xl font-medium">{activeDiscountCount}</div>
-              <div className="text-xs text-muted-foreground">currently redeemable</div>
+              <div className="text-[13px] text-muted-foreground">currently redeemable</div>
             </CardContent>
           </Card>
         </Link>
@@ -81,7 +102,7 @@ export default async function AdminDashboardPage() {
         <CardContent>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold">Recent custom order requests</h2>
-            <Link href="/admin/custom-orders" className="text-[13px] text-[oklch(0.5_0.05_20)]">
+            <Link href="/admin/custom-orders" className="text-[13.5px] text-[oklch(0.5_0.05_20)]">
               View all →
             </Link>
           </div>
@@ -93,7 +114,7 @@ export default async function AdminDashboardPage() {
                 <Link
                   key={r.id}
                   href={`/admin/custom-orders/${r.id}`}
-                  className="flex justify-between border-b border-border/60 py-2.5 text-[13.5px] last:border-b-0"
+                  className="flex justify-between border-b border-border/60 py-2.5 text-[14.5px] last:border-b-0"
                 >
                   <span>
                     <strong className="font-medium">{r.name}</strong>

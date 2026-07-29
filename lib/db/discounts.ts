@@ -1,6 +1,7 @@
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { discountCodes } from "@/lib/db/schema";
+import { logWarn } from "@/lib/observability/log";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -64,9 +65,13 @@ export async function incrementDiscountUsage(tx: Tx, discountCodeId: string) {
     .returning();
 
   if (!row) {
-    console.warn(
-      `discount code ${discountCodeId} was redeemed past its maxUses cap (a concurrent checkout raced past the checkout-time check) — the order was still paid, usedCount was not incremented further`
-    );
+    // A concurrent checkout raced past the checkout-time maxUses check — the
+    // order was still paid, so this is a real (if small) revenue leak, not a
+    // harmless race. Structured + alerting so it's possible to answer "does
+    // this actually happen?" before spending effort on a locking fix.
+    // logWarn is synchronous console plus a fire-and-forget Sentry queue, so it
+    // cannot extend or fail the surrounding webhook transaction.
+    logWarn("discount.over_redeemed", { discountCodeId });
   }
 }
 

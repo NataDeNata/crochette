@@ -9,6 +9,7 @@ import type { FormActionState } from "@/lib/actions/types";
 import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
 import { auth } from "@/lib/auth";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
+import { logError } from "@/lib/observability/log";
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
@@ -94,7 +95,10 @@ export async function submitCustomOrder(
       description: parsed.data.description,
     });
   } catch (err) {
-    console.error("submitCustomOrder failed:", err);
+    logError("custom_order.submit_failed", err, {
+      photoCount: uploadResult.urls.length,
+      pieceType: parsed.data.pieceType,
+    });
     return {
       status: "error",
       message: "We couldn't send your request right now — please try again in a moment.",

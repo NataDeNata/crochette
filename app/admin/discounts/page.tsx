@@ -17,7 +17,7 @@ export default async function AdminDiscountsPage() {
   const rows = await db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt));
 
   return (
-    <div className="flex max-w-4xl flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-3xl font-medium">Discount codes</h1>
         <Button href="/admin/discounts/new" size="md">

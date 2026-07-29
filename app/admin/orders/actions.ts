@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { restoreStockForOrder, getOrderProductSlugs } from "@/lib/db/inventory";
@@ -9,6 +10,7 @@ import { decrementDiscountUsage } from "@/lib/db/discounts";
 import { orderUpdateSchema } from "@/lib/validation/order-admin";
 import { notifyOrderShipped, notifyOrderDelivered } from "@/lib/email/notifications";
 import type { FormActionState } from "@/lib/actions/types";
+import { logError } from "@/lib/observability/log";
 
 export async function updateOrder(
   id: string,
@@ -75,7 +77,7 @@ export async function updateOrder(
       }
     });
   } catch (err) {
-    console.error("updateOrder failed:", err);
+    logError("admin.order.update_failed", err, { orderId: id, nextStatus: parsed.data.status });
     return { status: "error", message: "Couldn't save changes — please try again." };
   }
 
@@ -102,5 +104,5 @@ export async function updateOrder(
     }
   }
 
-  return { status: "success", message: "Saved." };
+  redirect("/admin/orders");
 }

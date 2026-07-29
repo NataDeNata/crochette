@@ -6,6 +6,7 @@ import { contactSchema } from "@/lib/validation/contact";
 import type { FormActionState } from "@/lib/actions/types";
 import { notifyContactMessageSubmitted } from "@/lib/email/notifications";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
+import { logError } from "@/lib/observability/log";
 
 export async function submitContactMessage(
   _prevState: FormActionState,
@@ -42,7 +43,7 @@ export async function submitContactMessage(
       message: parsed.data.message,
     });
   } catch (err) {
-    console.error("submitContactMessage failed:", err);
+    logError("contact.submit_failed", err);
     return {
       status: "error",
       message: "We couldn't send your message right now — please try again in a moment.",

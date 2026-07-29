@@ -3,13 +3,18 @@
 import { useActionState, useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, type ProductFormValues, type ProductFormInput } from "@/lib/validation/product";
+import {
+  productSchema,
+  DEFAULT_LOW_STOCK_THRESHOLD,
+  type ProductFormValues,
+  type ProductFormInput,
+} from "@/lib/validation/product";
 import { IDLE_STATE, type FormActionState } from "@/lib/actions/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
+import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field";
 
 export type ProductFormDefaults = {
   name: string;
@@ -20,6 +25,7 @@ export type ProductFormDefaults = {
   tag: string;
   status: string;
   stockQty: string;
+  lowStockThreshold: string;
 };
 
 export function ProductForm({
@@ -45,6 +51,7 @@ export function ProductForm({
       tag: defaults?.tag ?? "",
       status: (defaults?.status as ProductFormInput["status"]) ?? "active",
       stockQty: defaults ? Number(defaults.stockQty) : 0,
+      lowStockThreshold: defaults ? Number(defaults.lowStockThreshold) : DEFAULT_LOW_STOCK_THRESHOLD,
     },
   });
 
@@ -58,6 +65,7 @@ export function ProductForm({
     fd.set("tag", values.tag ?? "");
     fd.set("status", values.status);
     fd.set("stockQty", String(values.stockQty));
+    fd.set("lowStockThreshold", String(values.lowStockThreshold));
     startTransition(() => dispatch(fd));
   }
 
@@ -94,6 +102,22 @@ export function ProductForm({
             <FieldError errors={[form.formState.errors.stockQty]} />
           </Field>
         </div>
+
+        <Field data-invalid={!!form.formState.errors.lowStockThreshold}>
+          <FieldLabel htmlFor="lowStockThreshold">Low stock alert at</FieldLabel>
+          <Input
+            id="lowStockThreshold"
+            type="number"
+            step="1"
+            min="0"
+            {...form.register("lowStockThreshold")}
+          />
+          <FieldDescription>
+            Flags this product on the admin dashboard once stock drops to this number or below. Set to 0 to turn
+            the alert off.
+          </FieldDescription>
+          <FieldError errors={[form.formState.errors.lowStockThreshold]} />
+        </Field>
 
         <div className="grid grid-cols-2 gap-4">
           <Field data-invalid={!!form.formState.errors.category}>

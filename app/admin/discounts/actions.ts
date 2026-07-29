@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { discountCodes, orders } from "@/lib/db/schema";
 import { discountSchema } from "@/lib/validation/discount";
 import type { FormActionState } from "@/lib/actions/types";
+import { logError } from "@/lib/observability/log";
 
 function parseDiscountForm(formData: FormData) {
   return discountSchema.safeParse({
@@ -46,7 +47,7 @@ export async function createDiscount(_prevState: FormActionState, formData: Form
   try {
     await db.insert(discountCodes).values(toRow(parsed.data));
   } catch (err) {
-    console.error("createDiscount failed:", err);
+    logError("admin.discount.create_failed", err);
     const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't create the discount code — please try again.";
     return { status: "error", message };
   }
@@ -68,7 +69,7 @@ export async function updateDiscount(
   try {
     await db.update(discountCodes).set(toRow(parsed.data)).where(eq(discountCodes.id, id));
   } catch (err) {
-    console.error("updateDiscount failed:", err);
+    logError("admin.discount.update_failed", err, { discountCodeId: id });
     const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't save the discount code — please try again.";
     return { status: "error", message };
   }
@@ -90,7 +91,7 @@ export async function deleteDiscount(id: string, _prevState: FormActionState, _f
   try {
     await db.delete(discountCodes).where(eq(discountCodes.id, id));
   } catch (err) {
-    console.error("deleteDiscount failed:", err);
+    logError("admin.discount.delete_failed", err, { discountCodeId: id });
     return { status: "error", message: "Couldn't delete the discount code — please try again." };
   }
 

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "New discount code", robots: { index:
 
 export default function NewDiscountPage() {
   return (
-    <div className="flex max-w-md flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
       <h1 className="font-serif text-3xl font-medium">New discount code</h1>
       <DiscountForm action={createDiscount} submitLabel="Create code" />
     </div>

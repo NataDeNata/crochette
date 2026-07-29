@@ -11,6 +11,7 @@ import { createPaymentSession } from "@/lib/payments/xendit";
 import { resolveDiscountCode } from "@/lib/db/discounts";
 import { auth } from "@/lib/auth";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
+import { logError, logWarn } from "@/lib/observability/log";
 import type { FormActionState } from "@/lib/actions/types";
 
 async function getSiteOrigin(): Promise<string> {
@@ -55,7 +56,14 @@ export async function submitCheckout(
   let cart;
   try {
     cart = cartPayloadSchema.parse(JSON.parse(String(formData.get("cart") || "[]")));
-  } catch {
+  } catch (err) {
+    // Was a bare `catch {}`. The customer sees a clear message either way, but
+    // without this there's no way to tell "empty cart" apart from "CartContext
+    // is emitting malformed JSON after a schema change". Cart contents are
+    // never logged.
+    logWarn("checkout.cart_payload_invalid", {
+      reason: err instanceof Error ? err.name : "unknown",
+    });
     return {
       status: "error",
       message: "Your cart looks empty or invalid — please go back to your cart and try again.",
@@ -160,7 +168,15 @@ export async function submitCheckout(
       cancelUrl: `${origin}/cart`,
     });
   } catch (err) {
-    console.error("createPaymentSession failed:", err);
+    // orderId correlates the log line with the orders row this then marks
+    // "failed" — currently the only durable artifact of a failure anywhere in
+    // the app. Customer name/email/phone are in scope here and deliberately
+    // not logged.
+    logError("checkout.payment_session_failed", err, {
+      orderId: order.id,
+      totalCents,
+      itemCount: lineItems.length,
+    });
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, order.id));
     return {
       status: "error",

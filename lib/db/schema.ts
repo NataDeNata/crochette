@@ -61,6 +61,13 @@ export const products = pgTable("products", {
   tag: text("tag"),
   status: productStatusEnum("status").notNull().default("active"),
   stockQty: integer("stock_qty").notNull().default(0),
+  /** Admin-facing restock trigger — per-product, because items sell at very
+   * different rates. Exact semantics live in `lowStockCondition`
+   * (lib/db/inventory.ts); 0 disables the alert for this product. Deliberately
+   * NOT the same number as `LOW_STOCK_THRESHOLD` in lib/data/products.ts, which
+   * is the customer-facing storefront urgency badge. Keep this default in sync
+   * with DEFAULT_LOW_STOCK_THRESHOLD in lib/validation/product.ts. */
+  lowStockThreshold: integer("low_stock_threshold").notNull().default(3),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -29,11 +29,11 @@ export function OrderUpdateForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="status">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="status">
           Fulfillment status
         </label>
         {(status === "pending" || status === "failed") && (
-          <div className="mb-2 text-xs text-muted-foreground">
+          <div className="mb-2 text-[13px] text-muted-foreground">
             Current status is <strong>{status}</strong> — set automatically by the payment flow, not editable here.
           </div>
         )}
@@ -53,7 +53,7 @@ export function OrderUpdateForm({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="carrier">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="carrier">
           Carrier (optional)
         </label>
         <Input id="carrier" name="carrier" defaultValue={carrier ?? ""} placeholder="e.g. J&T Express" />
@@ -61,7 +61,7 @@ export function OrderUpdateForm({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor="trackingNumber">
+        <label className="mb-1.5 block text-[13px] text-muted-foreground" htmlFor="trackingNumber">
           Tracking number (optional)
         </label>
         <Input id="trackingNumber" name="trackingNumber" defaultValue={trackingNumber ?? ""} />
@@ -69,9 +69,6 @@ export function OrderUpdateForm({
       </div>
 
       <FieldError error={state.status === "error" ? state.message : undefined} />
-      {state.status === "success" && (
-        <span className="text-xs text-[oklch(0.55_0.12_150)]">{state.message}</span>
-      )}
 
       <SubmitButton isPending={isPending} label="Save" pendingLabel="Saving…" />
     </form>

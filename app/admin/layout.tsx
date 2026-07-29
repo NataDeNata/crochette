@@ -30,19 +30,21 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="min-h-screen bg-card">
-      <header className="flex items-center justify-between py-[18px] px-8 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
-        <div className="flex items-center gap-8">
-          <span className="font-serif font-medium text-xl">Crochette admin</span>
-          <nav className="flex gap-5">
-            {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="text-[13.5px] text-[oklch(0.4_0.02_60)]">
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[13px] text-muted-foreground">{session.user.email}</span>
+      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-[18px] px-8 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <span className="font-serif font-medium text-xl">Crochette admin</span>
+        <nav className="flex justify-self-center gap-6">
+          {NAV_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-[14.5px] text-[oklch(0.4_0.02_60)] transition-colors hover:text-[oklch(0.2_0.02_60)] hover:underline underline-offset-4"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center justify-self-end gap-4">
+          <span className="text-[13.5px] text-muted-foreground">{session.user.email}</span>
           <form action={adminSignOut}>
             <Button type="submit" variant="outline" size="sm">
               Sign out

@@ -18,10 +18,10 @@ export default async function ProductImagesPage({ params }: { params: Promise<{ 
     .orderBy(asc(productImages.position));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="font-serif font-medium text-3xl m-0">Photos — {product.name}</h1>
-        <Link href={`/admin/products/${product.id}`} className="text-[13.5px] text-[oklch(0.4_0.02_60)]">
+        <Link href={`/admin/products/${product.id}`} className="text-[14.5px] text-[oklch(0.4_0.02_60)] underline">
           ← Back to product
         </Link>
       </div>

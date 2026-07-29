@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gt, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orderItems, products } from "@/lib/db/schema";
 
@@ -52,4 +52,33 @@ export async function restoreStockForOrder(tx: Tx, orderId: string) {
       .set({ status: "active" })
       .where(sql`${products.id} = ${item.productId} and ${products.stockQty} > 0 and ${products.status} = 'sold_out'`);
   }
+}
+
+/** A product is "running low" when it's still on sale and has fallen to or
+ * below its own restock threshold, but isn't out yet. The three tiers —
+ * healthy / low / sold out — deliberately never overlap, so each row carries
+ * exactly one stock signal:
+ *   - `stockQty > 0` excludes sold-out products, which already show a red
+ *     quantity and a "sold out" status badge. "Low" means *restock soon*, not
+ *     *too late*.
+ *   - `status = 'active'` excludes both drafts (not for sale) and anything the
+ *     admin manually parked at `sold_out` while it still has stock — that's a
+ *     deliberate "not selling this right now" hold, not something to nag about.
+ *   - A threshold of 0 disables the alert entirely, since `stockQty > 0` and
+ *     `stockQty <= 0` can never both hold.
+ *
+ * This is the single source of truth: the dashboard count, the products-list
+ * filter, and the per-row badge all derive from it (or from `isLowStock`
+ * below) so they can't drift apart. Distinct from LOW_STOCK_THRESHOLD in
+ * lib/data/products.ts, which is the customer-facing storefront badge. */
+export const lowStockCondition = and(
+  eq(products.status, "active"),
+  gt(products.stockQty, 0),
+  lte(products.stockQty, products.lowStockThreshold)
+)!;
+
+/** Row-level twin of `lowStockCondition`, for a row that's already been
+ * fetched. Keep the two in lockstep — they encode the same rule. */
+export function isLowStock(p: { status: string; stockQty: number; lowStockThreshold: number }): boolean {
+  return p.status === "active" && p.stockQty > 0 && p.stockQty <= p.lowStockThreshold;
 }

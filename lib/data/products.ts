@@ -26,7 +26,13 @@ export interface Product {
   primaryImageUrl?: string;
 }
 
-/** At or below this many left, the product page shows a "Low on Stock" notice. */
+/** At or below this many left, the product page shows a "Low on Stock" notice.
+ * Storefront-only urgency signal, deliberately uniform across the catalog — NOT
+ * the same number as `products.low_stock_threshold`, which is the admin's
+ * per-product restock alert (see `lowStockCondition` in lib/db/inventory.ts).
+ * The duplication is intentional: one is a conversion lever aimed at customers,
+ * the other is an operational trigger aimed at the studio owner, and they have
+ * no reason to share a value. */
 export const LOW_STOCK_THRESHOLD = 5;
 
 export const CATEGORIES: { name: string; value: ProductCategory | "all" }[] = [
