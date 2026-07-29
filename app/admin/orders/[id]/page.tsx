@@ -1,12 +1,15 @@
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { OrderUpdateForm } from "@/components/admin/OrderUpdateForm";
-
-const fieldClass = "text-[14.5px]";
-const labelClass = "text-[13px] text-muted-foreground mb-[3px]";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
+import { DetailBlock, DetailDivider, DetailRow } from "@/components/admin/AdminDetail";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,83 +19,84 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
 
   return (
-    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
-      <div>
-        <h1 className="font-serif font-medium text-3xl mb-1">{order.customerName}</h1>
-        <a href={`mailto:${order.customerEmail}`} className="text-[14.5px] text-[oklch(0.5_0.05_20)]">
-          {order.customerEmail}
-        </a>
-      </div>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+      <AdminPageHeader
+        title={order.customerName}
+        subtitle={order.customerEmail}
+        actions={
+          <>
+            <AdminStatusTag status={order.status} />
+            <Button href="/admin/orders" variant="ghost" size="sm">
+              <ArrowLeft className="size-3.5" aria-hidden />
+              All orders
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-[1.3fr_1fr] gap-8 items-start">
-        <div className="flex flex-col gap-5 p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-          <div>
-            <div className={labelClass}>Items</div>
-            <div className="flex flex-col gap-2 mt-1.5">
-              {items.map((item) => (
-                <div key={item.id} className={`flex justify-between ${fieldClass}`}>
-                  <span>
-                    {item.productName} × {item.quantity}
-                  </span>
-                  <span>{formatPrice(item.unitPriceCents * item.quantity)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className={labelClass}>Subtotal</div>
-              <div className={fieldClass}>{formatPrice(order.subtotalCents)}</div>
-            </div>
-            <div>
-              <div className={labelClass}>Shipping</div>
-              <div className={fieldClass}>{formatPrice(order.shippingCents)}</div>
-            </div>
-            {order.discountCents > 0 && (
-              <div>
-                <div className={labelClass}>Discount</div>
-                <div className={`${fieldClass} text-[oklch(0.55_0.12_150)]`}>−{formatPrice(order.discountCents)}</div>
+      <div className="grid items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <DetailBlock label="Items">
+              <div className="flex flex-col gap-1.5">
+                {items.map((item) => (
+                  <div key={item.id} className="flex justify-between gap-4">
+                    <span>
+                      {item.productName} × {item.quantity}
+                    </span>
+                    <span className="flex-none">{formatPrice(item.unitPriceCents * item.quantity)}</span>
+                  </div>
+                ))}
               </div>
-            )}
-            <div>
-              <div className={labelClass}>Total</div>
-              <div className={fieldClass}>{formatPrice(order.totalCents)}</div>
-            </div>
-            <div>
-              <div className={labelClass}>Payment status</div>
-              <div className={`${fieldClass} capitalize`}>{order.status}</div>
-            </div>
-          </div>
+            </DetailBlock>
 
-          <div>
-            <div className={labelClass}>Shipping address</div>
-            <div className={`${fieldClass} leading-[1.6]`}>
+            <DetailDivider />
+
+            <DetailRow label="Subtotal">{formatPrice(order.subtotalCents)}</DetailRow>
+            <DetailRow label="Shipping">{formatPrice(order.shippingCents)}</DetailRow>
+            {order.discountCents > 0 && (
+              <DetailRow label="Discount">
+                <span className="text-sage">−{formatPrice(order.discountCents)}</span>
+              </DetailRow>
+            )}
+
+            <DetailDivider />
+
+            <div className="flex items-baseline justify-between gap-4 font-semibold">
+              <span>Total</span>
+              <span>{formatPrice(order.totalCents)}</span>
+            </div>
+
+            <DetailDivider />
+
+            <DetailBlock label="Shipping address">
               {order.customerPhone && <div>{order.customerPhone}</div>}
               <div>{order.shippingLine1}</div>
               {order.shippingLine2 && <div>{order.shippingLine2}</div>}
               <div>
                 {order.shippingCity}, {order.shippingProvince} {order.shippingPostalCode}
               </div>
-            </div>
-          </div>
+            </DetailBlock>
 
-          <div className="text-[13px] text-[oklch(0.55_0.02_60)]">
-            Placed {order.createdAt.toLocaleString()}
-            {order.paidAt && <> · Paid {order.paidAt.toLocaleString()}</>}
-            {order.shippedAt && <> · Shipped {order.shippedAt.toLocaleString()}</>}
-            {order.completedAt && <> · Completed {order.completedAt.toLocaleString()}</>}
-          </div>
-        </div>
+            <p className="m-0 text-[13px] text-muted-foreground">
+              Placed {order.createdAt.toLocaleString()}
+              {order.paidAt && <> · Paid {order.paidAt.toLocaleString()}</>}
+              {order.shippedAt && <> · Shipped {order.shippedAt.toLocaleString()}</>}
+              {order.completedAt && <> · Completed {order.completedAt.toLocaleString()}</>}
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-          <OrderUpdateForm
-            id={order.id}
-            status={order.status}
-            trackingNumber={order.trackingNumber}
-            carrier={order.carrier}
-          />
-        </div>
+        <Card>
+          <CardContent>
+            <OrderUpdateForm
+              id={order.id}
+              status={order.status}
+              trackingNumber={order.trackingNumber}
+              carrier={order.carrier}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

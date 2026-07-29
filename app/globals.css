@@ -72,7 +72,10 @@
  * a few narrow, deliberate exceptions (genuinely dynamic per-instance values
  * driving a Framer Motion prop or a CSS custom property; see components/motion/
  * FadeIn.tsx and Float.tsx's pass-through `style` prop, ShopMarquee.tsx's
- * drag-x MotionValue, and GallerySection.tsx's --row-h variable).
+ * drag-x MotionValue, GallerySection.tsx's --row-h variable, and — added
+ * 2026-07-30 — components/admin/RevenueChart.tsx's --bar-h, which is the same
+ * case: one bar height per data point, an unbounded set of runtime values with
+ * no fixed enumeration to turn into classes).
  *
  * The handful of small hand-written classes below (.nav-link, .footer-link,
  * .footer-admin-link, .cart-icon-link, .account-icon-link) are a *different*,
@@ -243,6 +246,27 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  /* --destructive-foreground has existed in :root since the palette was
+   * written but was never exposed here, so `text-destructive-foreground`
+   * silently did nothing. Added 2026-07-30. */
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-soft-foreground: var(--destructive-soft-foreground);
+  /* Status/accent roles — see the commentary beside their :root values. */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-foreground: var(--brand-soft-foreground);
+  --color-sage: var(--sage);
+  --color-sage-foreground: var(--sage-foreground);
+  --color-sage-soft: var(--sage-soft);
+  --color-sage-soft-foreground: var(--sage-soft-foreground);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-soft-foreground: var(--info-soft-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -297,14 +321,55 @@
   --chart-4: oklch(0.7 0.06 280);
   --chart-5: oklch(0.5 0.05 20);
   --radius: 0.75rem;
-  --sidebar: oklch(0.975 0.012 85);
+
+  /* Sidebar — retuned 2026-07-30 for the /admin redesign. These were all
+   * verbatim copies of the base tokens above, which made the shadcn sidebar
+   * namespace unusable: --sidebar equalled --background, so a sidebar had no
+   * edge against the page, and --sidebar-primary was the dark ink, so an
+   * active nav item was indistinguishable from ordinary body text. Now
+   * --sidebar sits one step deeper than --background (a tinted rail, still
+   * well inside the light cream family) and the active pill uses the brand
+   * terracotta. Only these three changed; the *-foreground/border/ring
+   * siblings are untouched. Nothing outside /admin consumes this namespace. */
+  --sidebar: oklch(0.958 0.016 80);
   --sidebar-foreground: oklch(0.28 0.02 60);
-  --sidebar-primary: oklch(0.28 0.02 60);
+  --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: oklch(0.98 0.01 85);
-  --sidebar-accent: oklch(0.92 0.025 75);
+  --sidebar-accent: oklch(0.93 0.024 78);
   --sidebar-accent-foreground: oklch(0.28 0.02 60);
   --sidebar-border: oklch(0.85 0.02 60);
   --sidebar-ring: oklch(0.7 0.06 20);
+
+  /* Status/accent roles — added 2026-07-30 for the /admin redesign.
+   *
+   * Before this, admin pages hardcoded roughly forty one-off `oklch(...)`
+   * arbitrary Tailwind values for exactly these meanings, duplicated across
+   * six files with no shared definition (two separate STATUS_TEXT_CLASSES
+   * maps, a STATUS_VARIANT map, and LOW_STOCK_TEXT_CLASS). These tokens are
+   * the single source of truth that replaced them.
+   *
+   * Each role is a triple: a solid version for text/fills, plus a
+   * `-soft`/`-soft-foreground` pair for the tinted badge treatment (the
+   * shape shadcn's Badge has no built-in variant for — see
+   * components/admin/AdminStatusTag.tsx). `--brand` is deliberately the
+   * same terracotta already used for `a` above and for --chart-1; it is
+   * NOT --primary, which is the dark ink. */
+  --brand: oklch(0.55 0.09 20);
+  --brand-foreground: oklch(0.98 0.01 85);
+  --brand-soft: oklch(0.94 0.03 20);
+  --brand-soft-foreground: oklch(0.42 0.09 20);
+  --sage: oklch(0.6 0.06 140);
+  --sage-foreground: oklch(0.98 0.01 85);
+  --sage-soft: oklch(0.94 0.03 140);
+  --sage-soft-foreground: oklch(0.4 0.06 140);
+  --warning: oklch(0.5 0.13 60);
+  --warning-soft: oklch(0.94 0.04 60);
+  --warning-soft-foreground: oklch(0.42 0.11 60);
+  --info: oklch(0.5 0.1 260);
+  --info-soft: oklch(0.94 0.03 260);
+  --info-soft-foreground: oklch(0.4 0.1 260);
+  --destructive-soft: oklch(0.94 0.04 25);
+  --destructive-soft-foreground: oklch(0.45 0.16 25);
 }
 /*
  ---break---

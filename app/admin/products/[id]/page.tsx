@@ -1,10 +1,12 @@
 import { eq } from "drizzle-orm";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, Images } from "lucide-react";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { updateProduct } from "@/app/admin/products/actions";
+import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,13 +14,23 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   if (!product) notFound();
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif font-medium text-3xl m-0">Edit product</h1>
-        <Link href={`/admin/products/${product.id}/images`} className="text-[14.5px] text-[oklch(0.4_0.02_60)] underline">
-          Manage photos →
-        </Link>
-      </div>
+    <div className="mx-auto flex w-full max-w-md flex-col gap-5">
+      <AdminPageHeader
+        title="Edit product"
+        subtitle={product.name}
+        actions={
+          <>
+            <Button href={`/admin/products/${product.id}/images`} variant="outline" size="sm">
+              <Images className="size-3.5" aria-hidden />
+              Photos
+            </Button>
+            <Button href="/admin/products" variant="ghost" size="sm">
+              <ArrowLeft className="size-3.5" aria-hidden />
+              All products
+            </Button>
+          </>
+        }
+      />
       <ProductForm
         action={updateProduct.bind(null, product.id)}
         submitLabel="Save changes"

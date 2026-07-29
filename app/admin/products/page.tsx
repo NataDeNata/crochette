@@ -1,21 +1,18 @@
-import { desc, count, and, type SQL } from "drizzle-orm";
+import Link from "next/link";
+import { desc, count, and, eq, inArray, type SQL } from "drizzle-orm";
+import { Image as ImageIcon, Plus } from "lucide-react";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
+import { productImages, products } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
 import { lowStockCondition, isLowStock } from "@/lib/db/inventory";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton";
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
+import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { LowStockBadge } from "@/components/admin/LowStockBadge";
-
-const STATUS_VARIANT: Record<string, "default" | "outline" | "destructive"> = {
-  active: "default",
-  draft: "outline",
-  sold_out: "destructive",
-};
 
 const PAGE_SIZE = 20;
 
@@ -33,7 +30,7 @@ export default async function AdminProductsPage({
   const where = conditions.length ? and(...conditions) : undefined;
 
   // The second count is unfiltered on purpose — it powers the "Low stock (N)"
-  // toggle below, so the filter is discoverable from this page and not only by
+  // tab below, so the filter is discoverable from this page and not only by
   // arriving from the dashboard tile.
   const [[{ total }], [{ lowStockCount }]] = await Promise.all([
     db.select({ total: count() }).from(products).where(where),
@@ -51,75 +48,120 @@ export default async function AdminProductsPage({
     .limit(PAGE_SIZE)
     .offset((page - 1) * PAGE_SIZE);
 
-  return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-3xl font-medium">Products</h1>
-        <div className="flex items-center gap-2">
-          {stock === "low" ? (
-            <Button href="/admin/products" variant="outline" size="md">
-              Show all
-            </Button>
-          ) : (
-            lowStockCount > 0 && (
-              <Button href="/admin/products?stock=low" variant="outline" size="md">
-                Low stock ({lowStockCount})
-              </Button>
-            )
-          )}
-          <Button href="/admin/products/new" size="md">
-            + New product
-          </Button>
-        </div>
-      </div>
+  // Cover photos for just this page's products — an `inArray` over the 20 ids
+  // rather than joining the whole product_images table, mirroring how the
+  // orders list narrows its item-count subquery. Products photographed but
+  // never given a cover simply have no row here and fall back to the
+  // placeholder, same as the storefront does.
+  const covers = rows.length
+    ? await db
+        .select({ productId: productImages.productId, url: productImages.url })
+        .from(productImages)
+        .where(
+          and(
+            inArray(
+              productImages.productId,
+              rows.map((r) => r.id),
+            ),
+            eq(productImages.isPrimary, true),
+          ),
+        )
+    : [];
+  const coverByProduct = new Map(covers.map((c) => [c.productId, c.url]));
 
-      <Card className="p-0">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-muted-foreground capitalize">{p.category.replace("-", " ")}</TableCell>
-                  <TableCell>{formatPrice(p.priceCents)}</TableCell>
-                  <TableCell className={p.stockQty === 0 ? "text-destructive" : undefined}>
-                    <span className="inline-flex items-center gap-2">
-                      {p.stockQty}
-                      {isLowStock(p) && <LowStockBadge threshold={p.lowStockThreshold} />}
+  return (
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+      <AdminPageHeader
+        title="Products"
+        subtitle="Your catalog & inventory"
+        actions={
+          <Button href="/admin/products/new" size="sm">
+            <Plus className="size-3.5" aria-hidden />
+            New product
+          </Button>
+        }
+      />
+
+      <AdminFilterTabs
+        basePath="/admin/products"
+        param="stock"
+        current={stock}
+        options={[
+          { label: "All" },
+          // Hidden when nothing is low, so the tab row never offers a filter
+          // that can only produce an empty page.
+          ...(lowStockCount > 0 ? [{ value: "low", label: "Low stock", count: lowStockCount }] : []),
+        ]}
+      />
+
+      {rows.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            {stock === "low" ? "No products are running low right now." : "No products yet."}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {rows.map((p) => {
+            const cover = coverByProduct.get(p.id);
+            return (
+              <Card key={p.id} className="h-full">
+                <CardContent className="flex h-full flex-col gap-2">
+                  <Link
+                    href={`/admin/products/${p.id}`}
+                    className="flex h-[120px] items-center justify-center overflow-hidden rounded-md bg-muted text-inherit"
+                  >
+                    {cover ? (
+                      /* eslint-disable-next-line @next/next/no-img-element -- Vercel Blob URL,
+                         same reasoning as the custom-order reference photos. */
+                      <img src={cover} alt="" className="size-full object-cover" />
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <ImageIcon className="size-3.5" aria-hidden />
+                        No photo yet
+                      </span>
+                    )}
+                  </Link>
+
+                  <div className="text-[10px] tracking-[0.1em] text-brand uppercase">
+                    {p.category.replace("-", " ")}
+                  </div>
+                  <Link
+                    href={`/admin/products/${p.id}`}
+                    className="font-serif text-base leading-snug font-medium text-inherit hover:underline"
+                  >
+                    {p.name}
+                  </Link>
+
+                  <div className="flex flex-1 items-center gap-2 text-[13px]">
+                    <span className={p.stockQty === 0 ? "text-destructive" : "text-muted-foreground"}>
+                      {p.stockQty} in stock
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={STATUS_VARIANT[p.status] ?? "outline"}>{p.status.replace("_", " ")}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right whitespace-nowrap">
+                    {isLowStock(p) && <LowStockBadge threshold={p.lowStockThreshold} />}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{formatPrice(p.priceCents)}</span>
+                    <AdminStatusTag status={p.status} className="ml-auto flex-none" />
+                  </div>
+
+                  <div className="-mx-1 flex items-center gap-1 border-t border-border pt-2">
                     <Button href={`/admin/products/${p.id}`} variant="ghost" size="sm">
                       Edit
                     </Button>
-                    <DeleteProductButton id={p.id} slug={p.slug} name={p.name} />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    {stock === "low" ? "No products are running low right now." : "No products yet."}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <Button href={`/admin/products/${p.id}/images`} variant="ghost" size="sm">
+                      Photos
+                    </Button>
+                    <span className="ml-auto">
+                      <DeleteProductButton id={p.id} slug={p.slug} name={p.name} />
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <AdminPagination
         page={page}

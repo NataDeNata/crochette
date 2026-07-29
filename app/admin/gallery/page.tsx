@@ -3,6 +3,7 @@ import { eq, asc, notInArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { productImages, products } from "@/lib/db/schema";
 import { GalleryFeaturedRow, GalleryAddableRow } from "@/components/admin/GalleryCurationRow";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function AdminGalleryPage() {
   const rows = await db
@@ -36,20 +37,19 @@ export default async function AdminGalleryPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-8">
-      <div>
-        <h1 className="m-0 font-serif text-3xl font-medium">Gallery</h1>
-        <p className="mt-1.5 text-[13.5px] text-muted-foreground">
-          Gallery photos are uploaded from a product&rsquo;s own photo page, then featured here. To add a brand-new
-          photo, open a product below (or from <Link href="/admin/products" className="underline">Products</Link>)
-          and upload it there first.
-        </p>
-      </div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-7">
+      <AdminPageHeader title="Gallery" subtitle="What appears on the public gallery page, and in what order" />
+
+      <p className="m-0 text-sm text-muted-foreground">
+        Gallery photos are uploaded from a product&rsquo;s own photo page, then featured here. To add a brand-new
+        photo, open a product below (or from <Link href="/admin/products" className="underline">Products</Link>)
+        and upload it there first.
+      </p>
 
       <div className="flex flex-col gap-3">
         <h2 className="m-0 font-serif text-xl font-medium">Featured (in order)</h2>
         {featured.length === 0 ? (
-          <p className="text-sm text-[oklch(0.55_0.02_60)]">No photos featured yet — add some below.</p>
+          <p className="text-sm text-muted-foreground">No photos featured yet — add some below.</p>
         ) : (
           <div className="flex flex-col gap-2.5">
             {featured.map((row, i) => (
@@ -69,18 +69,18 @@ export default async function AdminGalleryPage() {
       <div className="flex flex-col gap-3">
         <h2 className="m-0 font-serif text-xl font-medium">Add from products</h2>
         {addableByProduct.size === 0 ? (
-          <p className="text-sm text-[oklch(0.55_0.02_60)]">Every uploaded product photo is already featured.</p>
+          <p className="text-sm text-muted-foreground">Every uploaded product photo is already featured.</p>
         ) : (
           <div className="flex flex-col gap-4">
             {[...addableByProduct.entries()].map(([productName, entry]) => (
-              <details key={productName} className="rounded-[14px] border-[1.5px] border-[oklch(0.9_0.02_60)] p-4">
+              <details key={productName} className="rounded-xl border border-border bg-card p-4">
                 <summary className="flex cursor-pointer items-center justify-between text-sm font-medium">
                   <span>
                     {productName} ({entry.images.length})
                   </span>
                   <Link
                     href={`/admin/products/${entry.productId}/images`}
-                    className="text-[13px] font-normal text-[oklch(0.4_0.02_60)] underline"
+                    className="text-[13px] font-normal text-muted-foreground underline"
                   >
                     Upload more →
                   </Link>
@@ -104,10 +104,10 @@ export default async function AdminGalleryPage() {
               <Link
                 key={p.id}
                 href={`/admin/products/${p.id}/images`}
-                className="flex items-center justify-between rounded-[12px] border-[1.5px] border-[oklch(0.9_0.02_60)] p-3 text-[14.5px] text-inherit"
+                className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm text-inherit transition-colors hover:bg-muted"
               >
                 <span>{p.name}</span>
-                <span className="text-[13px] text-[oklch(0.4_0.02_60)] underline">Upload photos →</span>
+                <span className="text-[13px] text-muted-foreground underline">Upload photos →</span>
               </Link>
             ))}
           </div>

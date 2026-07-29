@@ -1,19 +1,15 @@
 import Link from "next/link";
 import { desc, count, ilike, or, and, eq, type SQL } from "drizzle-orm";
+import { Calendar, Image as ImageIcon } from "lucide-react";
 import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
+import { formatPrice } from "@/lib/data/products";
+import { Card, CardContent } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
-
-const STATUS_TEXT_CLASSES: Record<string, string> = {
-  new: "text-[oklch(0.5_0.18_25)]",
-  quoted: "text-[oklch(0.55_0.12_60)]",
-  accepted: "text-[oklch(0.55_0.12_150)]",
-  in_production: "text-[oklch(0.55_0.12_150)]",
-  shipped: "text-[oklch(0.5_0.1_260)]",
-  completed: "text-[oklch(0.5_0.02_60)]",
-  declined: "text-[oklch(0.5_0.02_60)]",
-};
+import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
+import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
 
 const CUSTOM_ORDER_STATUSES = [
   "new",
@@ -56,60 +52,95 @@ export default async function AdminCustomOrdersPage({
     .offset((page - 1) * PAGE_SIZE);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5">
-      <h1 className="m-0 font-serif text-3xl font-medium">Custom order requests</h1>
-
-      <AdminSearchBar
-        basePath="/admin/custom-orders"
-        q={q}
-        status={status}
-        statusOptions={CUSTOM_ORDER_STATUSES.map((s) => ({ value: s, label: s.replace("_", " ") }))}
-        searchPlaceholder="Search by name or email…"
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+      <AdminPageHeader
+        title="Custom requests"
+        subtitle="Bespoke pieces in progress"
+        actions={
+          <AdminSearchBar
+            basePath="/admin/custom-orders"
+            q={q}
+            searchPlaceholder="Search by name or email…"
+            hiddenParams={{ status: status || undefined }}
+          />
+        }
       />
 
-      <div className="overflow-hidden rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-        <table className="w-full border-collapse text-[14.5px]">
-          <thead>
-            <tr className="text-left bg-[oklch(0.97_0.01_60)]">
-              {["Name", "Piece type", "Budget", "Photos", "Status", "Submitted"].map((h) => (
-                <th key={h} className="py-3 px-4 font-semibold text-[oklch(0.45_0.02_60)]">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-[oklch(0.93_0.01_60)]">
-                <td className="py-3 px-4">
-                  <Link href={`/admin/custom-orders/${r.id}`} className="text-inherit">
-                    <strong className="font-medium">{r.name}</strong>
-                    <div className="text-sm text-[oklch(0.55_0.02_60)]">{r.email}</div>
-                  </Link>
-                </td>
-                <td className="py-3 px-4 text-muted-foreground">{r.pieceType}</td>
-                <td className="py-3 px-4 text-muted-foreground">{r.budgetRange || "—"}</td>
-                <td className="py-3 px-4 text-muted-foreground">{r.referenceImageUrls?.length ?? 0}</td>
-                <td className="py-3 px-4">
-                  <span className={`${STATUS_TEXT_CLASSES[r.status] ?? "text-inherit"} capitalize`}>
-                    {r.status.replace("_", " ")}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-[oklch(0.55_0.02_60)]">
-                  {r.createdAt.toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 px-4 text-center text-muted-foreground">
-                  {q || status ? "No requests match your search." : "No requests yet."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminFilterTabs
+        basePath="/admin/custom-orders"
+        param="status"
+        current={status}
+        params={{ q: q || undefined }}
+        options={[
+          { label: "All" },
+          ...CUSTOM_ORDER_STATUSES.map((s) => ({ value: s, label: humanizeStatus(s) })),
+        ]}
+      />
+
+      {rows.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            {q || status ? "No requests match your search." : "No requests yet."}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map((r) => {
+            const photo = r.referenceImageUrls?.[0];
+            const extraPhotos = Math.max(0, (r.referenceImageUrls?.length ?? 0) - 1);
+            return (
+              <Link key={r.id} href={`/admin/custom-orders/${r.id}`} className="block text-inherit">
+                <Card className="h-full transition-shadow hover:shadow-sm">
+                  <CardContent className="flex h-full flex-col gap-2">
+                    <div className="relative flex h-[110px] items-center justify-center overflow-hidden rounded-md bg-muted">
+                      {photo ? (
+                        /* eslint-disable-next-line @next/next/no-img-element -- customer-uploaded
+                           Vercel Blob URLs, same as the detail page: these are arbitrary remote
+                           hosts that next/image would need configured remotePatterns for. */
+                        <img src={photo} alt="" className="size-full object-cover" />
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <ImageIcon className="size-3.5" aria-hidden />
+                          No reference photo
+                        </span>
+                      )}
+                      {extraPhotos > 0 ? (
+                        <span className="absolute right-1.5 bottom-1.5 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-medium backdrop-blur">
+                          +{extraPhotos}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-[10px] tracking-[0.1em] text-muted-foreground uppercase">
+                        {r.email}
+                      </span>
+                      <AdminStatusTag status={r.status} className="ml-auto flex-none" />
+                    </div>
+
+                    <div className="font-serif text-base leading-snug font-medium">{r.pieceType}</div>
+                    <div className="flex-1 text-[13px] text-muted-foreground">
+                      {r.name}
+                      {r.preferredSize ? ` · ${r.preferredSize}` : ""}
+                      {r.preferredColors ? ` · ${r.preferredColors}` : ""}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Calendar className="size-3" aria-hidden />
+                      {r.createdAt.toLocaleDateString()}
+                      <span className="ml-auto font-semibold text-foreground">
+                        {r.quotedPriceCents !== null
+                          ? formatPrice(r.quotedPriceCents)
+                          : r.budgetRange || "—"}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <AdminPagination
         page={page}

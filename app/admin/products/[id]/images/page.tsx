@@ -1,10 +1,12 @@
 import { eq, asc } from "drizzle-orm";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { products, productImages } from "@/lib/db/schema";
 import { ProductImageUploadForm } from "@/components/admin/ProductImageUploadForm";
 import { ProductImageRow } from "@/components/admin/ProductImageRow";
+import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function ProductImagesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,18 +20,22 @@ export default async function ProductImagesPage({ params }: { params: Promise<{ 
     .orderBy(asc(productImages.position));
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif font-medium text-3xl m-0">Photos — {product.name}</h1>
-        <Link href={`/admin/products/${product.id}`} className="text-[14.5px] text-[oklch(0.4_0.02_60)] underline">
-          ← Back to product
-        </Link>
-      </div>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+      <AdminPageHeader
+        title="Photos"
+        subtitle={product.name}
+        actions={
+          <Button href={`/admin/products/${product.id}`} variant="ghost" size="sm">
+            <ArrowLeft className="size-3.5" aria-hidden />
+            Back to product
+          </Button>
+        }
+      />
 
       <ProductImageUploadForm productId={product.id} />
 
       {images.length === 0 ? (
-        <p className="text-sm text-[oklch(0.55_0.02_60)]">No photos yet — upload some above.</p>
+        <p className="m-0 text-sm text-muted-foreground">No photos yet — upload some above.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {images.map((image, i) => (
