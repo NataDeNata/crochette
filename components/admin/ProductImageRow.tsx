@@ -65,8 +65,8 @@ export function ProductImageRow({
   const metaFieldErrors = metaState.fieldErrors ?? {};
 
   return (
-    <div className="flex gap-4 p-4 rounded-[14px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
-      <div className="relative w-24 h-24 shrink-0 rounded-[10px] overflow-hidden bg-[oklch(0.95_0.01_60)]">
+    <div className="flex gap-4 rounded-xl border border-border bg-card p-4">
+      <div className="relative size-24 shrink-0 overflow-hidden rounded-md bg-muted">
         <Image src={url} alt={alt || "Product photo"} fill className="object-cover" sizes="96px" />
         {isPrimary && (
           <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-primary text-card text-[10px] leading-none">
@@ -87,7 +87,7 @@ export function ProductImageRow({
           </div>
           <div className="flex items-center gap-2">
             <SubmitButton isPending={metaPending} label="Save" pendingLabel="Saving…" />
-            {metaState.status === "success" && <span className="text-xs text-[oklch(0.55_0.12_150)]">Saved.</span>}
+            {metaState.status === "success" && <span className="text-xs text-sage">Saved.</span>}
           </div>
         </form>
       </div>

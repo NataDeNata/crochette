@@ -12,10 +12,10 @@ export default async function AdminLoginPage() {
   if (session?.user?.role === "admin") redirect("/admin");
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-[360px] p-10 rounded-[24px] bg-card border-[1.5px] border-[oklch(0.9_0.02_60)]">
-        <div className="font-serif font-medium text-[26px] text-center mb-1.5">Crochette</div>
-        <p className="text-[13px] text-muted-foreground text-center mb-7">Studio admin sign in</p>
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-[360px] rounded-3xl border border-border bg-card p-10 shadow-sm">
+        <div className="mb-1.5 text-center font-serif text-2xl font-medium">Crochette</div>
+        <p className="mb-7 text-center text-[13px] text-muted-foreground">Studio admin sign in</p>
         <AdminLoginForm />
       </div>
     </div>

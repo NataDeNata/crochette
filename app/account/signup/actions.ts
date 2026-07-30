@@ -31,7 +31,12 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
   }
 
   const ip = await getClientIp();
-  if (await isRateLimited("signup", `${ip}:${parsed.data.email.toLowerCase()}`)) {
+  // IP-only first — it's the bucket an enumeration sweep can't escape by
+  // varying the email. See lib/security/rate-limit.ts.
+  if (
+    (await isRateLimited("auth-ip", ip)) ||
+    (await isRateLimited("signup", `${ip}:${parsed.data.email.toLowerCase()}`))
+  ) {
     return {
       status: "error",
       message: "Too many attempts — please wait a few minutes and try again.",
@@ -40,6 +45,11 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
     };
   }
 
+  // This says outright what the login timing oracle used to leak indirectly:
+  // that an address has an account here. Kept deliberately — a signup form
+  // that silently accepts a duplicate email has no honest way to explain what
+  // went wrong, and every store makes this same trade. Login is the surface
+  // where the leak was worth closing, and it now is (see lib/auth.ts).
   const existing = await findCustomerByEmail(parsed.data.email);
   if (existing) {
     return {

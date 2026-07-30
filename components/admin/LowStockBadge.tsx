@@ -1,23 +1,26 @@
 import { Badge } from "@/components/ui/badge";
 
-/** Amber "needs attention but nothing is broken" tone — the same hue 60 the
- * admin already uses for pending order status (app/admin/orders/page.tsx).
- * Deliberately not `text-destructive`: red is reserved for sold out / zero
- * stock, and low stock is a plan-a-restock signal, not an error. Exported so
- * the dashboard tile and the row badge share one definition of the colour. */
-export const LOW_STOCK_TEXT_CLASS = "text-[oklch(0.5_0.13_60)]";
-
-/** shadcn's Badge has no "warning" variant, and the three that exist are all
- * wrong here (destructive = the sold-out signal, default = solid primary,
- * secondary = muted grey). Starting from `outline` and overriding reproduces
- * the exact shape of the built-in `destructive` variant — tinted background,
- * tinted text, subtle border — in amber, so it reads as a sibling of the
- * existing badges rather than a bolt-on. */
+/** The amber "Low" badge on a products-list row.
+ *
+ * Amber — the `--warning` role — is a deliberate third signal, not a shade of
+ * the other two. `destructive` red is reserved for sold out / zero stock, and
+ * low stock means *restock soon*, not *too late*; the dashboard's "Products
+ * running low" tile uses the same role for the same reason.
+ *
+ * Not routed through AdminStatusTag: "low" is a derived condition
+ * (lowStockCondition in lib/db/inventory.ts), not a value of any DB enum, so it
+ * has no business in that component's status→tone table. It borrows the same
+ * tinted-outline shape, which is the part worth sharing visually.
+ *
+ * This file used to also export a `LOW_STOCK_TEXT_CLASS` const so the dashboard
+ * tile and this badge couldn't drift apart in colour. That const is gone: the
+ * `--warning` token in app/globals.css is now the single definition it was
+ * standing in for, and both surfaces reference the token directly. */
 export function LowStockBadge({ threshold }: { threshold: number }) {
   return (
     <Badge
       variant="outline"
-      className="border-[oklch(0.86_0.06_60)] bg-[oklch(0.55_0.12_60)]/10 text-[oklch(0.45_0.13_60)]"
+      className="border-warning/25 bg-warning-soft text-warning-soft-foreground"
       title={`Alerts at ${threshold} or fewer`}
     >
       Low

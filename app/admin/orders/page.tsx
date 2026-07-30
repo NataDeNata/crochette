@@ -3,17 +3,14 @@ import { desc, count, eq, ilike, or, and, inArray, type SQL } from "drizzle-orm"
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
-
-const STATUS_TEXT_CLASSES: Record<string, string> = {
-  pending: "text-[oklch(0.55_0.12_60)]",
-  paid: "text-[oklch(0.55_0.12_150)]",
-  failed: "text-[oklch(0.5_0.18_25)]",
-  shipped: "text-[oklch(0.5_0.1_260)]",
-  completed: "text-[oklch(0.5_0.02_60)]",
-  cancelled: "text-[oklch(0.5_0.02_60)]",
-};
+import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
+import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
 
 const ORDER_STATUSES = ["pending", "paid", "failed", "shipped", "completed", "cancelled"] as const;
 const PAGE_SIZE = 20;
@@ -55,59 +52,81 @@ export default async function AdminOrdersPage({
   const countByOrder = new Map(itemCounts.map((r) => [r.orderId, r.itemCount]));
 
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5">
-      <h1 className="m-0 font-serif text-3xl font-medium">Orders</h1>
-
-      <AdminSearchBar
-        basePath="/admin/orders"
-        q={q}
-        status={status}
-        statusOptions={ORDER_STATUSES.map((s) => ({ value: s, label: s }))}
-        searchPlaceholder="Search by customer name or email…"
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+      <AdminPageHeader
+        title="Orders"
+        subtitle="All customer orders"
+        actions={
+          <AdminSearchBar
+            basePath="/admin/orders"
+            q={q}
+            searchPlaceholder="Search by customer name or email…"
+            hiddenParams={{ status: status || undefined }}
+          />
+        }
       />
 
-      <div className="overflow-hidden rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-        <table className="w-full border-collapse text-[14.5px]">
-          <thead>
-            <tr className="text-left bg-[oklch(0.97_0.01_60)]">
-              {["Customer", "Items", "Total", "Status", "Placed"].map((h) => (
-                <th key={h} className="py-3 px-4 font-semibold text-[oklch(0.45_0.02_60)]">
-                  {h}
-                </th>
+      <AdminFilterTabs
+        basePath="/admin/orders"
+        param="status"
+        current={status}
+        params={{ q: q || undefined }}
+        options={[
+          { label: "All" },
+          ...ORDER_STATUSES.map((s) => ({ value: s, label: humanizeStatus(s) })),
+        ]}
+      />
+
+      <Card className="overflow-hidden p-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Customer</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Placed</TableHead>
+                <TableHead className="pr-4">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="pl-4">
+                    <Link href={`/admin/orders/${r.id}`} className="text-inherit">
+                      <strong className="font-medium">{r.customerName}</strong>
+                      <div className="text-[13px] text-muted-foreground">{r.customerEmail}</div>
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{countByOrder.get(r.id) ?? 0}</TableCell>
+                  <TableCell>{formatPrice(r.totalCents)}</TableCell>
+                  <TableCell>
+                    <AdminStatusTag status={r.status} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {r.createdAt.toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="pr-4 text-right">
+                    <Button href={`/admin/orders/${r.id}`} variant="outline" size="sm">
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-[oklch(0.93_0.01_60)]">
-                <td className="py-3 px-4">
-                  <Link href={`/admin/orders/${r.id}`} className="text-inherit">
-                    <strong className="font-medium">{r.customerName}</strong>
-                    <div className="text-sm text-[oklch(0.55_0.02_60)]">{r.customerEmail}</div>
-                  </Link>
-                </td>
-                <td className="py-3 px-4 text-muted-foreground">{countByOrder.get(r.id) ?? 0}</td>
-                <td className="py-3 px-4 text-muted-foreground">{formatPrice(r.totalCents)}</td>
-                <td className="py-3 px-4">
-                  <span className={`${STATUS_TEXT_CLASSES[r.status] ?? "text-inherit"} capitalize`}>
-                    {r.status}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-[oklch(0.55_0.02_60)]">
-                  {r.createdAt.toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-6 px-4 text-center text-muted-foreground">
-                  {q || status ? "No orders match your search." : "No orders yet."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              {rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                    {q || status ? "No orders match your search." : "No orders yet."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <AdminPagination
         page={page}

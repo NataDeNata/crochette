@@ -162,6 +162,12 @@ export const admins = pgTable("admins", {
   passwordHash: text("password_hash").notNull(),
   name: text("name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  /** Set by `npm run db:seed-admin` on every password change. Sessions issued
+   * before this instant are rejected in lib/auth.ts's jwt callback, which is
+   * what makes rotating the password actually revoke live logins — a JWT
+   * session is otherwise valid until it expires no matter what the row says.
+   * Null means "never rotated", the correct reading for pre-existing rows. */
+  passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
 });
 
 /** Customer-facing login (Phase 2 "customer accounts") — separate from
@@ -170,9 +176,21 @@ export const admins = pgTable("admins", {
 export const customers = pgTable("customers", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  /** Nullable since Google sign-in landed: an account created through Google
+   * has no password at all. The customer Credentials provider treats a null
+   * hash exactly like a missing account — same dummy-hash comparison, same
+   * generic failure — so "password sign-in on a Google-only account" can't
+   * throw, and can't be told apart from a wrong password. */
+  passwordHash: text("password_hash"),
   name: text("name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  /** Mirrors `admins.passwordChangedAt` above, but is **not yet enforced**:
+   * customers have no way to change a password today (self-service change and
+   * reset are both still open scope), so there is nothing to revoke, and
+   * checking it would cost a DB lookup per request for every shopper in
+   * exchange for nothing. The column exists now so the reset flow doesn't need
+   * its own migration; switch the check on — throttled — when that lands. */
+  passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
 });
 
 /** Saved shipping addresses for a customer account. Purely a convenience

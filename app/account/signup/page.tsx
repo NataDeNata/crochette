@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { SignupForm } from "@/components/account/SignupForm";
+import { GoogleSignInButton } from "@/components/account/GoogleSignInButton";
 
 export const metadata: Metadata = {
   title: "Create account",
@@ -21,6 +22,9 @@ export default async function AccountSignupPage() {
           Save addresses and track your orders
         </p>
         <SignupForm />
+        <div className="mt-3.5">
+          <GoogleSignInButton label="Sign up with Google" />
+        </div>
         <p className="text-[13px] text-muted-foreground text-center mt-5">
           Already have an account? <Link href="/account/login">Sign in</Link>
         </p>

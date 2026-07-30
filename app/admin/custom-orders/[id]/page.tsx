@@ -1,11 +1,14 @@
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { CustomOrderUpdateForm } from "@/components/admin/CustomOrderUpdateForm";
-
-const fieldClass = "text-[14.5px]";
-const labelClass = "text-[13px] text-muted-foreground mb-[3px]";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
+import { DetailBlock, DetailDivider, DetailRow } from "@/components/admin/AdminDetail";
 
 export default async function CustomOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,73 +16,72 @@ export default async function CustomOrderDetailPage({ params }: { params: Promis
   if (!r) notFound();
 
   return (
-    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
-      <div>
-        <h1 className="font-serif font-medium text-3xl mb-1">{r.name}</h1>
-        <a href={`mailto:${r.email}`} className="text-[14.5px] text-[oklch(0.5_0.05_20)]">
-          {r.email}
-        </a>
-      </div>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+      <AdminPageHeader
+        title={r.name}
+        subtitle={r.email}
+        actions={
+          <>
+            <AdminStatusTag status={r.status} />
+            <Button href="/admin/custom-orders" variant="ghost" size="sm">
+              <ArrowLeft className="size-3.5" aria-hidden />
+              All requests
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-[1.3fr_1fr] gap-8 items-start">
-        <div className="flex flex-col gap-5 p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className={labelClass}>Piece type</div>
-              <div className={fieldClass}>{r.pieceType}</div>
-            </div>
-            <div>
-              <div className={labelClass}>Size</div>
-              <div className={fieldClass}>{r.preferredSize || "—"}</div>
-            </div>
-            <div>
-              <div className={labelClass}>Colors</div>
-              <div className={fieldClass}>{r.preferredColors || "—"}</div>
-            </div>
-            <div>
-              <div className={labelClass}>Budget</div>
-              <div className={fieldClass}>{r.budgetRange || "—"}</div>
-            </div>
-          </div>
+      <div className="grid items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <DetailRow label="Piece type">{r.pieceType}</DetailRow>
+            <DetailRow label="Size">{r.preferredSize || "—"}</DetailRow>
+            <DetailRow label="Colors">{r.preferredColors || "—"}</DetailRow>
+            <DetailRow label="Budget">{r.budgetRange || "—"}</DetailRow>
 
-          <div>
-            <div className={labelClass}>Description</div>
-            <div className={`${fieldClass} leading-[1.6] whitespace-pre-wrap`}>{r.description}</div>
-          </div>
+            <DetailDivider />
 
-          <div>
-            <div className={labelClass}>Reference photos</div>
-            {r.referenceImageUrls && r.referenceImageUrls.length > 0 ? (
-              <div className="flex gap-2.5 flex-wrap mt-1.5">
-                {r.referenceImageUrls.map((url) => (
-                  <a key={url} href={url} target="_blank" rel="noopener noreferrer">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- external Vercel Blob URL */}
-                    <img
-                      src={url}
-                      alt="Reference"
-                      className="w-24 h-24 rounded-[10px] object-cover border-[1.5px] border-[oklch(0.9_0.02_60)]"
-                    />
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className={fieldClass}>None attached.</div>
-            )}
-          </div>
+            <DetailBlock label="Description">
+              <span className="whitespace-pre-wrap">{r.description}</span>
+            </DetailBlock>
 
-          <div className="text-[13px] text-[oklch(0.55_0.02_60)]">
-            Submitted {r.createdAt.toLocaleString()}
-          </div>
-        </div>
+            <DetailDivider />
 
-        <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] bg-white">
-          <CustomOrderUpdateForm
-            id={r.id}
-            status={r.status}
-            quotedPriceDollars={r.quotedPriceCents != null ? (r.quotedPriceCents / 100).toFixed(2) : ""}
-            adminNotes={r.adminNotes ?? ""}
-          />
-        </div>
+            <DetailBlock label="Reference photos">
+              {r.referenceImageUrls && r.referenceImageUrls.length > 0 ? (
+                <div className="flex flex-wrap gap-2.5">
+                  {r.referenceImageUrls.map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- external Vercel Blob URL */}
+                      <img
+                        src={url}
+                        alt="Reference"
+                        className="size-24 rounded-md border border-border object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                "None attached."
+              )}
+            </DetailBlock>
+
+            <p className="m-0 text-[13px] text-muted-foreground">
+              Submitted {r.createdAt.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <CustomOrderUpdateForm
+              id={r.id}
+              status={r.status}
+              quotedPriceDollars={r.quotedPriceCents != null ? (r.quotedPriceCents / 100).toFixed(2) : ""}
+              adminNotes={r.adminNotes ?? ""}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -35,8 +35,8 @@ export function GalleryFeaturedRow({
   }, [downState]);
 
   return (
-    <div className="flex items-center gap-4 p-3 rounded-[14px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
-      <div className="relative w-16 h-16 shrink-0 rounded-[10px] overflow-hidden bg-[oklch(0.95_0.01_60)]">
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-3">
+      <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
         <Image src={url} alt="" fill className="object-cover" sizes="64px" />
       </div>
       <span className="flex-1 text-sm">{productName}</span>
@@ -72,8 +72,8 @@ export function GalleryAddableRow({ id, url }: { id: string; url: string }) {
   }, [state]);
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-[12px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
-      <div className="relative w-12 h-12 shrink-0 rounded-[8px] overflow-hidden bg-[oklch(0.95_0.01_60)]">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-2">
+      <div className="relative size-12 shrink-0 overflow-hidden rounded-sm bg-muted">
         <Image src={url} alt="" fill className="object-cover" sizes="48px" />
       </div>
       <form action={action}>

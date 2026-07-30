@@ -1,22 +1,14 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { count, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { adminSignOut } from "@/app/admin/actions";
-import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
+import { customOrderRequests } from "@/lib/db/schema";
+import { AdminMobileNav, AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
-
-const NAV_LINKS = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/gallery", label: "Gallery" },
-  { href: "/admin/discounts", label: "Discounts" },
-  { href: "/admin/custom-orders", label: "Custom orders" },
-  { href: "/admin/orders", label: "Orders" },
-];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -28,31 +20,30 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   // never renders around anything but a real admin session.
   if (session?.user?.role !== "admin") return <>{children}</>;
 
+  // Drives the sidebar's "Custom requests" badge. One indexed count on an enum
+  // column, and every /admin route is already fully dynamic (the root layout
+  // awaits auth() and getCart() on each request), so this adds no new render
+  // mode — just one more cheap query alongside the auth lookup above.
+  const [{ newRequestCount }] = await db
+    .select({ newRequestCount: count() })
+    .from(customOrderRequests)
+    .where(eq(customOrderRequests.status, "new"));
+
   return (
-    <div className="min-h-screen bg-card">
-      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-[18px] px-8 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
-        <span className="font-serif font-medium text-xl">Crochette admin</span>
-        <nav className="flex justify-self-center gap-6">
-          {NAV_LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="text-[14.5px] text-[oklch(0.4_0.02_60)] transition-colors hover:text-[oklch(0.2_0.02_60)] hover:underline underline-offset-4"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex items-center justify-self-end gap-4">
-          <span className="text-[13.5px] text-muted-foreground">{session.user.email}</span>
-          <form action={adminSignOut}>
-            <Button type="submit" variant="outline" size="sm">
-              Sign out
-            </Button>
-          </form>
-        </div>
-      </header>
-      <main className="p-8">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <AdminSidebar email={session.user.email ?? ""} newRequestCount={newRequestCount} />
+      {/* min-w-0 so a wide table inside scrolls rather than forcing the flex
+          row wider than the viewport. Each page still supplies its own
+          `mx-auto max-w-*` — the deliberate 2026-07-28 choice, since the wide
+          tables and the single-column forms genuinely want different widths. */}
+      <main className="min-w-0 flex-1 px-6 pb-14 md:px-8">
+        {/* Rendered here rather than inside AdminPageHeader so the badge count
+            doesn't have to be threaded as a prop through all fifteen admin
+            pages just to reach one strip. Not sticky — the page header below
+            it is, which is the part worth keeping on screen while scrolling. */}
+        <AdminMobileNav newRequestCount={newRequestCount} />
+        {children}
+      </main>
     </div>
   );
 }

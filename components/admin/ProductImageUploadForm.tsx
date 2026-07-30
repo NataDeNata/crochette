@@ -13,7 +13,7 @@ export function ProductImageUploadForm({ productId }: { productId: string }) {
   const [state, formAction, isPending] = useActionState(action, IDLE_STATE);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
+    <form action={formAction} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
       <PhotoAttach
         name="images"
         maxPhotos={MAX_PRODUCT_IMAGES}
@@ -21,7 +21,7 @@ export function ProductImageUploadForm({ productId }: { productId: string }) {
       />
       <FieldError error={state.status === "error" ? state.message : undefined} />
       {state.status === "success" && state.message && (
-        <span className="text-xs text-[oklch(0.55_0.12_150)]">{state.message}</span>
+        <span className="text-xs text-sage">{state.message}</span>
       )}
       <SubmitButton isPending={isPending} label="Upload photos" pendingLabel="Uploading…" />
     </form>

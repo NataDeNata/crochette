@@ -10,7 +10,9 @@ export async function adminLogin(_prevState: AdminLoginState, formData: FormData
   const emailKey = typeof email === "string" ? email.trim().toLowerCase() : "";
 
   const ip = await getClientIp();
-  if (await isRateLimited("admin-login", `${ip}:${emailKey}`)) {
+  // IP-only first — it's the bucket an enumeration sweep can't escape by
+  // varying the email. See lib/security/rate-limit.ts.
+  if ((await isRateLimited("auth-ip", ip)) || (await isRateLimited("admin-login", `${ip}:${emailKey}`))) {
     return {
       status: "error",
       message: "Too many attempts — please wait a few minutes and try again.",

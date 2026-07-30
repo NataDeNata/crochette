@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { discountCodes } from "@/lib/db/schema";
 import { updateDiscount } from "@/app/admin/discounts/actions";
 import { DiscountForm } from "@/components/admin/DiscountForm";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const metadata: Metadata = { title: "Edit discount code", robots: { index: false, follow: false } };
 
@@ -14,8 +17,17 @@ export default async function EditDiscountPage({ params }: { params: Promise<{ i
   if (!row) notFound();
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <h1 className="font-serif text-3xl font-medium">Edit discount code</h1>
+    <div className="mx-auto flex w-full max-w-md flex-col gap-5">
+      <AdminPageHeader
+        title="Edit discount code"
+        subtitle={row.code}
+        actions={
+          <Button href="/admin/discounts" variant="ghost" size="sm">
+            <ArrowLeft className="size-3.5" aria-hidden />
+            All codes
+          </Button>
+        }
+      />
       <DiscountForm
         action={updateDiscount.bind(null, id)}
         submitLabel="Save changes"

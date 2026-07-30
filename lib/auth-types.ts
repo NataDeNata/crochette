@@ -25,5 +25,9 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: UserRole;
+    /** Epoch ms at sign-in. Fixed for the life of the session — the cookie's
+     * own expiry is rolled forward on every read, so it can't measure age.
+     * See lib/auth-session.ts. */
+    authTime?: number;
   }
 }
