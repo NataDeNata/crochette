@@ -8,7 +8,7 @@ Handmade-crochet e-commerce storefront: a fixed product catalog plus a custom-or
 - **Styling**: Tailwind CSS v4 + shadcn/ui (Radix), `next/font` (Cormorant Garamond + Work Sans). Tailwind is the sole styling mechanism — no inline `style={{}}` outside Framer Motion's own animation API
 - **Animation**: Framer Motion — transform/opacity-only, `prefers-reduced-motion`-aware (`components/motion/`)
 - **Database**: PostgreSQL (Supabase) via Drizzle ORM (`lib/db/`)
-- **Auth**: Auth.js v5 — one config, two Credentials providers (`admin`, `customer`) on a shared JWT session (`lib/auth.ts`)
+- **Auth**: Auth.js v5 — one config, two Credentials providers (`admin`, `customer`) plus Google for customers, on a shared JWT session (`lib/auth.ts`). Admin sessions are capped at 8h absolute and are revoked by rotating the password (`lib/auth-session.ts`)
 - **Payments**: Xendit hosted checkout (Payment Sessions) — Stripe doesn't support PH-registered merchants (`lib/payments/xendit.ts`)
 - **Storage**: Vercel Blob — product photos, gallery images, custom-order reference uploads
 - **Email**: Resend — order, custom-order and contact notifications (`lib/email/`)
@@ -28,6 +28,12 @@ Copy `.env.example` to `.env.local` and set `DATABASE_URL` to a Postgres connect
 ```bash
 cp .env.example .env.local
 ```
+
+Google sign-in is optional in development — leave `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET`
+unset and the button simply fails; email/password still works. If you do configure it,
+note that running the dev server behind a tunnel (ngrok) needs `AUTH_URL` set to the
+tunnel's URL: ngrok rewrites the `Host` header, so without it Auth.js builds a
+`redirect_uri` pointing at `localhost` and Google rejects the callback.
 
 Apply the schema and seed the product catalog:
 
