@@ -22,8 +22,12 @@ export const EMPTY_PREVIEW: PreviewData = {
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+/* Square only once it sits beside the form (`md` and up, see app/custom/
+ * page.tsx). Stacked below that it spans the full width, where a square would
+ * be a ~280px-tall block hanging off the end of an already-long form — so it
+ * takes its natural height with a floor instead. */
 const shellClassName =
-  "aspect-square rounded-[32px] p-9 bg-card border-2 border-dashed border-[oklch(0.75_0.03_20)] flex flex-col justify-center gap-[22px] overflow-hidden";
+  "min-h-[200px] md:min-h-0 md:aspect-square rounded-[24px] sm:rounded-[32px] p-6 sm:p-9 bg-card border-2 border-dashed border-[oklch(0.75_0.03_20)] flex flex-col justify-center gap-[22px] overflow-hidden";
 
 /** Fades a value in/out only when it toggles between empty and non-empty —
  * typing within an already-filled field just re-renders instantly. */
@@ -101,7 +105,7 @@ export function LiveRequestPreview({
           {pieceType || "Your custom piece"}
         </div>
       </AnimatedSwap>
-      <div className="flex gap-7">
+      <div className="flex flex-wrap gap-x-7 gap-y-3">
         <MetaRow label="Size" value={preferredSize} reduceMotion={reduceMotion} />
         <MetaRow label="Colors" value={preferredColors} reduceMotion={reduceMotion} />
       </div>

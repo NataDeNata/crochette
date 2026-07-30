@@ -26,7 +26,12 @@ export function OrderTracker({ status }: { status: string }) {
         <div key={step.key} className="flex items-center flex-1 last:flex-none">
           <div className="flex flex-col items-center gap-1.5">
             <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", i <= currentIndex ? ACTIVE_DOT : INACTIVE_DOT)} />
-            <span className={cn("text-[11px] whitespace-nowrap", i <= currentIndex ? ACTIVE_LABEL : INACTIVE_LABEL)}>
+            <span
+              className={cn(
+                "text-[10px] sm:text-[11px] whitespace-nowrap",
+                i <= currentIndex ? ACTIVE_LABEL : INACTIVE_LABEL,
+              )}
+            >
               {step.label}
             </span>
           </div>

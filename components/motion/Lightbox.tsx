@@ -19,10 +19,13 @@ export function Lightbox({
 
   const closeButton = (
     <DialogPrimitive.Close asChild>
+      {/* A bare glyph gave this a ~20x28px hit area — fine for a mouse, well
+          under the 44px touch minimum. The size comes from the box now; the
+          glyph itself is unchanged. */}
       <button
         type="button"
         aria-label="Close"
-        className="absolute -top-11 right-0 bg-transparent border-0 text-[oklch(0.98_0.01_85)] text-[28px] leading-none cursor-pointer"
+        className="absolute -top-12 right-0 flex size-11 items-center justify-center bg-transparent border-0 text-[oklch(0.98_0.01_85)] text-[28px] leading-none cursor-pointer"
       >
         ×
       </button>

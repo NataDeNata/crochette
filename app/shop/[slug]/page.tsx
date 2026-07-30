@@ -76,7 +76,7 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
-      <section className="pt-9 px-12 pb-0">
+      <section className="pt-9 page-gutter pb-0">
         <FadeIn>
           <Link href="/shop" className="text-[13px] text-[oklch(0.5_0.05_20)] inline-flex items-center gap-1.5">
             ← Back to shop
@@ -84,7 +84,10 @@ export default async function ProductPage({
         </FadeIn>
       </section>
 
-      <section className="pt-8 px-12 pb-20 grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-14 max-w-[1100px] mx-auto items-center">
+      {/* `min(320px,100%)` so the single surviving track can drop below 320px
+          on a narrow screen — a flat 320px minimum overflows instead of
+          collapsing. Same fix as CheckoutForm's summary grid. */}
+      <section className="pt-8 page-gutter pb-20 grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-10 md:gap-14 max-w-[1100px] mx-auto items-center">
         <FadeIn>
           <ProductGallery
             images={product.images}

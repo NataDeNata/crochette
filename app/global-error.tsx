@@ -52,7 +52,7 @@ export default function GlobalError({
   return (
     <html lang="en" className={cn(cormorant.variable, workSans.variable, "font-sans")}>
       <body>
-        <section className="py-[100px] px-12 text-center">
+        <section className="py-[100px] page-gutter text-center">
           <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">Crochette</div>
           <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-4">
             The site is having a moment

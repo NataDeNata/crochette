@@ -13,7 +13,7 @@ export default async function CheckoutPage() {
   const addresses = session?.user?.role === "customer" ? await listAddresses(session.user.id) : [];
 
   return (
-    <section className="pt-12 px-12 pb-24">
+    <section className="pt-12 page-gutter pb-24">
       <h1 className="font-serif font-medium text-[34px] text-center mb-10">Checkout</h1>
       <CheckoutForm
         addresses={addresses.map((a) => ({

@@ -56,9 +56,12 @@ export function ShopMarquee({ products, onDark = false }: { products: Product[];
         {[...products, ...products].map((p, i) => (
           <div
             key={`${p.id}-${i}`}
-            // CARD_WIDTH must stay a literal `w-[320px]` here (not interpolated)
-            // so Tailwind's content scanner can see the class at build time.
-            className={cn("w-[320px] shrink-0", dragging && "pointer-events-none")}
+            // Both widths must stay literal (not interpolated) so Tailwind's
+            // content scanner can see them at build time. 320px is exactly the
+            // narrowest target viewport, which left a card edge-to-edge with
+            // no hint that the strip continues — 260px below `sm` keeps the
+            // next card peeking in, which is what reads as scrollable.
+            className={cn("w-[260px] sm:w-[320px] shrink-0", dragging && "pointer-events-none")}
             aria-hidden={i >= products.length || undefined}
           >
             <ProductCard product={p} onDark={onDark} />

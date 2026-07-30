@@ -22,14 +22,14 @@ const PILL_WIDTHS = ["w-12", "w-28", "w-20", "w-32", "w-24"];
 export default function ShopLoading() {
   return (
     <>
-      <section className="pt-[72px] px-12 pb-10 text-center">
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-10 text-center">
         <Skeleton className="h-[13px] w-16 mx-auto mb-4 rounded-full" />
         <Skeleton className="h-[46px] w-80 max-w-full mx-auto mb-4" />
         <Skeleton className="h-4 w-[420px] max-w-full mx-auto mb-2 rounded-full" />
         <Skeleton className="h-4 w-72 max-w-full mx-auto rounded-full" />
       </section>
 
-      <section className="pt-5 px-12 pb-0 flex flex-col items-center gap-6">
+      <section className="pt-5 page-gutter pb-0 flex flex-col items-center gap-6">
         <Skeleton className="h-[46px] w-full max-w-[420px] rounded-[24px]" />
 
         <div className="flex gap-3.5 justify-center flex-wrap">
@@ -42,7 +42,7 @@ export default function ShopLoading() {
         </div>
       </section>
 
-      <section className="pt-12 px-12 pb-[60px]">
+      <section className="pt-12 page-gutter pb-[60px]">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,320px))] justify-center gap-8">
           {Array.from({ length: CARD_COUNT }).map((_, i) => (
             <div key={i} className="flex flex-col gap-3.5">

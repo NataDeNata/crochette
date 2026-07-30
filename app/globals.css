@@ -11,6 +11,31 @@
   --font-sans: var(--font-work), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* The sitewide horizontal page gutter, as one utility instead of the flat
+ * `px-12` that used to be repeated across ~20 files.
+ *
+ * 48px is the right inset on a desktop canvas and completely wrong on a phone:
+ * at 320px it spent 96px — 30% of the viewport — on empty margin, which is
+ * what forced the 320px-minimum grid tracks elsewhere to overflow. The top
+ * step is still exactly 48px, so nothing at or above `lg` moves.
+ *
+ * A Tailwind `@utility` rather than a plain class (the .nav-desktop-links /
+ * .footer-grid style used further down) specifically so it lands in the
+ * utilities layer: a plain class declared after `@import "tailwindcss"` sits
+ * outside that layer and would beat any `px-*` a call site tried to layer on
+ * top. Plain nested `@media` rather than `@variant sm/lg` to keep it
+ * independent of nested-variant resolution — the breakpoints match Tailwind's
+ * own sm (40rem) and lg (64rem). */
+@utility page-gutter {
+  padding-inline: 20px;
+  @media (width >= 40rem) {
+    padding-inline: 32px;
+  }
+  @media (width >= 64rem) {
+    padding-inline: 48px;
+  }
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -212,15 +237,27 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
+/* Row height is normally the caller's `--row-h` inline custom property (150px
+ * from the home teaser, 180px from /gallery — see GallerySection.tsx). Those
+ * are tuned for a 4-up grid, where a tile is roughly square. As the column
+ * count drops the tiles get wider but the rows don't get taller, so by the
+ * 1-column breakpoint a span-1 tile is a ~320x150 letterbox strip.
+ *
+ * `grid-auto-rows` is overridden here rather than `--row-h`, because the
+ * variable is set as an inline style and no class rule can outrank that.
+ * These rules sit outside Tailwind's layers, so they do outrank the
+ * `auto-rows-[var(--row-h)]` utility on the same element. */
 @media (max-width: 760px) {
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 150px;
   }
 }
 
 @media (max-width: 480px) {
   .gallery-grid {
     grid-template-columns: 1fr;
+    grid-auto-rows: 200px;
   }
 }
 /*
@@ -321,6 +358,15 @@
   --chart-4: oklch(0.7 0.06 280);
   --chart-5: oklch(0.5 0.05 20);
   --radius: 0.75rem;
+
+  /* Height of the sticky site nav, so the full-bleed landing sections can size
+   * themselves to "one screen below the nav" without restating the number.
+   * It was previously a bare `89px` inlined into three separate
+   * `calc(100vh-89px)` expressions in app/(home)/page.tsx plus a fourth in its
+   * loading.tsx skeleton — four copies of a figure derived from Nav.tsx's
+   * py-[22px] + the 44px icon buttons + the 1px bottom border. Same at every
+   * breakpoint: the icons don't shrink, so neither does the nav. */
+  --nav-h: 89px;
 
   /* Sidebar — retuned 2026-07-30 for the /admin redesign. These were all
    * verbatim copies of the base tokens above, which made the shadcn sidebar

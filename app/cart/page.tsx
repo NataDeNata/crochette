@@ -13,7 +13,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <section className="py-20 px-12 text-center">
+      <section className="py-20 page-gutter text-center">
         <h1 className="font-serif font-medium text-[32px] mb-3">Your cart is empty</h1>
         <p className="text-[14.5px] text-muted-foreground mb-7">
           Take a look around the shop — something handmade is waiting.
@@ -26,7 +26,7 @@ export default function CartPage() {
   const total = subtotalCents + SHIPPING_CENTS;
 
   return (
-    <section className="pt-12 px-12 pb-24 max-w-[800px] mx-auto">
+    <section className="pt-12 page-gutter pb-24 max-w-[800px] mx-auto">
       <h1 className="font-serif font-medium text-[34px] mb-7">Your cart</h1>
 
       <div className="flex flex-col gap-1">
@@ -39,24 +39,37 @@ export default function CartPage() {
               animate={{ opacity: 1 }}
               exit={reduceMotion ? undefined : { opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center justify-between gap-4 py-[18px] px-1 border-b border-[oklch(0.92_0.015_60)]"
+              // Two tiers below `sm`: the name/price block on its own row, the
+              // controls on a second full-width row. The five controls used to
+              // share one unwrapped line, which overflowed a 320px screen by
+              // well over 100px. `flex-wrap` alone wouldn't do it — the
+              // controls are a nested flex row, so that row is what has to go
+              // full-width and redistribute.
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-[18px] px-1 border-b border-[oklch(0.92_0.015_60)]"
             >
-              <div>
+              <div className="min-w-0">
                 <Link href={`/shop/${item.slug}`} className="text-[15px] font-medium text-inherit">
                   {item.name}
                 </Link>
                 <div className="text-[13px] text-muted-foreground mt-0.75">
                   {formatPrice(item.priceCents)} each
                 </div>
+                {/* Sits with the item rather than in the controls row: it is a
+                    status about the line, not a control, and in the controls
+                    row it was the one element that pushed a 320px screen back
+                    into overflow after the two-tier reflow. */}
+                {item.quantity >= item.stockQty && (
+                  <div className="text-xs text-[oklch(0.55_0.15_40)] mt-1">Max in stock</div>
+                )}
               </div>
 
-              <div className="flex items-center gap-[18px]">
+              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end sm:gap-[18px]">
                 <div className="flex items-center border-[1.5px] border-[oklch(0.9_0.02_60)] rounded-[24px] overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setQuantity(item.productId, item.quantity - 1)}
                     aria-label={`Decrease quantity of ${item.name}`}
-                    className="py-2 px-3 bg-transparent border-0 cursor-pointer"
+                    className="py-3 px-4 sm:py-2 sm:px-3 bg-transparent border-0 cursor-pointer"
                   >
                     −
                   </button>
@@ -66,7 +79,7 @@ export default function CartPage() {
                     disabled={item.quantity >= Math.min(20, item.stockQty)}
                     onClick={() => setQuantity(item.productId, Math.min(20, item.stockQty, item.quantity + 1))}
                     aria-label={`Increase quantity of ${item.name}`}
-                    className={`py-2 px-3 bg-transparent border-0 ${
+                    className={`py-3 px-4 sm:py-2 sm:px-3 bg-transparent border-0 ${
                       item.quantity >= Math.min(20, item.stockQty)
                         ? "cursor-not-allowed opacity-40"
                         : "cursor-pointer opacity-100"
@@ -75,10 +88,6 @@ export default function CartPage() {
                     +
                   </button>
                 </div>
-                {item.quantity >= item.stockQty && (
-                  <span className="text-xs text-[oklch(0.55_0.15_40)]">Max in stock</span>
-                )}
-
                 <div className="text-[14.5px] min-w-[70px] text-right">
                   {formatPrice(item.priceCents * item.quantity)}
                 </div>

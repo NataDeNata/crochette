@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 export default function CustomOrderPage() {
   return (
     <>
-      <section className="pt-[72px] px-12 pb-14 text-center">
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-14 text-center">
         <FadeIn>
           <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
             Custom orders
           </div>
-          <h1 className="font-serif font-medium text-[clamp(38px,5vw,58px)] mb-4">
+          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
             Have something in mind?
           </h1>
           <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[480px] mx-auto leading-[1.6]">
@@ -31,7 +31,7 @@ export default function CustomOrderPage() {
         </FadeIn>
       </section>
 
-      <section className="relative px-12 pb-[90px] grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 max-w-[1000px] mx-auto">
+      <section className="relative page-gutter pb-[90px] grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 max-w-[1000px] mx-auto">
         <StepThread />
         {CUSTOM_STEPS.map((s, i) => (
           <FadeIn key={s.n} delay={i * 0.08}>
@@ -47,7 +47,9 @@ export default function CustomOrderPage() {
       </section>
 
       <FadeIn>
-        <section className="mx-8 mb-[100px] p-14 rounded-[36px] bg-accent grid grid-cols-[1.1fr_1fr] gap-14 items-center">
+        {/* Form + live preview. Stacked below `md`: at 320px the old flat
+            `1.1fr 1fr` inside `p-14` left each column about 92px wide. */}
+        <section className="mx-4 sm:mx-8 mb-[100px] p-6 sm:p-10 md:p-14 rounded-[28px] sm:rounded-[36px] bg-accent grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-8 md:gap-14 items-center">
           <CustomOrderPanel />
         </section>
       </FadeIn>
