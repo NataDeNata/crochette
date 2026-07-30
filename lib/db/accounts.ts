@@ -7,6 +7,41 @@ export async function findCustomerByEmail(email: string) {
   return row ?? null;
 }
 
+/**
+ * Resolve the `customers` row behind a Google sign-in, creating it on first
+ * use. Returns our own row — the uuid is the entire point (see lib/auth.ts).
+ *
+ * An existing password account with the same address is **linked, not
+ * duplicated**. Google asserts `email_verified`, which is the standard bar for
+ * this, and the caller enforces it before we ever get here. The consequence is
+ * worth stating plainly: whoever controls the Google account controls the
+ * Crochette account. That is intended, and it is why the verified check is
+ * mandatory rather than advisory.
+ *
+ * `name` only fills a gap — it never overwrites a name the customer set
+ * themselves, since their own is the more deliberate of the two.
+ */
+export async function lookupOrCreateGoogleCustomer(data: { email: string; name?: string | null }) {
+  const email = data.email.trim().toLowerCase();
+
+  const existing = await findCustomerByEmail(email);
+  if (existing) {
+    if (!existing.name && data.name) {
+      await db.update(customers).set({ name: data.name }).where(eq(customers.id, existing.id));
+      return { ...existing, name: data.name };
+    }
+    return existing;
+  }
+
+  // passwordHash stays null: this account has no password until a reset flow
+  // exists to give it one. See the column comment in lib/db/schema.ts.
+  const [row] = await db
+    .insert(customers)
+    .values({ email, passwordHash: null, name: data.name || null })
+    .returning();
+  return row;
+}
+
 export async function createCustomer(data: { email: string; passwordHash: string; name?: string | null }) {
   const [row] = await db
     .insert(customers)

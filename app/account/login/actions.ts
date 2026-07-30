@@ -5,12 +5,20 @@ import { signIn } from "@/lib/auth";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import type { AccountLoginState } from "@/lib/actions/account-login-types";
 
+/** Kicks off the Google OAuth redirect. No rate limiting here on purpose:
+ * there are no credentials to guess, and Google owns that surface. */
+export async function googleSignIn() {
+  await signIn("google", { redirectTo: "/account" });
+}
+
 export async function accountLogin(_prevState: AccountLoginState, formData: FormData): Promise<AccountLoginState> {
   const email = formData.get("email");
   const emailKey = typeof email === "string" ? email.trim().toLowerCase() : "";
 
   const ip = await getClientIp();
-  if (await isRateLimited("login", `${ip}:${emailKey}`)) {
+  // IP-only first — it's the bucket an enumeration sweep can't escape by
+  // varying the email. See lib/security/rate-limit.ts.
+  if ((await isRateLimited("auth-ip", ip)) || (await isRateLimited("login", `${ip}:${emailKey}`))) {
     return {
       status: "error",
       message: "Too many attempts — please wait a few minutes and try again.",

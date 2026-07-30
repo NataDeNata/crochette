@@ -22,7 +22,31 @@ const redis = new Redis({
  * checkout/custom-order/contact are higher/looser than the auth endpoints
  * since legitimate shoppers retry a failed card, and custom-order's window
  * additionally guards the Vercel Blob photo-upload cost behind it. */
-const RATE_LIMITS = {
+export const RATE_LIMITS = {
+  /** Keyed on IP alone, across all three auth entry points. The per-endpoint
+   * limits below are keyed `IP:email`, which means an account-enumeration
+   * sweep gets a fresh bucket for every address it tries — this is the bucket
+   * that survives that. Checked *before* the per-endpoint one, so it's the
+   * first thing such a sweep hits.
+   *
+   * Note `getClientIp()` returns the constant "unknown" with no proxy in
+   * front, so every request from a local dev server shares one bucket: 20
+   * attempts in 10 minutes trips it for everyone. Wait out the window or drop
+   * the `ratelimit:auth-ip:unknown` key in Upstash. */
+  "auth-ip": { max: 20, window: "10 m" },
+  /** The backstop inside `authorize()` itself, so it covers every way a
+   * credentials check can be reached — not just the Server Actions.
+   *
+   * Needed because NextAuth's own `POST /api/auth/callback/{admin,customer}`
+   * is public (proxy.ts matches only `/admin/*` and `/account/*`), so a
+   * client that posts a CSRF token straight to it skips the login form and
+   * every limit attached to it. Verified before the fix: 25 consecutive failed
+   * admin logins through that endpoint, none refused.
+   *
+   * A separate scope from `auth-ip` on purpose. The form path calls that one
+   * and this one, so sharing a scope would spend two tokens per attempt and
+   * silently halve every limit. */
+  "auth-endpoint": { max: 20, window: "10 m" },
   "admin-login": { max: 5, window: "10 m" },
   login: { max: 5, window: "10 m" },
   signup: { max: 5, window: "10 m" },
