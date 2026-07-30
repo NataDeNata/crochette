@@ -34,13 +34,21 @@ export function RevenueChart({ bars }: { bars: RevenueBar[] }) {
       ) : (
         <div className="flex h-[150px] items-end gap-3 pt-2">
           {bars.map((bar) => (
-            <div key={bar.dayKey} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-              <div
-                // The deliberate exception documented at the top of this file.
-                style={{ "--bar-h": `${barHeightPercent(bar.totalCents, maxCents)}%` } as React.CSSProperties}
-                className="w-full max-w-[28px] rounded-t-lg rounded-b-sm bg-brand h-[var(--bar-h)]"
-                title={`${bar.label}: ${formatPrice(bar.totalCents)}`}
-              />
+            <div key={bar.dayKey} className="flex h-full flex-1 flex-col items-center gap-2">
+              {/* The bar's 100% is measured against this track, not against the
+                  whole column — otherwise the tallest bar is the column's full
+                  height and the gap and weekday label are added *on top* of it,
+                  pushing ~24px out of the box and into the heading above. The
+                  track takes what the label and gap leave behind (min-h-0 so it
+                  can actually shrink), so a full-height bar still fits. */}
+              <div className="flex min-h-0 w-full flex-1 items-end justify-center">
+                <div
+                  // The deliberate exception documented at the top of this file.
+                  style={{ "--bar-h": `${barHeightPercent(bar.totalCents, maxCents)}%` } as React.CSSProperties}
+                  className="w-full max-w-[28px] rounded-t-lg rounded-b-sm bg-brand h-[var(--bar-h)]"
+                  title={`${bar.label}: ${formatPrice(bar.totalCents)}`}
+                />
+              </div>
               <span className="text-[11px] text-muted-foreground">{bar.label}</span>
             </div>
           ))}

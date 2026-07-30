@@ -24,7 +24,18 @@ const REVENUE_STATUSES = ["paid", "shipped", "completed"] as const;
  * `paid_at` (not `created_at`) because revenue is recognised when Xendit
  * confirms payment, not when the order row was inserted — a checkout started
  * at 11:55pm and paid at 12:05am belongs to the second day. */
-const paidDayExpr = sql<string>`(${orders.paidAt} AT TIME ZONE ${sql.raw(`'${REPORTING_TIME_ZONE}'`)})::date`;
+const paidDayExpr = sql`(${orders.paidAt} AT TIME ZONE ${sql.raw(`'${REPORTING_TIME_ZONE}'`)})::date`;
+
+/** The same day, formatted as a `YYYY-MM-DD` string *in SQL*.
+ *
+ * Needed because a bare `date` column comes back from postgres.js as a JS
+ * `Date` (its default handler for OID 1082), and drizzle does not re-decode
+ * raw `sql` fields — so a `sql<string>` annotation on paidDayExpr would be a
+ * lie the compiler happily accepts, and `String(theDate).slice(0, 10)` yields
+ * `"Wed Jul 29"`, which matches no key buildRevenueSeries ever looks up.
+ * Formatting in SQL makes the string real. `to_char` rather than `::text`
+ * because the latter's output depends on the session's DateStyle. */
+const paidDayKeyExpr = sql<string>`to_char(${paidDayExpr}, 'YYYY-MM-DD')`;
 
 /** Start of the current month, in the studio's timezone, as a timestamptz. */
 const monthStartExpr = sql`date_trunc('month', now() AT TIME ZONE ${sql.raw(`'${REPORTING_TIME_ZONE}'`)})`;
@@ -43,7 +54,7 @@ function toCents(value: string | number | null): number {
  * filled in TS — see buildRevenueSeries for why the gaps matter. */
 export async function getRevenueLast7Days(): Promise<RevenueBar[]> {
   const rows = await db
-    .select({ day: paidDayExpr, totalCents: sql<string | null>`sum(${orders.totalCents})` })
+    .select({ day: paidDayKeyExpr, totalCents: sql<string | null>`sum(${orders.totalCents})` })
     .from(orders)
     .where(
       and(
@@ -60,7 +71,7 @@ export async function getRevenueLast7Days(): Promise<RevenueBar[]> {
     )
     .groupBy(paidDayExpr);
 
-  const totalsByDay = new Map(rows.map((r) => [String(r.day).slice(0, 10), toCents(r.totalCents)]));
+  const totalsByDay = new Map(rows.map((r) => [r.day, toCents(r.totalCents)]));
   return buildRevenueSeries(totalsByDay, toDayKey(new Date()));
 }
 
