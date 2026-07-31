@@ -6,7 +6,7 @@ import { compare } from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { admins, customers } from "@/lib/db/schema";
-import { lookupOrCreateGoogleCustomer } from "@/lib/db/accounts";
+import { claimGuestOrders, lookupOrCreateGoogleCustomer } from "@/lib/db/accounts";
 import { mergeCarts } from "@/lib/db/cart";
 import { readCartCookie, setCartCookie } from "@/lib/cart/cookie";
 import { logError, logInfo } from "@/lib/observability/log";
@@ -65,16 +65,26 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
       /**
        * Async on purpose: this is where the `customers` row is resolved.
        *
-       * There is no adapter, so nothing persists the Google user for us — and
-       * with `strategy: "jwt"`, whatever this returns *is* the `user` handed to
-       * the jwt callback and to `events.signIn`. Returning Google's `sub` as
-       * the id would put a non-uuid into `session.user.id`, and every later
-       * `customer_id` write (orders, addresses, carts) would hand Postgres a
-       * malformed uuid and raise 22P02 — the same failure class as the Xendit
-       * `reference_id` bug, surfacing at checkout rather than at sign-in.
-       * `events.signIn`'s cart merge reads the same id.
+       * There is no adapter, so nothing persists the Google user for us. With
+       * `strategy: "jwt"`, what this returns is *nearly* the `user` handed to
+       * the jwt callback and `events.signIn` — with one exception that matters
+       * more than anything else here.
        *
-       * So the DB write happens here, and our own uuid goes back.
+       * **@auth/core overwrites `id`.** Its OAuth callback builds the user as
+       * `{ ...userFromProfile, id: crypto.randomUUID(), email: ... }`
+       * (lib/actions/callback/oauth/callback.js). The spread preserves custom
+       * fields — that is why `role` arrives intact — but `id` is replaced
+       * unconditionally, so our uuid never survives in `user.id`.
+       *
+       * The consequence was live for a while and easy to miss: `session.user.id`
+       * pointed at no customer row, so every `customer_id` write (carts, orders,
+       * addresses) failed `orders_customer_id_customers_id_fk`, and
+       * /account/orders — a plain SELECT, no FK to violate — simply returned
+       * nothing. A customer with orders saw an empty history.
+       *
+       * So the DB write happens here and our uuid goes back in `customerId`,
+       * which @auth/core does not touch. The jwt callback and events.signIn
+       * both read that in preference to `id`. See lib/auth-types.ts.
        */
       async profile(profile: GoogleProfile) {
         // Enforced *here* rather than in the `signIn` callback, which is the
@@ -90,7 +100,16 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
         });
 
         return {
+          // Set for completeness, but @auth/core throws this away: its OAuth
+          // callback builds the user as `{ ...userFromProfile, id:
+          // crypto.randomUUID() }`, so `id` is always replaced with a random
+          // uuid that matches no customers row. Hence customerId below.
           id: customer.id,
+          // The id that actually survives. The spread above preserves unknown
+          // fields — the same mechanism `role` relies on — so this is how our
+          // uuid reaches the jwt callback and events.signIn. Without it every
+          // customer_id write (orders, carts, addresses) fails the foreign key.
+          customerId: customer.id,
           email: customer.email,
           name: customer.name ?? customer.email,
           role: "customer" as const,
@@ -164,7 +183,11 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.id = user.id;
+        // `customerId` first: on an OAuth sign-in `user.id` is a random uuid
+        // @auth/core generated, not ours (see lib/auth-types.ts). Credentials
+        // sign-ins don't set customerId and keep their own id, so the fallback
+        // is the normal path for those.
+        token.id = user.customerId ?? user.id;
         // Stamped at sign-in and never refreshed, unlike the cookie's own
         // expiry, which @auth/core rolls forward on every read. This is what
         // makes the admin cap an absolute one rather than an idle timeout.
@@ -194,7 +217,8 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
   },
   events: {
     /**
-     * Fold a guest's cart into their account on sign-in.
+     * Fold a guest's cart — and their past guest orders — into their account
+     * on sign-in.
      *
      * Hooked here rather than in the two login actions because `events.signIn`
      * covers both the login and signup paths (app/account/login/actions.ts and
@@ -205,17 +229,50 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
      * machine that also shops would otherwise have the shopper's guest cart
      * silently attached to the admin account.
      *
-     * Deliberately non-fatal. A failure here must never block a login — the
-     * worst case is a guest cart that stays unclaimed, which the shopper can
-     * recover by re-adding items, whereas a thrown error would lock them out of
-     * their account entirely.
+     * Both steps are deliberately non-fatal, and independently so. A failure
+     * here must never block a login — the worst case is a guest cart or order
+     * that stays unclaimed, whereas a thrown error would lock the customer out
+     * of their account entirely.
      */
-    async signIn({ user }) {
-      if (user?.role !== "customer" || !user.id) return;
+    async signIn({ user, account }) {
+      // Same substitution as the jwt callback: `user.id` is a random uuid on
+      // an OAuth sign-in, so writing it into carts/orders fails the foreign
+      // key. This is what silently broke the Google cart merge — the failure
+      // is non-fatal by design, so it only ever showed up as a log line.
+      const customerId = user?.customerId ?? user?.id;
+      if (user?.role !== "customer" || !customerId) return;
+
+      /**
+       * Google only, and the gate is the whole security argument.
+       *
+       * claimGuestOrders matches on email, so it must only run where the email
+       * has been proven to belong to whoever is signing in. Google asserts
+       * `email_verified` and the profile() callback above hard-rejects anything
+       * else. Credentials sign-ins are excluded because nothing verifies a
+       * password account's address yet — until email verification ships,
+       * including them would let anyone sign up with someone else's address and
+       * read the name, phone and shipping address off that person's orders.
+       *
+       * When email verification lands, widening this to `customer` sign-ins
+       * whose address is verified is the only change needed.
+       */
+      if (account?.provider === "google" && user.email) {
+        try {
+          const claimed = await claimGuestOrders(customerId, user.email);
+          if (claimed > 0) {
+            logInfo("orders.guest_claimed", { customerId, count: claimed });
+          }
+        } catch (err) {
+          logError("orders.guest_claim_failed", err, {
+            detail:
+              "past guest orders could not be attached to the account; the sign-in itself succeeded and the orders are untouched",
+          });
+        }
+      }
 
       try {
         const guestCartId = await readCartCookie();
-        const survivingCartId = await mergeCarts(guestCartId, user.id);
+        const survivingCartId = await mergeCarts(guestCartId, customerId);
         if (survivingCartId !== guestCartId) await setCartCookie(survivingCartId);
       } catch (err) {
         logError("cart.merge_on_login_failed", err, {

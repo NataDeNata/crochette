@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { addresses, customers, orders, type NewAddressRow } from "@/lib/db/schema";
 
@@ -104,8 +104,54 @@ export async function setDefaultAddress(customerId: string, addressId: string) {
     .where(and(eq(addresses.id, addressId), eq(addresses.customerId, customerId)));
 }
 
-/** Orders placed while logged in — orders placed as a guest before signup
- * are never retroactively linked, by design (see lib/db/schema.ts). */
+/**
+ * Attach a customer's own past guest orders to their account.
+ *
+ * The match is on email, so it is only ever safe where the email has been
+ * **proven** to belong to the person signing in. Today that means Google
+ * (`email_verified`, enforced in lib/auth.ts before a row is ever resolved) —
+ * see the call site, which is what enforces the restriction. Password accounts
+ * are deliberately excluded: nothing verifies their address yet, so matching on
+ * it would let anyone sign up with someone else's email and read the name,
+ * phone number and full shipping address off that person's guest orders.
+ * When email verification ships, this becomes safe to call for them too and
+ * the provider gate at the call site is the only thing that needs to change.
+ *
+ * `customerId IS NULL` is what makes this safe to re-run and impossible to use
+ * for theft: an order that already belongs to an account is never reassigned,
+ * so a second account claiming the same address cannot take orders off the
+ * first. Only genuinely unclaimed guest orders move.
+ *
+ * Case-insensitive on purpose. `customers.email` is lowercased on every write,
+ * but `orders.customerEmail` is only `.trim()`ed (lib/validation/checkout.ts),
+ * so it holds whatever case the shopper typed — a plain `=` would silently miss
+ * "Sam@Example.com".
+ *
+ * The order's own customerName/Email/Phone are **not** touched: they stay the
+ * snapshot of what was typed at checkout, per the column comments in
+ * lib/db/schema.ts. Only the account link is filled in.
+ *
+ * Returns how many orders were claimed, for logging.
+ */
+export async function claimGuestOrders(customerId: string, email: string) {
+  const claimed = await db
+    .update(orders)
+    .set({ customerId })
+    .where(
+      and(
+        isNull(orders.customerId),
+        sql`lower(${orders.customerEmail}) = ${email.trim().toLowerCase()}`
+      )
+    )
+    .returning({ id: orders.id });
+
+  return claimed.length;
+}
+
+/** Orders belonging to the account: those placed while logged in, plus any
+ * guest orders since claimed by a verified-email sign-in (claimGuestOrders
+ * above). Both are the same thing by the time they get here — a row whose
+ * `customerId` is set. */
 export async function getCustomerOrders(customerId: string) {
   return db.select().from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
 }
