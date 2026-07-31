@@ -51,7 +51,11 @@ export function CheckoutForm({
   if (loaded && items.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-12 max-w-[900px] mx-auto">
+    // `min(320px,100%)` rather than a flat 320px: auto-fit collapses the track
+    // *count* to one on a narrow screen, but the surviving track keeps its
+    // 320px minimum and overflows a container narrower than that. The min()
+    // lets the floor fall away exactly when it stops fitting.
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-8 sm:gap-12 max-w-[900px] mx-auto">
       <motion.form
         action={formAction}
         initial={{ opacity: 0, y: 12 }}

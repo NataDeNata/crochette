@@ -11,6 +11,21 @@ export type UserRole = "admin" | "customer";
 declare module "@auth/core/types" {
   interface User {
     role: UserRole;
+    /**
+     * Our `customers.id`, carried separately because `user.id` cannot survive
+     * an OAuth sign-in.
+     *
+     * @auth/core's OAuth callback builds the user as
+     * `{ ...userFromProfile, id: crypto.randomUUID() }`
+     * (lib/actions/callback/oauth/callback.js) — the spread keeps every custom
+     * field, which is why `role` works, but `id` is unconditionally replaced
+     * with a fresh random uuid. Anything written from `user.id` therefore
+     * points at no customer row at all and fails the FK.
+     *
+     * Credentials providers keep the id they return, so this is only ever set
+     * by the Google provider; readers fall back to `user.id`.
+     */
+    customerId?: string;
   }
 
   interface Session {

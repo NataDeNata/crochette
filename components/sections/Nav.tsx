@@ -17,6 +17,12 @@ const LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
+/** Shared by the animated and reduced-motion drawer shells — see the note at
+ * the render site. `py-3` on the rows rather than pure `gap`, so each tap
+ * target clears 44px on a phone. */
+const DRAWER_CLASS =
+  "absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col px-5 py-2";
+
 export function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
@@ -33,8 +39,31 @@ export function Nav({ session }: { session: Session | null }) {
     setOpen(false);
   }
 
+  const drawerBody = (
+    <>
+      {LINKS.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className="nav-link py-3"
+          data-active={pathname === link.href}
+        >
+          {link.label}
+        </Link>
+      ))}
+      {!isShopPage && (
+        <Link href="/shop" className="nav-link py-3 font-medium">
+          Shop now
+        </Link>
+      )}
+      <Link href={accountHref} className="nav-link py-3 font-medium">
+        {session?.user?.role === "customer" ? "My account" : "Sign in"}
+      </Link>
+    </>
+  );
+
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] px-12 bg-[oklch(0.975_0.012_85/0.85)] backdrop-blur border-b border-[oklch(0.9_0.015_60)]">
+    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-[oklch(0.975_0.012_85/0.85)] backdrop-blur border-b border-[oklch(0.9_0.015_60)]">
       <Link href="/" className="font-serif text-[26px] italic font-semibold tracking-[0.5px] text-inherit">
         Crochette
       </Link>
@@ -94,24 +123,13 @@ export function Nav({ session }: { session: Session | null }) {
         </button>
       </div>
 
+      {/* One drawer body, shared by both branches below. These used to be two
+          hand-maintained copies and had already drifted: the reduced-motion
+          copy offered a "My account" / "Sign in" link and the animated one —
+          what almost everyone actually sees — did not. Rendering the same
+          nodes into either shell makes that class of divergence impossible. */}
       {reduceMotion ? (
-        open && (
-          <div className="absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col p-6 gap-4.5">
-            {LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="nav-link" data-active={pathname === link.href}>
-                {link.label}
-              </Link>
-            ))}
-            {!isShopPage && (
-              <Link href="/shop" className="nav-link font-medium">
-                Shop now
-              </Link>
-            )}
-            <Link href={accountHref} className="nav-link font-medium">
-              {session?.user?.role === "customer" ? "My account" : "Sign in"}
-            </Link>
-          </div>
-        )
+        open && <div className={DRAWER_CLASS}>{drawerBody}</div>
       ) : (
         <AnimatePresence>
           {open && (
@@ -121,18 +139,9 @@ export function Nav({ session }: { session: Session | null }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col p-6 gap-4.5"
+              className={DRAWER_CLASS}
             >
-              {LINKS.map((link) => (
-                <Link key={link.href} href={link.href} className="nav-link" data-active={pathname === link.href}>
-                  {link.label}
-                </Link>
-              ))}
-              {!isShopPage && (
-                <Link href="/shop" className="nav-link font-medium">
-                  Shop now
-                </Link>
-              )}
+              {drawerBody}
             </motion.div>
           )}
         </AnimatePresence>

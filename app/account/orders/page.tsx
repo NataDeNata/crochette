@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getCustomerOrders } from "@/lib/db/accounts";
 import { formatPrice } from "@/lib/data/products";
 import { OrderTracker } from "@/components/account/OrderTracker";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = {
   title: "Order history",
@@ -55,32 +56,39 @@ export default async function AccountOrdersPage() {
             No orders yet — <Link href="/shop">browse the shop</Link>.
           </p>
         ) : (
+          // Was a hand-rolled <table> inside `overflow-hidden`, which clipped
+          // its four columns on a narrow screen instead of letting them
+          // scroll. The shared primitive already wraps itself in an
+          // `overflow-x-auto` container — the same one every /admin list page
+          // relies on — so the columns keep their widths and pan instead.
           <div className="rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] overflow-hidden">
-            <table className="w-full border-collapse text-[13.5px]">
-              <thead>
-                <tr className="text-left bg-[oklch(0.97_0.01_60)]">
+            <Table className="text-[13.5px]">
+              <TableHeader>
+                <TableRow className="bg-[oklch(0.97_0.01_60)]">
                   {["Order", "Placed", "Status", "Total"].map((h) => (
-                    <th key={h} className="py-3 px-4 font-semibold text-[oklch(0.45_0.02_60)]">
+                    <TableHead key={h} className="py-3 px-4 font-semibold text-[oklch(0.45_0.02_60)]">
                       {h}
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {orders.map((o) => (
-                  <tr key={o.id} className="border-t border-[oklch(0.93_0.01_60)]">
-                    <td className="py-3 px-4">
+                  <TableRow key={o.id}>
+                    <TableCell className="py-3 px-4">
                       <Link href={`/order/${o.id}`} className="text-inherit">
                         {o.id.slice(0, 8)}
                       </Link>
-                    </td>
-                    <td className="py-3 px-4 text-[oklch(0.55_0.02_60)]">{o.createdAt.toLocaleDateString()}</td>
-                    <td className="py-3 px-4 capitalize">{o.status}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{formatPrice(o.totalCents)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[oklch(0.55_0.02_60)]">
+                      {o.createdAt.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 capitalize">{o.status}</TableCell>
+                    <TableCell className="py-3 px-4 text-muted-foreground">{formatPrice(o.totalCents)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

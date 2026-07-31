@@ -3,7 +3,7 @@ import { FadeIn } from "@/components/motion/FadeIn";
 
 export default function ProductNotFound() {
   return (
-    <section className="py-[100px] px-12 text-center">
+    <section className="py-[100px] page-gutter text-center">
       <FadeIn>
         <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
           Shop

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="pt-12 px-12 pb-10 bg-[oklch(0.28_0.02_60)] text-[oklch(0.97_0.01_85)]">
+    <footer className="pt-12 page-gutter pb-10 bg-[oklch(0.28_0.02_60)] text-[oklch(0.97_0.01_85)]">
       <div className="max-w-[1344px] mx-auto">
         <div className="footer-grid grid gap-12 mb-12">
           <div>
@@ -37,9 +37,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="flex justify-center items-center gap-4 text-[13px] text-[oklch(0.6_0.025_60)] border-t border-[oklch(0.4_0.02_60)] pt-6 relative">
+        {/* The Admin link is pinned to the right only once the row is wide
+            enough to hold it beside the centered copyright. Below `sm` it was
+            `absolute right-0` over a centered full-width string, so the two
+            overlapped; there it becomes an ordinary stacked row instead. */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-[13px] text-[oklch(0.6_0.025_60)] border-t border-[oklch(0.4_0.02_60)] pt-6 sm:relative text-center">
           <span>© 2026 Crochette. Made by hand, in small batches.</span>
-          <Link href="/admin" className="footer-admin-link absolute right-0 text-xs">
+          <Link href="/admin" className="footer-admin-link sm:absolute sm:right-0 text-xs">
             Admin
           </Link>
         </div>

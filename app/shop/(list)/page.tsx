@@ -18,12 +18,12 @@ export default async function ShopPage() {
 
   return (
     <>
-      <section className="pt-[72px] px-12 pb-10 text-center">
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-10 text-center">
         <FadeIn>
           <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
             Shop
           </div>
-          <h1 className="font-serif font-medium text-[clamp(38px,5vw,58px)] mb-4">
+          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
             The full collection
           </h1>
           <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
@@ -35,7 +35,7 @@ export default async function ShopPage() {
       <ShopGrid products={products} />
 
       <FadeIn>
-        <section className="mx-8 mb-[100px] py-14 px-12 rounded-[36px] bg-accent text-center">
+        <section className="mx-4 sm:mx-8 mb-[100px] py-10 sm:py-14 px-6 sm:px-12 rounded-[28px] sm:rounded-[36px] bg-accent text-center">
           <h2 className="font-serif font-medium text-3xl mb-3.5">
             Don&apos;t see quite what you want?
           </h2>

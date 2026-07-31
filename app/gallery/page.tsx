@@ -18,12 +18,12 @@ export default async function GalleryPage() {
 
   return (
     <>
-      <section className="pt-[72px] px-12 pb-12 text-center">
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-12 text-center">
         <FadeIn>
           <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
             Gallery
           </div>
-          <h1 className="font-serif font-medium text-[clamp(38px,5vw,58px)] mb-4">
+          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
             A peek into the studio
           </h1>
           <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
@@ -32,7 +32,7 @@ export default async function GalleryPage() {
         </FadeIn>
       </section>
 
-      <section className="pt-5 px-12 pb-[100px]">
+      <section className="pt-5 page-gutter pb-[100px]">
         {gallery.length === 0 ? (
           <p className="text-center text-sm text-[oklch(0.55_0.02_60)]">Photos coming soon.</p>
         ) : (
@@ -41,7 +41,7 @@ export default async function GalleryPage() {
       </section>
 
       <FadeIn>
-        <section className="mx-8 mb-[100px] py-14 px-12 rounded-[36px] bg-[oklch(0.91_0.04_150)] text-center">
+        <section className="mx-4 sm:mx-8 mb-[100px] py-10 sm:py-14 px-6 sm:px-12 rounded-[28px] sm:rounded-[36px] bg-[oklch(0.91_0.04_150)] text-center">
           <h2 className="font-serif font-medium text-3xl mb-3.5">
             Follow along on Instagram
           </h2>

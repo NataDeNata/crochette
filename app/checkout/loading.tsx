@@ -28,10 +28,13 @@ function FieldRow({ width = "w-full" }: { width?: string }) {
 
 export default function CheckoutLoading() {
   return (
-    <section className="pt-12 px-12 pb-24">
+    <section className="pt-12 page-gutter pb-24">
       <Skeleton className="h-[34px] w-44 mx-auto mb-10" />
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-12 max-w-[900px] mx-auto">
+      {/* Track definition kept identical to CheckoutForm's, `min()` included —
+          a flat 320px minimum here would overflow the phone the real form no
+          longer overflows, and the skeleton would jump on hydration. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-8 sm:gap-12 max-w-[900px] mx-auto">
         <div className="flex flex-col gap-3.5">
           {/* Contact — name, email, phone */}
           <Skeleton className="h-[22px] w-28 mb-1" />

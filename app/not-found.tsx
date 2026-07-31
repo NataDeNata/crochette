@@ -7,7 +7,7 @@ import { FadeIn } from "@/components/motion/FadeIn";
  * unstyled default. /shop/[slug] keeps its own more specific version. */
 export default function NotFound() {
   return (
-    <section className="py-[100px] px-12 text-center">
+    <section className="py-[100px] page-gutter text-center">
       <FadeIn>
         <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">404</div>
         <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-4">

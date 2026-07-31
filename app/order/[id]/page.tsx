@@ -20,7 +20,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
   const isPaid = order.status !== "pending" && order.status !== "failed";
 
   return (
-    <section className="pt-16 px-12 pb-24 max-w-[640px] mx-auto text-center">
+    <section className="pt-16 page-gutter pb-24 max-w-[640px] mx-auto text-center">
       <FadeIn>
         {isPaid ? (
           <>

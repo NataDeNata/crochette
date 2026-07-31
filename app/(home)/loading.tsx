@@ -23,22 +23,25 @@ import { Skeleton } from "@/components/ui/Skeleton";
  */
 export default function HomeLoading() {
   return (
-    <section className="relative overflow-hidden min-h-[calc(100vh-89px)] flex items-center px-12 py-24 bg-[oklch(0.28_0.02_60)]">
+    <section className="relative overflow-hidden min-h-[calc(100svh-var(--nav-h))] flex items-center page-gutter py-16 sm:py-24 bg-[oklch(0.28_0.02_60)]">
       <div className="max-w-[1280px] mx-auto relative w-full">
-        <div className="max-w-[480px] -translate-y-[100px]">
+        <div className="max-w-[480px] md:-translate-y-[100px]">
           <Skeleton className="h-3.5 w-52 mb-[18px] rounded-full bg-white/15" />
 
-          <Skeleton className="h-[clamp(50px,5.7vw,72px)] w-full mb-3 bg-white/15" />
-          <Skeleton className="h-[clamp(50px,5.7vw,72px)] w-3/4 mb-[22px] bg-white/15" />
+          <Skeleton className="h-[clamp(38px,5.7vw,72px)] w-full mb-3 bg-white/15" />
+          <Skeleton className="h-[clamp(38px,5.7vw,72px)] w-3/4 mb-[22px] bg-white/15" />
 
           <div className="flex flex-col gap-2.5 max-w-[420px] mb-9">
             <Skeleton className="h-[19px] w-full rounded-full bg-white/15" />
             <Skeleton className="h-[19px] w-5/6 rounded-full bg-white/15" />
           </div>
 
-          <div className="flex gap-4">
-            <Skeleton className="h-12 w-[200px] rounded-[30px] bg-white/15" />
-            <Skeleton className="h-12 w-[210px] rounded-[30px] bg-white/15" />
+          {/* Mirrors the real hero's stacked-then-inline CTAs — a fixed
+              200px+210px row here would overflow the phone the page it stands
+              in for no longer overflows. */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Skeleton className="h-12 w-full sm:w-[200px] rounded-[30px] bg-white/15" />
+            <Skeleton className="h-12 w-full sm:w-[210px] rounded-[30px] bg-white/15" />
           </div>
         </div>
       </div>

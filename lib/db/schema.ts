@@ -111,10 +111,15 @@ export const customOrderRequests = pgTable("custom_order_requests", {
 
 export const orders = pgTable("orders", {
   id: uuid("id").defaultRandom().primaryKey(),
-  /** Nullable — set only when the customer was logged in at checkout. Guest
-   * checkout stays fully supported; customerName/Email/Phone below remain
-   * the source of truth for the order regardless (a snapshot, same as
-   * order_items.productName), never backfilled from the account later. */
+  /** Nullable — set at checkout when the customer was logged in, or filled in
+   * later by claimGuestOrders() when they sign in with a *verified* email that
+   * matches a guest order's (lib/db/accounts.ts; Google-only for now, see the
+   * gate in lib/auth.ts's events.signIn). Guest checkout stays fully supported.
+   *
+   * customerName/Email/Phone below remain the source of truth for the order
+   * regardless (a snapshot, same as order_items.productName) and are never
+   * backfilled from the account — claiming an order sets this column and
+   * nothing else. */
   customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),

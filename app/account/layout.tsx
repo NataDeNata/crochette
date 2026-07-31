@@ -20,7 +20,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   if (session?.user?.role !== "customer") return <>{children}</>;
 
   return (
-    <section className="pt-12 px-12 pb-24 max-w-[900px] mx-auto">
+    <section className="pt-12 page-gutter pb-24 max-w-[900px] mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-4 mb-9 pb-5 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
         <nav className="flex gap-6">
           {NAV_LINKS.map((l) => (

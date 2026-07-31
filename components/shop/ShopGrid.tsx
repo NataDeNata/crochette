@@ -32,7 +32,7 @@ export function ShopGrid({ products }: { products: Product[] }) {
 
   return (
     <>
-      <section className="pt-5 px-12 pb-0 flex flex-col items-center gap-6">
+      <section className="pt-5 page-gutter pb-0 flex flex-col items-center gap-6">
         <div className="w-full max-w-[420px]">
           <input
             type="search"
@@ -85,7 +85,7 @@ export function ShopGrid({ products }: { products: Product[] }) {
         </div>
       </section>
 
-      <section className="pt-12 px-12 pb-[60px]">
+      <section className="pt-12 page-gutter pb-[60px]">
         {visible.length === 0 ? (
           <p className="text-center text-muted-foreground text-[15px]">
             No products match &ldquo;{query}&rdquo;.
@@ -104,7 +104,7 @@ export function ShopGrid({ products }: { products: Product[] }) {
       </section>
 
       {totalPages > 1 && (
-        <section aria-label="Shop pagination" className="px-12 pb-[100px] flex justify-center gap-2">
+        <section aria-label="Shop pagination" className="page-gutter pb-[100px] flex justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
             <button
               key={n}
@@ -113,7 +113,8 @@ export function ShopGrid({ products }: { products: Product[] }) {
               aria-current={n === currentPage ? "page" : undefined}
               aria-label={`Page ${n}`}
               className={cn(
-                "w-9 h-9 rounded-full border-0 text-sm font-medium cursor-pointer [font-family:inherit] transition-colors duration-200",
+                // 44px on touch, back to the design's 36px from `sm` up.
+                "w-11 h-11 sm:w-9 sm:h-9 rounded-full border-0 text-sm font-medium cursor-pointer [font-family:inherit] transition-colors duration-200",
                 n === currentPage
                   ? "bg-primary text-card"
                   : "bg-transparent text-[oklch(0.42_0.02_60)] hover:bg-[oklch(0.9_0.02_60)] focus-visible:bg-[oklch(0.9_0.02_60)]",

@@ -82,7 +82,7 @@ export function DiscountForm({
           <FieldError errors={[form.formState.errors.description]} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field data-invalid={!!form.formState.errors.type}>
             <FieldLabel htmlFor="type">Type</FieldLabel>
             <Controller
@@ -108,7 +108,7 @@ export function DiscountForm({
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field data-invalid={!!form.formState.errors.maxUses}>
             <FieldLabel htmlFor="maxUses">Max uses (optional)</FieldLabel>
             <Input id="maxUses" type="number" step={1} min={1} placeholder="Unlimited" {...form.register("maxUses")} />

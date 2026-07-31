@@ -90,7 +90,7 @@ export function ProductForm({
           <FieldError errors={[form.formState.errors.description]} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field data-invalid={!!form.formState.errors.priceDollars}>
             <FieldLabel htmlFor="priceDollars">Price (₱)</FieldLabel>
             <Input id="priceDollars" type="number" step="0.01" min="0.01" {...form.register("priceDollars")} />
@@ -119,7 +119,7 @@ export function ProductForm({
           <FieldError errors={[form.formState.errors.lowStockThreshold]} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field data-invalid={!!form.formState.errors.category}>
             <FieldLabel htmlFor="category">Category</FieldLabel>
             <Controller
