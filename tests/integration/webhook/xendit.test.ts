@@ -137,6 +137,82 @@ describe("order lookup", () => {
   });
 });
 
+describe("payment verification", () => {
+  /**
+   * The handler used to fulfill on the event name alone: any
+   * payment_session.completed naming a valid reference_id marked that order
+   * paid, decremented stock and burned the discount, whatever the payment
+   * actually was.
+   *
+   * `pendingOrder()` totals 250000 centavos — 2 x 120000 plus 10000 shipping —
+   * and the webhook reports amounts in major units, so 2500 is the match.
+   */
+  const TOTAL_MAJOR = 2500;
+
+  function completedEventWith(orderId: string, data: Record<string, unknown>) {
+    return { event: "payment_session.completed", data: { ...completedEvent(orderId).data, ...data } };
+  }
+
+  it("fulfills when the reported amount matches the order total", async () => {
+    const { order } = await pendingOrder();
+
+    const response = await POST(webhookRequest(completedEventWith(order.id, { amount: TOTAL_MAJOR })));
+
+    expect(response.status).toBe(200);
+    expect((await readOrder(order.id)).status).toBe("paid");
+  });
+
+  it("refuses to fulfill an underpaid settlement", async () => {
+    const { order, product } = await pendingOrder();
+
+    const response = await POST(webhookRequest(completedEventWith(order.id, { amount: 1 })));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "amount mismatch" });
+
+    // Nothing downstream may have run: the order stays claimable, the stock
+    // stays on the shelf, and no receipt goes out for money not received.
+    expect((await readOrder(order.id)).status).toBe("pending");
+    expect((await readProduct(product.id)).stockQty).toBe(10);
+    expect(notifyOrderPaid).not.toHaveBeenCalled();
+  });
+
+  it("refuses a settlement for a different payment session", async () => {
+    const { order } = await pendingOrder({ xenditPaymentSessionId: "ps_ours" });
+
+    const response = await POST(
+      webhookRequest(completedEventWith(order.id, { payment_session_id: "ps_someone_elses" }))
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "session mismatch" });
+    expect((await readOrder(order.id)).status).toBe("pending");
+  });
+
+  it("fulfills when the payment session is the one created for the order", async () => {
+    const { order } = await pendingOrder({ xenditPaymentSessionId: "ps_ours" });
+
+    const response = await POST(webhookRequest(completedEventWith(order.id, { payment_session_id: "ps_ours" })));
+
+    expect(response.status).toBe(200);
+    expect((await readOrder(order.id)).status).toBe("paid");
+  });
+
+  it("still fulfills when the payload carries neither field", async () => {
+    // Deliberate fail-open: these field names are taken from our own
+    // session-creation request shape and have not been confirmed against a live
+    // delivery. Rejecting an absent field would halt fulfillment sitewide the
+    // first time a name turned out to differ. Tighten this — and this test —
+    // once a real payload is on record.
+    const { order } = await pendingOrder();
+
+    const response = await POST(webhookRequest(completedEvent(order.id)));
+
+    expect(response.status).toBe(200);
+    expect((await readOrder(order.id)).status).toBe("paid");
+  });
+});
+
 describe("fulfillment", () => {
   it("marks the order paid and records the Xendit payment id", async () => {
     const { order } = await pendingOrder();
