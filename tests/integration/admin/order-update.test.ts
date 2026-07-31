@@ -7,6 +7,14 @@ class RedirectSignal extends Error {
   }
 }
 
+// The action now asserts an admin session before touching anything (see
+// lib/auth-guard.ts). There is no session in a test process, so this stands in
+// for one — the guard itself is exercised where it belongs, against the real
+// session logic, rather than by every action test paying to set one up.
+vi.mock("@/lib/auth-guard", () => ({
+  requireAdmin: async () => ({ id: "00000000-0000-0000-0000-0000000000ad", email: "admin@example.com" }),
+}));
+
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {

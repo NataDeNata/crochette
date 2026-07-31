@@ -11,6 +11,12 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
+import {
+  OrdersBulkBar,
+  OrdersSelectAllCheckbox,
+  OrderRowCheckbox,
+  OrdersSelectionProvider,
+} from "@/components/admin/OrdersBulkSelection";
 
 const ORDER_STATUSES = ["pending", "paid", "failed", "shipped", "completed", "cancelled"] as const;
 const PAGE_SIZE = 20;
@@ -77,56 +83,70 @@ export default async function AdminOrdersPage({
         ]}
       />
 
-      <Card className="overflow-hidden p-0">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-4">Customer</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Placed</TableHead>
-                <TableHead className="pr-4">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="pl-4">
-                    <Link href={`/admin/orders/${r.id}`} className="text-inherit">
-                      <strong className="font-medium">{r.customerName}</strong>
-                      <div className="text-[13px] text-muted-foreground">{r.customerEmail}</div>
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{countByOrder.get(r.id) ?? 0}</TableCell>
-                  <TableCell>{formatPrice(r.totalCents)}</TableCell>
-                  <TableCell>
-                    <AdminStatusTag status={r.status} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {r.createdAt.toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="pr-4 text-right">
-                    <Button href={`/admin/orders/${r.id}`} variant="outline" size="sm">
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {rows.length === 0 && (
+      {/* Wraps the table *and* the bar so both read the same selection. The
+          table below stays a Server Component — only the checkboxes and the bar
+          are client. */}
+      <OrdersSelectionProvider pageIds={rows.map((r) => r.id)}>
+        <Card className="overflow-hidden p-0">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
-                    {q || status ? "No orders match your search." : "No orders yet."}
-                  </TableCell>
+                  <TableHead className="w-10 pl-4">
+                    <OrdersSelectAllCheckbox />
+                    <span className="sr-only">Select all</span>
+                  </TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Placed</TableHead>
+                  <TableHead className="pr-4">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {rows.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="pl-4">
+                      <OrderRowCheckbox id={r.id} label={r.customerName} />
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/admin/orders/${r.id}`} className="text-inherit">
+                        <strong className="font-medium">{r.customerName}</strong>
+                        <div className="text-[13px] text-muted-foreground">{r.customerEmail}</div>
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{countByOrder.get(r.id) ?? 0}</TableCell>
+                    <TableCell>{formatPrice(r.totalCents)}</TableCell>
+                    <TableCell>
+                      <AdminStatusTag status={r.status} />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {r.createdAt.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="pr-4 text-right">
+                      <Button href={`/admin/orders/${r.id}`} variant="outline" size="sm">
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
+                      {q || status ? "No orders match your search." : "No orders yet."}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <OrdersBulkBar />
+      </OrdersSelectionProvider>
 
       <AdminPagination
         page={page}
