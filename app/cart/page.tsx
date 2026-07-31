@@ -3,13 +3,45 @@
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useCart } from "@/lib/cart/CartContext";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";
 
 export default function CartPage() {
-  const { items, removeItem, setQuantity, subtotalCents } = useCart();
+  const { items, removeItem, setQuantity, subtotalCents, loaded } = useCart();
   const reduceMotion = useReducedMotion();
+
+  // Gated on `loaded`, not just on `items.length`. The cart is server-owned and
+  // the store starts empty, so an ungated check renders "Your cart is empty"
+  // during SSR and for the first client frame — on every visit, including one
+  // with a full cart. That flash is the same class of bug as the ₱0 checkout
+  // summary (see CheckoutFormSkeleton); the fix is the same, show a placeholder
+  // until there is something true to say.
+  if (!loaded) {
+    return (
+      <section className="pt-12 page-gutter pb-24 max-w-[800px] mx-auto" aria-hidden>
+        <Skeleton className="h-[34px] w-44 mb-7" />
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-4 gap-4">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-[17px] w-40 rounded-full" />
+                <Skeleton className="h-3.5 w-20 rounded-full" />
+              </div>
+              <Skeleton className="h-[42px] w-[104px] rounded-[30px]" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-7 flex flex-col gap-2">
+          <Skeleton className="h-4 w-full max-w-[220px] rounded-full" />
+          <Skeleton className="h-4 w-full max-w-[180px] rounded-full" />
+          <Skeleton className="h-[18px] w-full max-w-[200px] rounded-full mt-1.5" />
+        </div>
+        <Skeleton className="h-12 w-full rounded-[30px] mt-7" />
+      </section>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -121,7 +153,12 @@ export default function CartPage() {
         </div>
       </div>
 
-      <Button href="/checkout" className="block w-full text-center mt-7 text-[15px]">
+      {/* `prefetch` is explicit because /checkout is a dynamic route: it awaits
+          auth() and then listAddresses(), so Next's default treatment leaves
+          the work to click time. Anyone looking at a filled cart is very likely
+          to go there next, and warming it now turns the slowest hop in the
+          purchase flow into a mostly-resolved one. */}
+      <Button href="/checkout" prefetch className="block w-full text-center mt-7 text-[15px]">
         Proceed to checkout
       </Button>
     </section>
