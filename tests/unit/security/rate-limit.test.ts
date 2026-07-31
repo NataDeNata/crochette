@@ -29,8 +29,26 @@ describe("RATE_LIMITS", () => {
 
   it("still covers every endpoint the 2026-07-27 plan scoped", () => {
     expect(Object.keys(RATE_LIMITS).sort()).toEqual(
-      ["admin-login", "auth-endpoint", "auth-ip", "checkout", "contact", "custom-order", "login", "signup"].sort()
+      [
+        "admin-login",
+        "admin-totp",
+        "auth-endpoint",
+        "auth-ip",
+        "checkout",
+        "contact",
+        "custom-order",
+        "login",
+        "signup",
+      ].sort()
     );
+  });
+
+  it("caps second-factor guesses tighter than password attempts", () => {
+    // A 6-digit code is one in a million and the ±1 drift window makes three
+    // live at once, so the online guess only stays hopeless while the attempt
+    // count stays small. Asserted as a relationship rather than a number so
+    // this fails if someone loosens it to match admin-login.
+    expect(RATE_LIMITS["admin-totp"].max).toBeLessThan(RATE_LIMITS["auth-ip"].max);
   });
 
   it.each(Object.entries(RATE_LIMITS))("%s has a positive max and a parseable window", (_scope, limit) => {

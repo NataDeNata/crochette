@@ -167,12 +167,28 @@ export const admins = pgTable("admins", {
   passwordHash: text("password_hash").notNull(),
   name: text("name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  /** Set by `npm run db:seed-admin` on every password change. Sessions issued
-   * before this instant are rejected in lib/auth.ts's jwt callback, which is
-   * what makes rotating the password actually revoke live logins — a JWT
-   * session is otherwise valid until it expires no matter what the row says.
+  /** Set by `npm run db:seed-admin` and by the self-service change-password
+   * form (/admin/settings) on every password change. Sessions issued before
+   * this instant are rejected in lib/auth.ts's jwt callback, which is what
+   * makes rotating the password actually revoke live logins — a JWT session is
+   * otherwise valid until it expires no matter what the row says.
    * Null means "never rotated", the correct reading for pre-existing rows. */
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+  /** The TOTP seed, AES-256-GCM encrypted under a key derived from
+   * `AUTH_SECRET` — see lib/security/secret-box.ts for why this one credential
+   * is encrypted rather than hashed. Non-null with a null `totpConfirmedAt`
+   * means an enrolment was started and never finished; that state is not
+   * enforced at login and is simply overwritten by the next attempt. */
+  totpSecret: text("totp_secret"),
+  /** When the enrolment was confirmed with a working code. **This column, not
+   * `totpSecret`, is what turns the second factor on** — an unconfirmed secret
+   * would otherwise lock the owner out of an authenticator they never
+   * successfully scanned. Null means no second factor. */
+  totpConfirmedAt: timestamp("totp_confirmed_at", { withTimezone: true }),
+  /** SHA-256 hashes of the unused single-use backup codes. Entries are removed
+   * as they are spent, so the array length *is* the remaining count. Not
+   * bcrypt, deliberately — see lib/security/totp.ts. */
+  totpBackupCodes: text("totp_backup_codes").array(),
 });
 
 /** Customer-facing login (Phase 2 "customer accounts") — separate from

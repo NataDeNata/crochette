@@ -7,6 +7,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { admins, customers } from "@/lib/db/schema";
 import { claimGuestOrders, lookupOrCreateGoogleCustomer } from "@/lib/db/accounts";
+import { verifyAdminSecondFactor } from "@/lib/db/admin-account";
+import { verifyAdminChallenge } from "@/lib/security/admin-challenge";
 import { mergeCarts } from "@/lib/db/cart";
 import { readCartCookie, setCartCookie } from "@/lib/cart/cookie";
 import { logError, logInfo } from "@/lib/observability/log";
@@ -35,6 +37,49 @@ async function authEndpointLimited(): Promise<boolean> {
     logError("auth.rate_limit_unavailable", err, { detail: "credentials attempt allowed through" });
     return false;
   }
+}
+
+type AdminRecord = { id: string; email: string; name: string | null; totpConfirmedAt: Date | null };
+
+/** The login form's path: the password was already checked by the Server
+ * Action, and this token is the proof. Nothing is re-hashed here. */
+async function adminFromChallenge(challenge: string): Promise<AdminRecord | null> {
+  const adminId = verifyAdminChallenge(challenge);
+  if (!adminId) return null;
+
+  const [admin] = await db
+    .select({ id: admins.id, email: admins.email, name: admins.name, totpConfirmedAt: admins.totpConfirmedAt })
+    .from(admins)
+    .where(eq(admins.id, adminId))
+    .limit(1);
+
+  return admin ?? null;
+}
+
+/** The direct-POST path. Kept working rather than removed, so that
+ * `/api/auth/callback/admin` behaves like a credentials endpoint should
+ * (constant-time, rate-limited) instead of failing in a way that itself
+ * distinguishes accounts — but it can never satisfy an enrolled second factor,
+ * because it carries no code. */
+async function adminFromPassword(
+  rawEmail: unknown,
+  rawPassword: unknown
+): Promise<AdminRecord | null> {
+  const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : undefined;
+  const password = typeof rawPassword === "string" ? rawPassword : undefined;
+  if (!email || !password) return null;
+
+  const [admin] = await db.select().from(admins).where(eq(admins.email, email)).limit(1);
+  if (!admin) {
+    // Spend the same ~250ms a real account would; result discarded.
+    await compare(password, DUMMY_PASSWORD_HASH);
+    return null;
+  }
+
+  const valid = await compare(password, admin.passwordHash);
+  if (!valid) return null;
+
+  return { id: admin.id, email: admin.email, name: admin.name, totpConfirmedAt: admin.totpConfirmedAt };
 }
 
 export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
@@ -121,22 +166,49 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email" },
         password: { label: "Password", type: "password" },
+        /** Set instead of email/password by app/admin/login/actions.ts, which
+         * has already verified the password. See lib/security/admin-challenge.ts. */
+        challenge: { label: "Login challenge" },
+        totp: { label: "Authentication code" },
       },
+      /**
+       * Two ways in, and the second factor is enforced on **both** — that is
+       * the entire security argument for this function.
+       *
+       * The login form takes the challenge path: step one checks the password
+       * and mints a signed token, step two adds the code. But
+       * `POST /api/auth/callback/admin` is public (proxy.ts matches only
+       * `/admin/*` and `/account/*`), so the email/password path below stays
+       * directly reachable by anyone — which is precisely how every rate limit
+       * in this project turned out to be skippable on 2026-07-30. A 2FA check
+       * that lived only in the Server Action would have exactly the same hole,
+       * and it would be a worse one: it would look enabled in the UI while
+       * being one POST away from irrelevant.
+       *
+       * So enrolment is checked here, against the database, on the way to
+       * returning a user. Neither path can reach the `return` without it.
+       */
       async authorize(credentials) {
-        const email = typeof credentials?.email === "string" ? credentials.email.trim().toLowerCase() : undefined;
-        const password = typeof credentials?.password === "string" ? credentials.password : undefined;
-        if (!email || !password) return null;
         if (await authEndpointLimited()) return null;
 
-        const [admin] = await db.select().from(admins).where(eq(admins.email, email)).limit(1);
-        if (!admin) {
-          // Spend the same ~250ms a real account would; result discarded.
-          await compare(password, DUMMY_PASSWORD_HASH);
+        const challenge = typeof credentials?.challenge === "string" ? credentials.challenge : undefined;
+        const totp = typeof credentials?.totp === "string" ? credentials.totp : "";
+
+        const admin = challenge
+          ? await adminFromChallenge(challenge)
+          : await adminFromPassword(credentials?.email, credentials?.password);
+
+        if (!admin) return null;
+
+        // The gate. A confirmed enrolment means no sign-in happens without a
+        // code, whichever path got here — including the password path, which
+        // carries no code at all and therefore always fails this once 2FA is
+        // on. That is deliberate: the direct-POST route must not be a way to
+        // sign in with a single factor.
+        if (admin.totpConfirmedAt && !(await verifyAdminSecondFactor(admin.id, totp))) {
+          logInfo("auth.admin.second_factor_rejected", { adminId: admin.id, via: challenge ? "challenge" : "password" });
           return null;
         }
-
-        const valid = await compare(password, admin.passwordHash);
-        if (!valid) return null;
 
         return { id: admin.id, email: admin.email, name: admin.name ?? admin.email, role: "admin" as const };
       },
