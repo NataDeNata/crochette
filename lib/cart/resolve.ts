@@ -1,6 +1,6 @@
 import "server-only";
 import { auth } from "@/lib/auth";
-import { cartExists, createGuestCart, getOrCreateCustomerCart } from "@/lib/db/cart";
+import { createGuestCart, findCustomerCart, getOrCreateCustomerCart, isGuestCart } from "@/lib/db/cart";
 import { readCartCookie, setCartCookie } from "./cookie";
 
 /**
@@ -24,14 +24,22 @@ export async function resolveCartId({ create }: { create: boolean }): Promise<st
 
   if (customerId) {
     if (create) return getOrCreateCustomerCart(customerId);
-    const existing = await readCartCookie();
+    // Addressed by customer id, never by the cookie — which is what the note
+    // above always claimed, but the read path used to consult the cookie and
+    // only check that the cart *existed*. On a shared browser the cookie can
+    // still hold the previous customer's cart id (lib/auth.ts writes it there
+    // after a merge, and it was never cleared on sign-out), so this path served
+    // — and checkout bought — another account's cart.
+    //
     // A logged-in customer with no cart yet reads as empty rather than having
     // one created for them by a page view.
-    return existing && (await cartExists(existing)) ? existing : null;
+    return findCustomerCart(customerId);
   }
 
+  // Guests must present a cookie naming a cart that is still unclaimed. A
+  // cookie pointing at some account's cart is treated as no cart at all.
   const fromCookie = await readCartCookie();
-  if (fromCookie && (await cartExists(fromCookie))) return fromCookie;
+  if (fromCookie && (await isGuestCart(fromCookie))) return fromCookie;
 
   if (!create) return null;
 

@@ -13,6 +13,18 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
+  experimental: {
+    serverActions: {
+      // Next's default Server Action body limit is 1 MB. Both upload paths
+      // promise far more than that — lib/validation/photos.ts allows 4 photos
+      // at 5 MB each, and the /custom form says so in as many words — so any
+      // photo over ~1 MB (i.e. most phone photos) was rejected with a bare 413
+      // *before* the action ran: no field error, no log line, and the whole
+      // filled-in commission form lost. 22mb is 4 × 5 MB plus multipart
+      // overhead. Raise MAX_PHOTO_BYTES and this together, or neither.
+      bodySizeLimit: "22mb",
+    },
+  },
 };
 
 // Gated on the DSN so that with Sentry switched off the build is exactly what
