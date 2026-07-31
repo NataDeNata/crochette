@@ -11,6 +11,7 @@ import { formatPrice } from "@/lib/data/products";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
 import { Input } from "@/components/ui/input";
+import { CheckoutFormSkeleton } from "@/components/checkout/CheckoutFormSkeleton";
 
 const fieldClassName = "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
 
@@ -48,7 +49,15 @@ export function CheckoutForm({
     if (loaded && items.length === 0 && !isPending) router.replace("/cart");
   }, [loaded, items.length, isPending, router]);
 
-  if (loaded && items.length === 0) return null;
+  // Before the store's first read there is nothing truthful to show: the cart
+  // lives on the server, so `items` is still [] and `subtotalCents` still 0.
+  // Rendering the real form here paints "Subtotal ₱0 / Total ₱100" for a frame
+  // against a cart that may be full. The skeleton is the same one loading.tsx
+  // uses, so the placeholder simply stays on screen across hydration instead of
+  // flickering through a wrong total.
+  if (!loaded) return <CheckoutFormSkeleton />;
+
+  if (items.length === 0) return null;
 
   return (
     // `min(320px,100%)` rather than a flat 320px: auto-fit collapses the track
