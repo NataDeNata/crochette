@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { desc, count, and, eq, inArray, type SQL } from "drizzle-orm";
+import { desc, count, and, eq, ilike, or, inArray, type SQL } from "drizzle-orm";
 import { Image as ImageIcon, Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { productImages, products } from "@/lib/db/schema";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { LowStockBadge } from "@/components/admin/LowStockBadge";
@@ -19,13 +20,27 @@ const PAGE_SIZE = 20;
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; stock?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; stock?: string }>;
 }) {
   const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
   const stock = sp.stock === "low" ? "low" : "";
   const rawPage = Math.max(1, Number(sp.page) || 1);
 
   const conditions: SQL[] = [];
+  // Name, slug and description — the three free-text columns. Slug is included
+  // because it's what appears in a storefront URL, so pasting one from a
+  // customer's message finds the product. `description` is nullable and an
+  // `ilike` against NULL yields NULL, which `or` correctly treats as no match.
+  if (q) {
+    conditions.push(
+      or(
+        ilike(products.name, `%${q}%`),
+        ilike(products.slug, `%${q}%`),
+        ilike(products.description, `%${q}%`),
+      )!,
+    );
+  }
   if (stock === "low") conditions.push(lowStockCondition);
   const where = conditions.length ? and(...conditions) : undefined;
 
@@ -75,10 +90,18 @@ export default async function AdminProductsPage({
         title="Products"
         subtitle="Your catalog & inventory"
         actions={
-          <Button href="/admin/products/new" size="sm">
-            <Plus className="size-3.5" aria-hidden />
-            New product
-          </Button>
+          <>
+            <AdminSearchBar
+              basePath="/admin/products"
+              q={q}
+              searchPlaceholder="Search by name, slug or description…"
+              hiddenParams={{ stock: stock || undefined }}
+            />
+            <Button href="/admin/products/new" size="sm">
+              <Plus className="size-3.5" aria-hidden />
+              New product
+            </Button>
+          </>
         }
       />
 
@@ -86,6 +109,7 @@ export default async function AdminProductsPage({
         basePath="/admin/products"
         param="stock"
         current={stock}
+        params={{ q: q || undefined }}
         options={[
           { label: "All" },
           // Hidden when nothing is low, so the tab row never offers a filter
@@ -97,7 +121,11 @@ export default async function AdminProductsPage({
       {rows.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            {stock === "low" ? "No products are running low right now." : "No products yet."}
+            {q
+              ? "No products match your search."
+              : stock === "low"
+                ? "No products are running low right now."
+                : "No products yet."}
           </CardContent>
         </Card>
       ) : (
@@ -168,7 +196,7 @@ export default async function AdminProductsPage({
         totalPages={totalPages}
         totalCount={total}
         basePath="/admin/products"
-        params={{ stock: stock || undefined }}
+        params={{ q: q || undefined, stock: stock || undefined }}
       />
     </div>
   );
