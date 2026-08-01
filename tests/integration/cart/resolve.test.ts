@@ -98,21 +98,33 @@ describe("signed-in customers", () => {
   });
 
   /**
-   * PINS CURRENT BEHAVIOUR, WHICH MAY BE A BUG.
+   * This assertion used to be its own inverse, and deliberately so.
    *
-   * lib/cart/resolve.ts says a signed-in customer is "always addressed by
-   * customer id, never by the cookie", and that holds on the write path above.
-   * The read path (`create: false`) does not: it reads the cookie, so a customer
-   * with no cart cookie — a second device, or cleared cookies — reads as having
-   * an empty cart until their first write, even though the cart exists.
-   *
-   * In practice the cookie is usually correct, because merge-on-login writes the
-   * surviving cart id back into it. This test records the gap rather than
-   * asserting the documented intent, so a deliberate fix flips it loudly.
+   * lib/cart/resolve.ts has always said a signed-in customer is "always
+   * addressed by customer id, never by the cookie". That held on the write path
+   * above, but the read path (`create: false`) consulted the cookie instead, so
+   * a customer with no cart cookie — a second device, or cleared cookies — read
+   * as having an empty cart even though the cart existed. The old test pinned
+   * that gap rather than asserting the documented intent, on the reasoning that
+   * a deliberate fix should flip it loudly. It did exactly that: closing the
+   * ownership hole made the read path resolve by customer id, and this was the
+   * one test in the suite that failed.
    */
-  it("reads as empty on a device with no cart cookie, despite the cart existing", async () => {
+  it("reads the customer's cart on a device with no cart cookie", async () => {
     const customer = await makeCustomer();
-    await getOrCreateCustomerCart(customer.id);
+    const customerCartId = await getOrCreateCustomerCart(customer.id);
+    auth.mockResolvedValue({ user: { id: customer.id, role: "customer" } });
+
+    expect(cookieStore.get("crochette_cart")).toBeUndefined();
+    expect(await resolveCartId({ create: false })).toBe(customerCartId);
+  });
+
+  it("does not mint a cart for a signed-in customer who has none", async () => {
+    // The read path resolves by customer id now, but it still must not create.
+    // Otherwise a logged-in crawler hit — or any page view before the first
+    // add-to-cart — leaves a row behind, which is the same rule the guest path
+    // follows above.
+    const customer = await makeCustomer();
     auth.mockResolvedValue({ user: { id: customer.id, role: "customer" } });
 
     expect(await resolveCartId({ create: false })).toBeNull();
