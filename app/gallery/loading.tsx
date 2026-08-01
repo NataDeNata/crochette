@@ -21,8 +21,8 @@ export default function GalleryLoading() {
 
       <section className="pt-5 page-gutter pb-[100px]">
         {/* auto-rows-[180px] mirrors app/gallery/page.tsx's rowHeight={180}
-            prop to GallerySection, which sets the same value via inline
-            --row-h. Update this literal if that prop value ever changes. */}
+            prop to GallerySection, which now resolves to the same literal
+            class. Update this if that prop value ever changes. */}
         <div className="gallery-grid grid auto-rows-[180px] gap-5">
           {spans.map((span, i) => (
             <Skeleton

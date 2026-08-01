@@ -1,15 +1,14 @@
 "use client";
 
 import { motion, useReducedMotion, type TargetAndTransition } from "framer-motion";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type FadeInProps = {
   children: ReactNode;
-  className?: string;
   /** Applied to the wrapping element — needed when it's a direct grid/flex
-   * item (e.g. `gridRow: "span 2"`) so placement lands on the real item
-   * instead of being inert on a nested child. */
-  style?: CSSProperties;
+   * item (e.g. `row-span-2`) so placement lands on the real item instead of
+   * being inert on a nested child. */
+  className?: string;
   /** Seconds to delay the entrance — useful for staggering grids. */
   delay?: number;
   /** Vertical rise distance in px. */
@@ -29,7 +28,6 @@ type FadeInProps = {
 export function FadeIn({
   children,
   className,
-  style,
   delay = 0,
   y = 24,
   as = "div",
@@ -42,16 +40,13 @@ export function FadeIn({
   if (reduceMotion) {
     const Tag = as;
     return (
-      <Tag className={className} style={style}>
-        {children}
-      </Tag>
+      <Tag className={className}>{children}</Tag>
     );
   }
 
   return (
     <MotionTag
       className={className}
-      style={style}
       layout={layout}
       exit={exit}
       initial={{ opacity: 0, y }}
