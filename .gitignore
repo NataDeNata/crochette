@@ -44,6 +44,12 @@ devserver*.log
 # vercel
 .vercel
 
+# agent scratch space, and especially agent git worktrees. A worktree under
+# .claude/worktrees/<name> gets its own node_modules, and eslint walks it: the
+# run goes from 43 warnings to 1003 errors, none of them in project code.
+# Committing this directory would take CI's lint step down with it.
+.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent git worktrees. Each gets its own node_modules, and eslint walks it
+    // unless told not to — a bare `npm run lint` reported 1003 errors, none in
+    // project code, which makes the real result unreadable. .gitignore does not
+    // cover this: eslint never reads it.
+    ".claude/**",
   ]),
 ]);
 
