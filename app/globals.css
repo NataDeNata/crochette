@@ -93,14 +93,21 @@
 
 /*
  * As of the 2026-07 inline-style removal, base styling sitewide is Tailwind
- * classes (see Cro_Documentation.md) — inline `style={{}}` is gone except for
- * a few narrow, deliberate exceptions (genuinely dynamic per-instance values
- * driving a Framer Motion prop or a CSS custom property; see components/motion/
- * FadeIn.tsx and Float.tsx's pass-through `style` prop, ShopMarquee.tsx's
- * drag-x MotionValue, GallerySection.tsx's --row-h variable, and — added
- * 2026-07-30 — components/admin/RevenueChart.tsx's --bar-h, which is the same
- * case: one bar height per data point, an unbounded set of runtime values with
- * no fixed enumeration to turn into classes).
+ * classes (see Cro_Documentation.md). Inline `style={{}}` now survives in
+ * exactly two places, and neither sets a presentational property that a class
+ * rule might later try to override:
+ *
+ *   - ShopMarquee.tsx's `style={{ x }}` — not CSS at all. `x` is a Framer
+ *     MotionValue that Framer writes to the transform imperatively, outside
+ *     React's render cycle. There is no className equivalent.
+ *   - RevenueChart.tsx's --bar-h — one bar height per data point, a continuous
+ *     runtime value with no fixed enumeration to turn into classes.
+ *
+ * The 2026-08 pass removed the rest. FadeIn.tsx and Float.tsx carried a
+ * pass-through `style` prop that no call site ever used, and GallerySection.tsx
+ * set --row-h from a prop whose only two values sitewide were 150 and 180 —
+ * a closed set, so it became two literal `auto-rows-*` classes. Sonner's four
+ * static theme variables moved to `.toaster` below.
  *
  * The handful of small hand-written classes below (.nav-link, .footer-link,
  * .footer-admin-link, .cart-icon-link, .account-icon-link) are a *different*,
@@ -237,16 +244,24 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
-/* Row height is normally the caller's `--row-h` inline custom property (150px
- * from the home teaser, 180px from /gallery — see GallerySection.tsx). Those
- * are tuned for a 4-up grid, where a tile is roughly square. As the column
- * count drops the tiles get wider but the rows don't get taller, so by the
- * 1-column breakpoint a span-1 tile is a ~320x150 letterbox strip.
+/* Sonner's theming variables, moved off an inline `style` on the Toaster.
+ * They are inherited by the toasts it portals out, so they have to sit on the
+ * wrapper element — which is what `.toaster` is. See components/ui/sonner.tsx. */
+.toaster {
+  --normal-bg: var(--popover);
+  --normal-text: var(--popover-foreground);
+  --normal-border: var(--border);
+  --border-radius: var(--radius);
+}
+
+/* Row height is normally the caller's `auto-rows-[150px]` (home teaser) or
+ * `auto-rows-[180px]` (/gallery) — see GallerySection.tsx. Those are tuned for
+ * a 4-up grid, where a tile is roughly square. As the column count drops the
+ * tiles get wider but the rows don't get taller, so by the 1-column breakpoint
+ * a span-1 tile would be a ~320x150 letterbox strip.
  *
- * `grid-auto-rows` is overridden here rather than `--row-h`, because the
- * variable is set as an inline style and no class rule can outrank that.
- * These rules sit outside Tailwind's layers, so they do outrank the
- * `auto-rows-[var(--row-h)]` utility on the same element. */
+ * These rules sit outside Tailwind's layers, so they outrank whichever
+ * `auto-rows-*` utility the caller set on the same element. */
 @media (max-width: 760px) {
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);

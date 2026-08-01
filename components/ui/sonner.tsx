@@ -28,14 +28,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
           <Loader2Icon className="size-4 animate-spin" />
         ),
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
+      // Sonner's own theming variables live on `.toaster` in app/globals.css
+      // rather than inline here — they are four static values with no runtime
+      // input, and this is a vendored shadcn file that `shadcn add sonner`
+      // would overwrite.
       toastOptions={{
         classNames: {
           toast: "cn-toast",
