@@ -64,7 +64,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
-  let payload: { event?: string; data?: { reference_id?: string; status?: string; payment_id?: string } };
+  let payload: {
+    event?: string;
+    data?: {
+      reference_id?: string;
+      status?: string;
+      payment_id?: string;
+      /** Major currency units (PHP), matching the `amount` we send when
+       * creating the session — see lib/payments/xendit.ts. */
+      amount?: number;
+      payment_session_id?: string;
+    };
+  };
   try {
     payload = JSON.parse(rawBody);
   } catch (err) {
@@ -134,6 +145,64 @@ export async function POST(req: Request) {
     logError("webhook.xendit.order_not_found", new Error("no order for reference_id"), { orderId });
     await flushTelemetry();
     return NextResponse.json({ error: "order not found" }, { status: 400 });
+  }
+
+  // Confirm the payment we're being told about is actually *this* order's, for
+  // the full amount, before flipping it to paid.
+  //
+  // Until now the handler trusted the event name alone: any
+  // `payment_session.completed` naming a valid reference_id marked that order
+  // paid, decremented stock and burned the discount, whatever the payment
+  // actually was. An underpaid or partial settlement fulfilled in full.
+  //
+  // Both checks fail CLOSED on a mismatch (400, terminal — a wrong amount will
+  // still be wrong on every retry) but fail OPEN, loudly, when the field is
+  // absent. That asymmetry is deliberate: these field names are taken from the
+  // session-creation request shape in lib/payments/xendit.ts and have not been
+  // confirmed against a live `payment_session.completed` delivery, and this
+  // project has no live webhook yet. Rejecting on an absent field would stop
+  // fulfillment sitewide the first time a name turned out to differ — the exact
+  // silent-sitewide-halt failure the unknown_event branch above guards against.
+  // The warn below is the signal to tighten this once a real payload is on
+  // record; see webhook.xendit.verification_field_missing in the logs.
+  const missingVerificationFields: string[] = [];
+
+  if (typeof payload.data?.amount === "number") {
+    const paidCents = Math.round(payload.data.amount * 100);
+    if (paidCents !== order.totalCents) {
+      logError("webhook.xendit.amount_mismatch", new Error("paid amount does not match order total"), {
+        orderId,
+        detail: `webhook reported ${paidCents} centavos against an order total of ${order.totalCents}; refusing to mark paid`,
+      });
+      await flushTelemetry();
+      return NextResponse.json({ error: "amount mismatch" }, { status: 400 });
+    }
+  } else {
+    missingVerificationFields.push("amount");
+  }
+
+  // Binds the event to the session we actually created for this order, so a
+  // replayed or cross-order delivery can't settle it.
+  if (payload.data?.payment_session_id && order.xenditPaymentSessionId) {
+    if (payload.data.payment_session_id !== order.xenditPaymentSessionId) {
+      logError("webhook.xendit.session_mismatch", new Error("payment_session_id does not match the order"), {
+        orderId,
+        detail: "the completed session is not the one created for this order; refusing to mark paid",
+      });
+      await flushTelemetry();
+      return NextResponse.json({ error: "session mismatch" }, { status: 400 });
+    }
+  } else if (!payload.data?.payment_session_id) {
+    missingVerificationFields.push("payment_session_id");
+  }
+
+  if (missingVerificationFields.length > 0) {
+    logWarn("webhook.xendit.verification_field_missing", {
+      orderId,
+      missingFields: missingVerificationFields.join(","),
+      detail:
+        "payload carried no such field, so that check was skipped and the order is being fulfilled on the event name alone — confirm the real payload shape and tighten this to fail closed",
+    });
   }
 
   // Fast-path idempotency check — Xendit may retry webhook delivery.

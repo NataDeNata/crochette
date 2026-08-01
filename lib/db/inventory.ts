@@ -1,21 +1,58 @@
-import { and, eq, gt, lte, sql } from "drizzle-orm";
+import { and, eq, gt, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orderItems, products } from "@/lib/db/schema";
+import { logError } from "@/lib/observability/log";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /** Decrements stock for every line item on an order, clamped at 0 (never
  * goes negative even if more was sold than was in stock). Auto-flips a
  * product from "active" to "sold_out" the moment its stock hits 0 — leaves
- * "draft" alone since that's an admin-owned state, not a stock signal. */
+ * "draft" alone since that's an admin-owned state, not a stock signal.
+ *
+ * Checkout only *validates* stock; nothing is reserved between then and
+ * confirmed payment, so two buyers can both pass validation on the last unit
+ * and both pay. That is a real, accepted condition here — the money is already
+ * taken by the time this runs, so refusing to fulfill is not an option and this
+ * must not throw. What it must not do is stay silent: the `greatest(…, 0)`
+ * clamp used to absorb the overshoot invisibly, leaving both orders `paid` with
+ * nothing anywhere saying stock had been oversold. The guarded update below
+ * makes the overshoot detectable, and the order still completes.
+ */
 export async function decrementStockForOrder(tx: Tx, orderId: string) {
-  const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  // Deterministic order. These updates take a row lock per product inside the
+  // transaction, so two webhooks whose orders share products would deadlock if
+  // each locked them in a different sequence — Postgres aborts one, which
+  // becomes a 500 and a Xendit retry.
+  const items = await tx
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, orderId))
+    .orderBy(orderItems.productId);
 
   for (const item of items) {
-    await tx
+    // Guarded first: only succeeds when the stock is genuinely there.
+    const affected = await tx
       .update(products)
-      .set({ stockQty: sql`greatest(${products.stockQty} - ${item.quantity}, 0)` })
-      .where(eq(products.id, item.productId));
+      .set({ stockQty: sql`${products.stockQty} - ${item.quantity}` })
+      .where(and(eq(products.id, item.productId), gte(products.stockQty, item.quantity)))
+      .returning({ id: products.id });
+
+    if (affected.length === 0) {
+      // Either the product row is gone, or it was oversold. Fall back to the
+      // clamp so state stays consistent and the order still fulfills, but say
+      // so — this is the signal that someone paid for stock that wasn't there.
+      await tx
+        .update(products)
+        .set({ stockQty: sql`greatest(${products.stockQty} - ${item.quantity}, 0)` })
+        .where(eq(products.id, item.productId));
+
+      logError("inventory.oversold", new Error("stock decrement exceeded available quantity"), {
+        orderId,
+        productId: item.productId,
+        detail: `order line wanted ${item.quantity} but stock was short; clamped to 0 and fulfilled anyway — payment is already taken, so this needs manual reconciliation`,
+      });
+    }
 
     await tx
       .update(products)
@@ -39,7 +76,13 @@ export async function getOrderProductSlugs(orderId: string): Promise<string[]> {
  * (e.g. a refund), so the stock it had reserved goes back on the shelf.
  * Auto-flips "sold_out" back to "active" once stock is restored. */
 export async function restoreStockForOrder(tx: Tx, orderId: string) {
-  const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  // Same deterministic lock order as decrementStockForOrder — a restock and a
+  // payment touching the same two products would otherwise deadlock.
+  const items = await tx
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, orderId))
+    .orderBy(orderItems.productId);
 
   for (const item of items) {
     await tx

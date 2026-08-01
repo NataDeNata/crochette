@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "./index";
 import { carts, cartItems, products } from "./schema";
 
@@ -69,10 +69,42 @@ export async function createGuestCart(exec: Executor = db): Promise<string> {
 }
 
 /** Whether a cart id actually exists. Guards against a stale cookie pointing at
- * a cart that was merged away or cascade-deleted with its customer. */
+ * a cart that was merged away or cascade-deleted with its customer.
+ *
+ * Existence only — it says nothing about *whose* cart it is. Anything resolving
+ * a cart from the signed cookie must use `isGuestCart` instead: the cookie is
+ * set to the customer's own cart id after a merge (lib/auth.ts), so on a shared
+ * browser it outlives the session that created it and would otherwise hand the
+ * next visitor the previous customer's cart. */
 export async function cartExists(cartId: string, exec: Executor = db): Promise<boolean> {
   const [row] = await exec.select({ id: carts.id }).from(carts).where(eq(carts.id, cartId)).limit(1);
   return Boolean(row);
+}
+
+/** Whether this id names a cart that is still unclaimed — i.e. a real guest
+ * cart, not some account's cart.
+ *
+ * This is the ownership check the cookie path needs. `customer_id IS NULL` is
+ * exactly the "guest cart" predicate the schema already encodes (a null row *is*
+ * the guest cart), so no separate flag is needed. */
+export async function isGuestCart(cartId: string, exec: Executor = db): Promise<boolean> {
+  const [row] = await exec
+    .select({ id: carts.id })
+    .from(carts)
+    .where(and(eq(carts.id, cartId), isNull(carts.customerId)))
+    .limit(1);
+  return Boolean(row);
+}
+
+/** The customer's existing cart, or null. The read-path counterpart to
+ * `getOrCreateCustomerCart` — a page view must never mint a cart row. */
+export async function findCustomerCart(customerId: string, exec: Executor = db): Promise<string | null> {
+  const [row] = await exec
+    .select({ id: carts.id })
+    .from(carts)
+    .where(eq(carts.customerId, customerId))
+    .limit(1);
+  return row?.id ?? null;
 }
 
 /** Read a cart with live product data.
@@ -255,7 +287,13 @@ export async function mergeCarts(
     if (!guestCartId || guestCartId === customerCartId) return customerCartId;
 
     // A stale cookie can outlive its cart; treat that as "no guest cart".
-    if (!(await cartExists(guestCartId, tx))) return customerCartId;
+    //
+    // The check is `isGuestCart`, not `cartExists`: after a merge the cookie
+    // holds the *customer's* cart id, so on a shared browser it can still be
+    // present when a different person signs in. Merging then folded one
+    // account's cart into another's and deleted the original. A cart that
+    // already belongs to someone is never a merge source.
+    if (!(await isGuestCart(guestCartId, tx))) return customerCartId;
 
     const guestLines = await tx
       .select({ productId: cartItems.productId, quantity: cartItems.quantity })
