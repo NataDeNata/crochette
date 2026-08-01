@@ -11,6 +11,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
+import { containsPattern } from "@/lib/db/search";
 import {
   OrdersBulkBar,
   OrdersSelectAllCheckbox,
@@ -32,7 +33,10 @@ export default async function AdminOrdersPage({
   const rawPage = Math.max(1, Number(sp.page) || 1);
 
   const conditions: SQL[] = [];
-  if (q) conditions.push(or(ilike(orders.customerName, `%${q}%`), ilike(orders.customerEmail, `%${q}%`))!);
+  if (q) {
+    const pattern = containsPattern(q);
+    conditions.push(or(ilike(orders.customerName, pattern), ilike(orders.customerEmail, pattern))!);
+  }
   if (status) conditions.push(eq(orders.status, status as (typeof ORDER_STATUSES)[number]));
   const where = conditions.length ? and(...conditions) : undefined;
 

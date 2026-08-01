@@ -14,6 +14,7 @@ import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { LowStockBadge } from "@/components/admin/LowStockBadge";
+import { containsPattern } from "@/lib/db/search";
 
 const PAGE_SIZE = 20;
 
@@ -33,11 +34,12 @@ export default async function AdminProductsPage({
   // customer's message finds the product. `description` is nullable and an
   // `ilike` against NULL yields NULL, which `or` correctly treats as no match.
   if (q) {
+    const pattern = containsPattern(q);
     conditions.push(
       or(
-        ilike(products.name, `%${q}%`),
-        ilike(products.slug, `%${q}%`),
-        ilike(products.description, `%${q}%`),
+        ilike(products.name, pattern),
+        ilike(products.slug, pattern),
+        ilike(products.description, pattern),
       )!,
     );
   }

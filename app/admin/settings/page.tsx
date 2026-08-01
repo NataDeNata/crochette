@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth-guard";
+import { requireAdminPage } from "@/lib/auth-guard";
 import { getAdminSecurityState, getPendingTotpEnrolment } from "@/lib/db/admin-account";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminSettingsPage() {
-  const admin = await requireAdmin();
+  const admin = await requireAdminPage();
 
   const security = await getAdminSecurityState(admin.id);
   // The session says this admin exists; the row says otherwise. That only

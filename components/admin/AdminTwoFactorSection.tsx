@@ -29,7 +29,30 @@ export function AdminTwoFactorSection({
   backupCodesRemaining: number;
   enrolment: Enrolment | null;
 }) {
-  if (enrolment) return <EnrolmentStep enrolment={enrolment} />;
+  // Owned here, not in `EnrolmentStep`, because that subtree does not survive
+  // its own success. `confirmTotp` sets `totp_confirmed_at` and revalidates
+  // this page, which flips `enrolment` to null and `confirmedAt` to a date —
+  // so React unmounts `EnrolmentStep` in the same commit that delivers the
+  // codes, and state living inside it goes with it. Held one level up, the
+  // codes outlive the branch change.
+  const [confirmState, confirmAction, confirmPending] = useActionState(confirmTotp, IDLE);
+
+  // Checked before the prop-driven branches for the same reason: by the time
+  // the codes exist, the props already describe an active second factor.
+  if (confirmState.backupCodes) {
+    return <BackupCodes codes={confirmState.backupCodes} message={confirmState.message} />;
+  }
+
+  if (enrolment) {
+    return (
+      <EnrolmentStep
+        enrolment={enrolment}
+        state={confirmState}
+        formAction={confirmAction}
+        isPending={confirmPending}
+      />
+    );
+  }
   if (confirmedAt) return <ActiveState confirmedAt={confirmedAt} backupCodesRemaining={backupCodesRemaining} />;
   return <OffState />;
 }
@@ -50,13 +73,17 @@ function OffState() {
   );
 }
 
-function EnrolmentStep({ enrolment }: { enrolment: Enrolment }) {
-  const [state, formAction, isPending] = useActionState(confirmTotp, IDLE);
-
-  // The one render where the plaintext codes exist. After this they are only
-  // SHA-256 hashes in the database, so navigating away loses them for good.
-  if (state.backupCodes) return <BackupCodes codes={state.backupCodes} message={state.message} />;
-
+function EnrolmentStep({
+  enrolment,
+  state,
+  formAction,
+  isPending,
+}: {
+  enrolment: Enrolment;
+  state: TotpActionState;
+  formAction: (formData: FormData) => void;
+  isPending: boolean;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-[13px] text-muted-foreground">

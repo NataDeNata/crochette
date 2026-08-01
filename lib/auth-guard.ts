@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 
 /**
@@ -18,9 +19,28 @@ import { auth } from "@/lib/auth";
  * beyond the session read the surrounding page already did.
  */
 export async function requireAdmin(): Promise<{ id: string; email: string }> {
+  const admin = await adminOrNull();
+  if (!admin) throw new Error("Unauthorized");
+  return admin;
+}
+
+/**
+ * The same assertion for a *page* render rather than an action.
+ *
+ * `requireAdmin`'s throw is right for an action — nothing sensible to render,
+ * and reaching it means the front door was skipped. During a page render it is
+ * wrong: a session expiring between the proxy check and the render is ordinary,
+ * and it would show a generic 500 instead of sending the admin to sign in. The
+ * split keeps each failure mode matched to its caller.
+ */
+export async function requireAdminPage(): Promise<{ id: string; email: string }> {
+  const admin = await adminOrNull();
+  if (!admin) redirect("/admin/login");
+  return admin;
+}
+
+async function adminOrNull(): Promise<{ id: string; email: string } | null> {
   const session = await auth();
-  if (session?.user?.role !== "admin" || !session.user.id) {
-    throw new Error("Unauthorized");
-  }
+  if (session?.user?.role !== "admin" || !session.user.id) return null;
   return { id: session.user.id, email: session.user.email ?? "" };
 }

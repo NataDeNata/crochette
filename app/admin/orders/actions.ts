@@ -118,11 +118,16 @@ export async function bulkUpdateOrders(
     };
   }
 
-  const { status, orderIds } = parsed.data;
+  const { status } = parsed.data;
+  // De-duplicated because the count in the success message is derived from this
+  // list. The UI can't produce a repeat — a checkbox is either ticked or not —
+  // but a hand-built POST can, and the second pass would be a no-op transition
+  // that still incremented `updated`, reporting more orders changed than exist.
+  const orderIds = [...new Set(parsed.data.orderIds)];
 
-  // One pre-flight query so ids that don't exist are reported as such instead
-  // of being silently absorbed by the per-order `found: false`. Also keeps the
-  // count in the success message honest.
+  // One pre-flight query so ids with no row are counted as missing rather than
+  // silently absorbed by the per-order `found: false`, which is indistinguishable
+  // from "already in that status".
   const existing = await db
     .select({ id: orders.id })
     .from(orders)
@@ -132,18 +137,38 @@ export async function bulkUpdateOrders(
   let updated = 0;
   let restocked = 0;
   let failed = 0;
+  let missing = 0;
 
   for (const id of orderIds) {
-    if (!known.has(id)) continue;
+    if (!known.has(id)) {
+      missing += 1;
+      continue;
+    }
+    let transition: Awaited<ReturnType<typeof applyOrderStatusChange>>;
     try {
-      const transition = await applyOrderStatusChange(id, status);
-      if (!transition.found) continue;
-      updated += 1;
-      if (transition.restocked) restocked += 1;
-      await afterOrderTransition(id, transition);
+      transition = await applyOrderStatusChange(id, status);
     } catch (err) {
       failed += 1;
       logError("admin.order.bulk_update_failed", err, { orderId: id, nextStatus: status });
+      continue;
+    }
+
+    if (!transition.found) {
+      missing += 1;
+      continue;
+    }
+    updated += 1;
+    if (transition.restocked) restocked += 1;
+
+    // Deliberately outside the transaction's try. Everything above has already
+    // committed — stock restored, discount usage refunded — so a failure here
+    // is not a failed update and must not be counted as one. Doing so would
+    // report "N couldn't be updated" for orders that were, inviting a retry
+    // that re-runs the transition against rows already in the target status.
+    try {
+      await afterOrderTransition(id, transition);
+    } catch (err) {
+      logError("admin.order.bulk_after_transition_failed", err, { orderId: id, nextStatus: status });
     }
   }
 
@@ -157,18 +182,29 @@ export async function bulkUpdateOrders(
     updated,
     restocked,
     failed,
+    missing,
   });
 
+  const missingNote =
+    missing > 0 ? ` ${missing} ${missing === 1 ? "order was" : "orders were"} already in that status or no longer exist.` : "";
+  const failNote = failed > 0 ? ` ${failed} couldn't be updated.` : "";
+
   if (updated === 0) {
-    return { status: "error", message: "Nothing was updated — please try again." };
+    // Distinguished because they call for different responses: a failure is
+    // worth retrying, a selection that was already in the target status (or
+    // deleted underneath you) is not, and "please try again" on the latter
+    // sends the admin round a loop that cannot succeed.
+    return {
+      status: "error",
+      message: failed > 0 ? `Nothing was updated.${failNote}` : `Nothing to update.${missingNote}`,
+    };
   }
 
   const noun = updated === 1 ? "order" : "orders";
   const restockNote = restocked > 0 ? ` Stock was restored for ${restocked} paid ${restocked === 1 ? "order" : "orders"}.` : "";
-  const failNote = failed > 0 ? ` ${failed} couldn't be updated.` : "";
 
   return {
     status: failed > 0 ? "error" : "success",
-    message: `${updated} ${noun} marked ${status}.${restockNote}${failNote}`,
+    message: `${updated} ${noun} marked ${status}.${restockNote}${missingNote}${failNote}`,
   };
 }
