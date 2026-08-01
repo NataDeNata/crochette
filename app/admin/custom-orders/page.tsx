@@ -10,6 +10,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
+import { containsPattern } from "@/lib/db/search";
 
 const CUSTOM_ORDER_STATUSES = [
   "new",
@@ -35,7 +36,10 @@ export default async function AdminCustomOrdersPage({
   const rawPage = Math.max(1, Number(sp.page) || 1);
 
   const conditions: SQL[] = [];
-  if (q) conditions.push(or(ilike(customOrderRequests.name, `%${q}%`), ilike(customOrderRequests.email, `%${q}%`))!);
+  if (q) {
+    const pattern = containsPattern(q);
+    conditions.push(or(ilike(customOrderRequests.name, pattern), ilike(customOrderRequests.email, pattern))!);
+  }
   if (status) conditions.push(eq(customOrderRequests.status, status as (typeof CUSTOM_ORDER_STATUSES)[number]));
   const where = conditions.length ? and(...conditions) : undefined;
 

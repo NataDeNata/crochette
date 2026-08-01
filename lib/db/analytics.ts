@@ -1,6 +1,7 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { addresses, customers, orders } from "@/lib/db/schema";
+import { containsPattern } from "@/lib/db/search";
 import {
   REPORTING_TIME_ZONE,
   REVENUE_DAYS,
@@ -153,7 +154,7 @@ export async function listCustomersWithTotals({
   q?: string;
 }): Promise<{ rows: CustomerListRow[]; total: number; page: number; totalPages: number }> {
   const where = q
-    ? or(ilike(customers.name, `%${q}%`), ilike(customers.email, `%${q}%`))
+    ? or(ilike(customers.name, containsPattern(q)), ilike(customers.email, containsPattern(q)))
     : undefined;
 
   const [{ total }] = await db.select({ total: count() }).from(customers).where(where);

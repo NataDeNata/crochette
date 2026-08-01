@@ -11,6 +11,7 @@ import { DUMMY_PASSWORD_HASH } from "@/lib/auth-session";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { ADMIN_CHALLENGE_COOKIE, mintAdminChallenge } from "@/lib/security/admin-challenge";
 import { logInfo } from "@/lib/observability/log";
+import { isNextControlFlowError } from "@/lib/observability/sentry-shared";
 import type { AdminLoginState } from "@/lib/actions/admin-login-types";
 
 const GENERIC_FAILURE = "Incorrect email or password.";
@@ -27,6 +28,19 @@ async function setChallengeCookie(value: string): Promise<void> {
     path: "/admin/login",
     maxAge: 3 * 60,
   });
+}
+
+/** Cleared once the challenge has been spent on a successful sign-in.
+ *
+ * The token is deliberately not single-use (see lib/security/admin-challenge.ts
+ * for why enforcing that would put a fail-closed Redis round trip on the login
+ * path), but "not single-use" is not a reason to leave it lying in the browser
+ * after it has served its purpose. Until it expires it is a standing proof that
+ * someone knew the password — so on a shared machine it outlives the session
+ * that earned it, and a second person starting a login within the window would
+ * have step two pick up the first person's challenge. */
+async function clearChallengeCookie(): Promise<void> {
+  (await cookies()).delete({ name: ADMIN_CHALLENGE_COOKIE, path: "/admin/login" });
 }
 
 /**
@@ -139,7 +153,12 @@ async function finishSignIn(
     await signIn("admin", { challenge, totp, redirectTo: "/admin" });
     return { status: "idle" };
   } catch (error) {
+    // Refused: leave the cookie alone. A wrong code has to be retryable without
+    // re-entering the password, which is the entire reason the challenge exists.
     if (error instanceof AuthError) return { ...onFailure, email };
+    // Accepted — `signIn` signals success by throwing Next's redirect. The
+    // challenge has now been spent, so drop it before the throw propagates.
+    if (isNextControlFlowError(error)) await clearChallengeCookie();
     throw error;
   }
 }
