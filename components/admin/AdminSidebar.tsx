@@ -8,6 +8,7 @@ import {
   LogOut,
   Package,
   Scissors,
+  Settings,
   ShoppingBag,
   Ticket,
   Users,
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
   { href: "/admin/discounts", label: "Discounts", icon: Ticket },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 /** Which nav item the current URL belongs to.

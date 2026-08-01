@@ -48,6 +48,12 @@ export const RATE_LIMITS = {
    * silently halve every limit. */
   "auth-endpoint": { max: 20, window: "10 m" },
   "admin-login": { max: 5, window: "10 m" },
+  /** The second-factor step, keyed on IP. Tighter than `admin-login` because
+   * the search space is smaller: a 6-digit code is one in a million, and the
+   * ±1 drift window (lib/security/totp.ts) makes three of them valid at any
+   * moment. 10 tries per 10 minutes keeps an online guess hopeless without
+   * punishing someone fat-fingering a code off a phone screen. */
+  "admin-totp": { max: 10, window: "10 m" },
   login: { max: 5, window: "10 m" },
   signup: { max: 5, window: "10 m" },
   checkout: { max: 10, window: "10 m" },
