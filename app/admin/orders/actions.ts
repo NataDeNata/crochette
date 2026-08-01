@@ -125,23 +125,36 @@ export async function bulkUpdateOrders(
   // that still incremented `updated`, reporting more orders changed than exist.
   const orderIds = [...new Set(parsed.data.orderIds)];
 
-  // One pre-flight query so ids with no row are counted as missing rather than
-  // silently absorbed by the per-order `found: false`, which is indistinguishable
-  // from "already in that status".
+  // One pre-flight query, because `applyOrderStatusChange` cannot answer either
+  // of the questions the success message needs. It reports `found: true` for any
+  // row that exists (lib/db/orders.ts:88) — including one already in the target
+  // status — so on its own it makes "changed" and "was already like that"
+  // indistinguishable, and both get reported as changed. The current status is
+  // read here so they can be told apart.
   const existing = await db
-    .select({ id: orders.id })
+    .select({ id: orders.id, status: orders.status })
     .from(orders)
     .where(inArray(orders.id, orderIds));
-  const known = new Set(existing.map((r) => r.id));
+  const currentStatus = new Map(existing.map((r) => [r.id, r.status]));
 
   let updated = 0;
   let restocked = 0;
   let failed = 0;
   let missing = 0;
+  let unchanged = 0;
+  let notifyFailed = 0;
 
   for (const id of orderIds) {
-    if (!known.has(id)) {
+    const before = currentStatus.get(id);
+    if (before === undefined) {
       missing += 1;
+      continue;
+    }
+    // Skipped rather than written: re-applying the status an order already has
+    // is a no-op that still burns a transaction and a row lock, and counting it
+    // as updated overstates what the admin actually did.
+    if (before === status) {
+      unchanged += 1;
       continue;
     }
     let transition: Awaited<ReturnType<typeof applyOrderStatusChange>>;
@@ -165,9 +178,16 @@ export async function bulkUpdateOrders(
     // is not a failed update and must not be counted as one. Doing so would
     // report "N couldn't be updated" for orders that were, inviting a retry
     // that re-runs the transition against rows already in the target status.
+    //
+    // It still needs its own counter, though. This is where the "your order is
+    // on its way" email is sent, and swallowing a failure silently means the
+    // admin reads "20 orders marked shipped" while three customers were never
+    // told. The status change stands; only the notification is in doubt, which
+    // is what the message has to say.
     try {
       await afterOrderTransition(id, transition);
     } catch (err) {
+      notifyFailed += 1;
       logError("admin.order.bulk_after_transition_failed", err, { orderId: id, nextStatus: status });
     }
   }
@@ -183,11 +203,21 @@ export async function bulkUpdateOrders(
     restocked,
     failed,
     missing,
+    unchanged,
+    notifyFailed,
   });
 
+  // Kept as separate sentences rather than one merged "skipped" count: they are
+  // four different things, and only two of them are worth doing anything about.
+  const unchangedNote =
+    unchanged > 0 ? ` ${unchanged} ${unchanged === 1 ? "was" : "were"} already ${status}.` : "";
   const missingNote =
-    missing > 0 ? ` ${missing} ${missing === 1 ? "order was" : "orders were"} already in that status or no longer exist.` : "";
+    missing > 0 ? ` ${missing} ${missing === 1 ? "order no longer exists" : "orders no longer exist"}.` : "";
   const failNote = failed > 0 ? ` ${failed} couldn't be updated.` : "";
+  const notifyNote =
+    notifyFailed > 0
+      ? ` ${notifyFailed} ${notifyFailed === 1 ? "customer" : "customers"} couldn't be emailed — the status change went through, but they weren't told.`
+      : "";
 
   if (updated === 0) {
     // Distinguished because they call for different responses: a failure is
@@ -196,7 +226,7 @@ export async function bulkUpdateOrders(
     // sends the admin round a loop that cannot succeed.
     return {
       status: "error",
-      message: failed > 0 ? `Nothing was updated.${failNote}` : `Nothing to update.${missingNote}`,
+      message: failed > 0 ? `Nothing was updated.${failNote}` : `Nothing to update.${unchangedNote}${missingNote}`,
     };
   }
 
@@ -204,7 +234,9 @@ export async function bulkUpdateOrders(
   const restockNote = restocked > 0 ? ` Stock was restored for ${restocked} paid ${restocked === 1 ? "order" : "orders"}.` : "";
 
   return {
-    status: failed > 0 ? "error" : "success",
-    message: `${updated} ${noun} marked ${status}.${restockNote}${missingNote}${failNote}`,
+    // An un-sent email is not a failed update, but it is not a clean success
+    // either — the admin has to know to follow it up by hand.
+    status: failed > 0 || notifyFailed > 0 ? "error" : "success",
+    message: `${updated} ${noun} marked ${status}.${restockNote}${unchangedNote}${missingNote}${failNote}${notifyNote}`,
   };
 }

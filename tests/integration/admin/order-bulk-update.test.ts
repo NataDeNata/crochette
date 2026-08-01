@@ -122,6 +122,44 @@ describe("bulk order updates", () => {
     expect((await readOrder(real.id)).status).toBe("shipped");
   });
 
+  it("does not count orders already in the target status as updated", async () => {
+    // `applyOrderStatusChange` returns `found: true` for a row that exists even
+    // when nothing changed, so counting on it alone reported "2 orders marked
+    // shipped" for one real change and one no-op.
+    const changed = await makeOrder({ status: "paid" });
+    const already = await makeOrder({ status: "shipped" });
+
+    const result = await apply("shipped", [changed.id, already.id]);
+
+    expect(result.message).toContain("1 order marked shipped");
+    expect(result.message).toContain("1 was already shipped");
+  });
+
+  it("says so when the customer could not be emailed", async () => {
+    // The status change has already committed by this point, so this must not
+    // read as a failed update — but it must not read as a clean success either.
+    notifyOrderShipped.mockRejectedValueOnce(new Error("resend is down"));
+    const order = await makeOrder({ status: "paid" });
+
+    const result = await apply("shipped", [order.id]);
+
+    expect((await readOrder(order.id)).status).toBe("shipped");
+    expect(result.message).toContain("1 order marked shipped");
+    expect(result.message).toContain("couldn't be emailed");
+    expect(result.message).not.toContain("couldn't be updated");
+  });
+
+  it("reports a batch that was entirely already in the target status", async () => {
+    const already = await makeOrder({ status: "shipped" });
+
+    const result = await apply("shipped", [already.id]);
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("Nothing to update");
+    expect(result.message).toContain("already shipped");
+    expect(notifyOrderShipped).not.toHaveBeenCalled();
+  });
+
   it("refuses an empty selection", async () => {
     const result = await apply("shipped", []);
     expect(result.status).toBe("error");
