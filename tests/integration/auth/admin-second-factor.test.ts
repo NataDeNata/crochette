@@ -34,11 +34,23 @@ async function enrolledAdmin(backupCodes: string[] = []) {
  * The parts of the second factor that only the database can answer for:
  * whether a backup code can be spent twice, and whether the enrolment state
  * machine can be walked into a position where 2FA looks on but isn't.
+ *
+ * ── `toFake: ["Date"]` is load-bearing, not tidiness ──
+ * Pinning the clock is unavoidable here: the RFC 6238 vectors are only valid at
+ * a fixed instant, and `otpauth`'s `validate()` reads `Date.now()`. But a bare
+ * `vi.useFakeTimers()` also replaces setTimeout/setInterval, and the postgres
+ * driver needs real ones to drive its socket I/O — so every query issued under
+ * fake timers never settles. That is not a slow test, it is a hang: the first
+ * one blocked for its full 20s timeout still holding a connection, then every
+ * later `beforeEach` blocked another 30s waiting to TRUNCATE against it, and
+ * all 13 tests in this file failed even though only four touch the clock.
+ * Faking Date alone leaves the driver's timers real. Verified in CI, which is
+ * the only place this suite can run — there is no Docker on the dev machine.
  */
 describe("verifyAdminSecondFactor", () => {
   it("accepts a current TOTP code", async () => {
     const admin = await enrolledAdmin();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(59_000);
     try {
       expect(await verifyAdminSecondFactor(admin.id, RFC_CODE_AT_59)).toBe(true);
@@ -49,7 +61,7 @@ describe("verifyAdminSecondFactor", () => {
 
   it("rejects a wrong code", async () => {
     const admin = await enrolledAdmin();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(59_000);
     try {
       expect(await verifyAdminSecondFactor(admin.id, "000000")).toBe(false);
@@ -65,7 +77,7 @@ describe("verifyAdminSecondFactor", () => {
     const admin = await makeAdmin();
     await testDb.update(admins).set({ totpSecret: encryptSecret(RFC_SECRET) }).where(eq(admins.id, admin.id));
 
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(59_000);
     try {
       expect(await verifyAdminSecondFactor(admin.id, RFC_CODE_AT_59)).toBe(false);
@@ -152,7 +164,7 @@ describe("enrolment state", () => {
     // Point the stored secret at the RFC seed so a known code confirms it.
     await testDb.update(admins).set({ totpSecret: encryptSecret(RFC_SECRET) }).where(eq(admins.id, admin.id));
 
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(59_000);
     let result;
     try {
