@@ -11,7 +11,6 @@ import { DUMMY_PASSWORD_HASH } from "@/lib/auth-session";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { ADMIN_CHALLENGE_COOKIE, mintAdminChallenge } from "@/lib/security/admin-challenge";
 import { logInfo } from "@/lib/observability/log";
-import { isNextControlFlowError } from "@/lib/observability/sentry-shared";
 import type { AdminLoginState } from "@/lib/actions/admin-login-types";
 
 const GENERIC_FAILURE = "Incorrect email or password.";
@@ -136,6 +135,15 @@ export async function adminLoginTotp(_prevState: AdminLoginState, formData: Form
   });
 }
 
+/** `signIn()` reports success by throwing Next's redirect signal, which carries
+ * a `digest` of `NEXT_REDIRECT;<type>;<url>;...`. Checked by prefix rather than
+ * by importing `isRedirectError` from `next/dist/client/components/redirect` —
+ * an unstable internal path that has moved between Next majors. */
+function isSignInRedirect(error: unknown): boolean {
+  const digest = (error as { digest?: unknown } | null | undefined)?.digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+}
+
 /**
  * Hand the challenge to `authorize()` and let it decide.
  *
@@ -158,7 +166,15 @@ async function finishSignIn(
     if (error instanceof AuthError) return { ...onFailure, email };
     // Accepted — `signIn` signals success by throwing Next's redirect. The
     // challenge has now been spent, so drop it before the throw propagates.
-    if (isNextControlFlowError(error)) await clearChallengeCookie();
+    //
+    // Matched on the redirect digest specifically, NOT with
+    // `isNextControlFlowError`: that helper exists to keep Next's control-flow
+    // throws out of Sentry, so it deliberately also matches `NEXT_NOT_FOUND`,
+    // `DYNAMIC_SERVER_USAGE` and `BAILOUT_TO_CLIENT_SIDE_RENDERING`. None of
+    // those mean the admin is signed in, and clearing the cookie for one would
+    // send them back to the password step — the exact failure the challenge is
+    // here to prevent. Only a redirect means `authorize()` said yes.
+    if (isSignInRedirect(error)) await clearChallengeCookie();
     throw error;
   }
 }

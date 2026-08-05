@@ -36,11 +36,26 @@ export function AdminTwoFactorSection({
   // codes, and state living inside it goes with it. Held one level up, the
   // codes outlive the branch change.
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmTotp, IDLE);
+  // The codes can't be un-rendered by the action state — `useActionState` has no
+  // reset — and nothing else clears them, so without this the enrolment view is
+  // a dead end for the life of the mount: no way back to `ActiveState`, and so
+  // no way to reissue codes or turn 2FA off short of reloading the page.
+  //
+  // Holds the dismissed array rather than a boolean so that a *later* set of
+  // codes is never suppressed by an earlier dismissal — each action run returns
+  // a fresh array, so identity is the right key here.
+  const [dismissed, setDismissed] = useState<string[] | null>(null);
 
   // Checked before the prop-driven branches for the same reason: by the time
   // the codes exist, the props already describe an active second factor.
-  if (confirmState.backupCodes) {
-    return <BackupCodes codes={confirmState.backupCodes} message={confirmState.message} />;
+  if (confirmState.backupCodes && confirmState.backupCodes !== dismissed) {
+    return (
+      <BackupCodes
+        codes={confirmState.backupCodes}
+        message={confirmState.message}
+        onDismiss={() => setDismissed(confirmState.backupCodes ?? null)}
+      />
+    );
   }
 
   if (enrolment) {
@@ -156,9 +171,18 @@ function ActiveState({
   const [showDisable, setShowDisable] = useState(false);
   const [reissueState, reissueAction, reissuePending] = useActionState(reissueBackupCodes, IDLE);
   const [disableState, disableAction, disablePending] = useActionState(turnOffTotp, IDLE);
+  // Same dead end as after enrolling: reissuing replaces this whole view with
+  // the codes, and nothing clears them again.
+  const [dismissed, setDismissed] = useState<string[] | null>(null);
 
-  if (reissueState.backupCodes) {
-    return <BackupCodes codes={reissueState.backupCodes} message={reissueState.message} />;
+  if (reissueState.backupCodes && reissueState.backupCodes !== dismissed) {
+    return (
+      <BackupCodes
+        codes={reissueState.backupCodes}
+        message={reissueState.message}
+        onDismiss={() => setDismissed(reissueState.backupCodes ?? null)}
+      />
+    );
   }
 
   return (
@@ -259,7 +283,15 @@ function ActiveState({
   );
 }
 
-function BackupCodes({ codes, message }: { codes: string[]; message?: string }) {
+function BackupCodes({
+  codes,
+  message,
+  onDismiss,
+}: {
+  codes: string[];
+  message?: string;
+  onDismiss?: () => void;
+}) {
   return (
     <div className="flex flex-col gap-3">
       <p className="m-0 text-[13px] font-medium">{message}</p>
@@ -274,6 +306,14 @@ function BackupCodes({ codes, message }: { codes: string[]; message?: string }) 
         Each one works once, in place of a code from your app. Print them or put them in a password manager —
         this page will not show them again.
       </p>
+      {onDismiss ? (
+        // Deliberately the only way out, and deliberately worded as a claim the
+        // admin has to make: dismissing is irreversible, because the server kept
+        // only SHA-256 hashes.
+        <Button type="button" variant="outline" size="sm" className="self-start" onClick={onDismiss}>
+          I&apos;ve saved these
+        </Button>
+      ) : null}
     </div>
   );
 }
