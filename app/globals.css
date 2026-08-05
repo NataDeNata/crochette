@@ -614,18 +614,28 @@
 
 [data-surface="storefront"] {
   /* --- the material ----------------------------------------------------- */
-  --washi: oklch(0.962 0.014 85); /* #F7F2E6 */
-  --paper: oklch(0.933 0.024 84); /* #F0E8D5 */
-  --ash: oklch(0.9 0.012 85); /* #E6E1D6 */
-  --bamboo: oklch(0.805 0.055 80); /* #D8BF94 */
-  --ink: oklch(0.215 0.003 90); /* #1E1E1C */
-  --vermilion: oklch(0.578 0.185 33); /* #D6452D */
+  /* These six are written as the reference's own hex rather than converted to
+   * oklch like the rest of this file. That is deliberate and it is not laziness:
+   * they were oklch approximations first, and a canvas read-back of the computed
+   * values showed every one of them had drifted — bamboo by 6/3/4 and vermilion
+   * by 6/5/9. Vermilion is the single accent this entire world spends, on a
+   * stamp and an arrow and nothing else, so being approximately right about it
+   * is being wrong about the one colour anyone will remember. Matching the
+   * chosen reference exactly beats matching the file's own notation. */
+  --washi: #f7f2e6;
+  --paper: #f0e8d5;
+  --ash: #e6e1d6;
+  --bamboo: #d8bf94;
+  --ink: #1e1e1c;
+  --vermilion: #d6452d;
 
   /* Two vermilions, and the split is a contrast rule rather than a taste one.
-   * The board uses vermilion for "View Details" links at body size, and
-   * #D6452D on washi measures 3.5:1 — fine for a stamp or a 24px arrow, under
-   * the 4.5:1 floor for text. --vermilion stays exact for marks and fills;
-   * --vermilion-ink is the darkened cut that carries words, at 4.9:1. */
+   * The board uses vermilion for "View Details" links at body size, and #D6452D
+   * on washi measures 3.96:1 — comfortably fine for the stamp and the arrows,
+   * which are graphics and owe 3:1, and under the 4.5:1 floor for text.
+   * --vermilion stays exact for marks; --vermilion-ink is the darkened cut that
+   * carries words, at 5.83:1. Both figures are canvas read-backs of the
+   * computed values, not estimates. */
   --vermilion-ink: oklch(0.5 0.17 33);
 
   /* --- roles the shadcn primitives consume ------------------------------ */
@@ -640,8 +650,8 @@
   --secondary: var(--ash);
   --secondary-foreground: var(--ink);
   --muted: var(--ash);
-  /* Warmed from the paper's own hue rather than desaturated to grey. 4.9:1 on
-   * --background. */
+  /* Warmed from the paper's own hue rather than desaturated to grey. Measured
+   * 6.94:1 on --background and 6.35:1 on --card. */
   --muted-foreground: oklch(0.44 0.02 80);
   --accent: var(--paper);
   --accent-foreground: var(--ink);
@@ -650,9 +660,9 @@
   --border: var(--bamboo);
   /* --border is the decorative bamboo hairline and is exempt from 1.4.11.
    * --input is the only thing identifying a text field, so it owes 3:1 against
-   * --card, and bamboo measures 1.4:1 there. This deeper cut reads 3.4:1. */
+   * --card, and bamboo measures 1.4:1 there. This deeper cut reads 4.52:1. */
   --input: oklch(0.52 0.035 80);
-  /* 3.5:1 against --background, clearing the 3:1 floor for a focus indicator. */
+  /* 3.96:1 against --background, clearing the 3:1 floor for a focus indicator. */
   --ring: var(--vermilion);
 
   /* Paper has a soft edge, not a sharp one, and not a pill. The board's cards
@@ -768,7 +778,7 @@ body:has([data-surface="storefront"]) {
 }
 
 /* Sits on the rotating placeholder tones, so both sides are opaque and taken
- * from the two ends of the material range: 14.5:1 either way. */
+ * from the two ends of the material range: 14.95:1 either way. */
 [data-surface="storefront"] .product-card-placeholder-caption {
   color: var(--ink);
   background: var(--washi);
