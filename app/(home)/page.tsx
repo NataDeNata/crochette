@@ -20,10 +20,16 @@ export default async function Home() {
         pieceCount={products.length}
       />
 
-      {/* The collection, on the paper ground. Deliberately quiet chrome: the
-       * pieces are the only saturated thing on the page, which is the whole
-       * discipline this world runs on. */}
-      <section className="pb-20 sm:pb-28 overflow-x-hidden">
+      {/* From here the page is a stack of sheets, each one bowing over the last.
+       * Every section alternates washi and paper so the curve between them has
+       * two tones to separate — a band drawn between two identical grounds is
+       * just a decorative swoosh, and this world does not do decoration.
+       *
+       * The collection gets a sheet of its own so the card row sits on the bow
+       * rather than floating above a flat edge. Chrome stays deliberately quiet:
+       * the pieces are the only saturated thing on the page. */}
+      <PaperBand fill="var(--paper)" className="bg-washi" />
+      <section className="bg-paper pt-4 pb-20 sm:pb-28 overflow-x-hidden">
         <FadeIn>
           <div className="page-gutter mb-10 max-w-[1320px] mx-auto">
             <h2 className="type-akari-display text-[clamp(28px,4vw,46px)] text-balance max-w-[560px]">
@@ -41,10 +47,9 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* The studio. Paper on ash, so the section reads as a second sheet laid
-       * over the first rather than as a coloured band. */}
-      <PaperBand fill="var(--paper)" />
-      <section className="bg-paper page-gutter pb-20 sm:pb-28 pt-4">
+      {/* The studio, back on washi. */}
+      <PaperBand fill="var(--washi)" className="bg-paper" />
+      <section className="bg-washi page-gutter pb-20 sm:pb-28 pt-4">
         <div className="max-w-[1320px] mx-auto grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-20 items-center">
           <div>
             <h2 className="type-akari-display text-[clamp(26px,3.4vw,42px)] text-balance mb-6">
@@ -72,10 +77,10 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      <PaperBand fill="var(--washi)" className="bg-paper" />
+      <PaperBand fill="var(--paper)" className="bg-washi" />
 
       {gallery.length > 0 && (
-        <section className="page-gutter pb-28 pt-10">
+        <section className="bg-paper page-gutter pb-28 pt-6">
           <div className="max-w-[1320px] mx-auto">
             <FadeIn>
               <h2 className="type-akari-display text-[clamp(26px,3.4vw,42px)] text-balance mb-10">

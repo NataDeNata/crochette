@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { AccountIcon } from "@/components/account/AccountIcon";
 import { Button } from "@/components/ui/button";
+import { PaperBand } from "@/components/sections/PaperBand";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -97,7 +98,17 @@ export function Nav({ session }: { session: Session | null }) {
   );
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-background/85 backdrop-blur border-b border-nav-border">
+    /* The nav rides its own sheet of paper, and the sheet bows into whatever is
+       below it — which on the landing page is the photograph.
+       The band hangs off the bottom with `absolute top-full`, so it costs no
+       layout height and `--nav-h` stays the 89px every full-bleed hero measures
+       itself against. It also means the curve overlaps the content rather than
+       pushing it down, which is what makes it read as one sheet lying over
+       another instead of a divider between two blocks.
+       `border-b` is gone: the sheet's own drawn edge is the boundary now, and a
+       straight rule under a curved one was the thing that made the header look
+       bolted on. */
+    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-background/85 backdrop-blur">
       {/* The wordmark, with the studio's stamp beside it. The stamp is authored
           SVG in the world's own grammar — a hand-cut seal, not a glyph pulled
           from a font — and it is the single place vermilion appears in the
@@ -188,6 +199,10 @@ export function Nav({ session }: { session: Session | null }) {
           )}
         </AnimatePresence>
       )}
+
+      {/* The sheet the header sits on, bowing into the page below. Sits under
+          the drawer in source order so an open mobile drawer covers it. */}
+      <PaperBand className="absolute top-full left-0 right-0 -z-10" />
     </nav>
   );
 }

@@ -677,18 +677,6 @@ body:has([data-surface="storefront"]) {
   background-color: oklch(0.962 0.014 85);
 }
 
-/* The rib lines: the bamboo structure showing through the paper. Three
- * hairlines bowing across a band, which is what the world does instead of a
- * straight divider rule. Cheap — one element, no DOM — and it reflows. */
-@utility rib-lines {
-  background-image:
-    radial-gradient(120% 100% at 50% -40%, transparent calc(100% - 1px), var(--bamboo) calc(100% - 1px)),
-    radial-gradient(120% 100% at 50% -20%, transparent calc(100% - 1px), var(--bamboo) calc(100% - 1px));
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  opacity: 0.55;
-}
-
 /* Display type is set light and large. The board's specimen is explicit about
  * it: "DISPLAY · LIGHT". A heavy weight here would turn paper into signage. */
 @utility type-akari-display {

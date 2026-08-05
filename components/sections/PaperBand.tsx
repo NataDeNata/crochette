@@ -38,26 +38,37 @@ export function PaperBand({
        can be known. */
     <div aria-hidden className={cn("w-full leading-[0]", className)}>
       <svg
-        viewBox="0 0 1440 64"
+        viewBox="0 0 1440 72"
         preserveAspectRatio="none"
-        className="block w-full h-[34px] sm:h-[52px]"
+        className="block w-full h-[40px] sm:h-[64px]"
       >
         {/* The sheet itself. */}
-        <path d="M0 64 L0 26 C 360 -8, 1080 -8, 1440 26 L1440 64 Z" fill={fill} />
-        {/* Two bamboo ribs following the same curve, the second fainter, so the
-            structure reads as being behind the paper rather than drawn on it. */}
+        <path d="M0 72 L0 30 C 360 -6, 1080 -6, 1440 30 L1440 72 Z" fill={fill} />
+
+        {/* The bamboo ribs. Four of them, drawn at full strength rather than
+            behind a container opacity — the structure showing through the paper
+            is the whole reason this world reads as made rather than rendered,
+            and at 55% it was invisible against washi.
+            The first rib sits exactly on the sheet's own edge, so the paper has
+            a drawn boundary instead of a soft colour change. The last is dashed:
+            on a real drying rack the far ribs break behind the sheet, and the
+            dash is what keeps the band from reading as a flat swoosh. */}
+        <path d="M0 30 C 360 -6, 1080 -6, 1440 30" fill="none" stroke="var(--bamboo)" strokeWidth="1.5" />
+        <path d="M0 41 C 360 5, 1080 5, 1440 41" fill="none" stroke="var(--bamboo)" strokeWidth="1" />
         <path
-          d="M0 30 C 360 -4, 1080 -4, 1440 30"
+          d="M0 52 C 360 16, 1080 16, 1440 52"
           fill="none"
           stroke="var(--bamboo)"
           strokeWidth="1"
+          opacity="0.75"
         />
         <path
-          d="M0 41 C 360 7, 1080 7, 1440 41"
+          d="M0 63 C 360 27, 1080 27, 1440 63"
           fill="none"
           stroke="var(--bamboo)"
           strokeWidth="1"
-          opacity="0.5"
+          opacity="0.6"
+          strokeDasharray="7 6"
         />
       </svg>
     </div>
