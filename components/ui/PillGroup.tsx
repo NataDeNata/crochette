@@ -49,7 +49,7 @@ export function PillGroup({
                 ? "border-[oklch(0.28_0.02_60)]"
                 : isActive
                   ? "border-transparent"
-                  : "border-[oklch(0.75_0.03_20)]",
+                  : "border-input",
             )}
           >
             {isActive && !reduceMotion && (

@@ -41,7 +41,11 @@ export function Footer() {
             enough to hold it beside the centered copyright. Below `sm` it was
             `absolute right-0` over a centered full-width string, so the two
             overlapped; there it becomes an ordinary stacked row instead. */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-[13px] text-[oklch(0.6_0.025_60)] border-t border-[oklch(0.4_0.02_60)] pt-6 sm:relative text-center">
+        {/* Text lightened from 0.6 to 0.65: at 13px on the footer's dark ink it
+            measured 3.69:1, under the 4.5:1 body-text minimum. The 0.4 divider
+            stays as it is -- it is a decorative rule, not a control boundary,
+            so 1.4.11's 3:1 does not apply to it. */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-[13px] text-[oklch(0.65_0.025_60)] border-t border-[oklch(0.4_0.02_60)] pt-6 sm:relative text-center">
           <span>© 2026 Crochette. Made by hand, in small batches.</span>
           <Link href="/admin" className="footer-admin-link sm:absolute sm:right-0 text-xs">
             Admin

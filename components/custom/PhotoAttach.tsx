@@ -119,7 +119,7 @@ export function PhotoAttach({
             type="button"
             onClick={() => inputRef.current?.click()}
             aria-label="Attach photos"
-            className="w-14 h-14 rounded-[10px] border-[1.5px] border-dashed border-[oklch(0.75_0.03_20)] bg-card cursor-pointer text-xl text-[oklch(0.5_0.05_20)] [font-family:inherit]"
+            className="w-14 h-14 rounded-[10px] border-[1.5px] border-dashed border-input bg-card cursor-pointer text-xl text-[oklch(0.5_0.05_20)] [font-family:inherit]"
           >
             +
           </button>

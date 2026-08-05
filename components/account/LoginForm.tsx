@@ -8,7 +8,7 @@ import { FieldError } from "@/components/forms/FieldError";
 import { Input } from "@/components/ui/input";
 
 const fieldClassName =
-  "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
+  "h-auto rounded-xl border-[1.5px] border-input bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(accountLogin, IDLE_ACCOUNT_LOGIN_STATE);

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import type { AddressRow } from "@/lib/db/schema";
 
 const fieldClassName =
-  "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[14px] py-3 text-sm";
+  "h-auto rounded-xl border-[1.5px] border-input bg-[oklch(0.98_0.01_85)] px-[14px] py-3 text-sm";
 
 export function AddressForm({ address, onSaved }: { address?: AddressRow; onSaved?: () => void }) {
   const [state, formAction, isPending] = useActionState(saveAddress, IDLE_STATE);

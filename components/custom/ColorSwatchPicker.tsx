@@ -13,7 +13,7 @@ const SWATCHES = [
 ];
 
 const inputClassName =
-  "py-3 px-4 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
+  "py-3 px-4 rounded-lg border-[1.5px] border-input bg-card text-sm [font-family:inherit]";
 
 function joinValue(selected: Set<string>, custom: string) {
   return [...selected, custom.trim()].filter(Boolean).join(", ").slice(0, 200);
@@ -79,7 +79,7 @@ export function ColorSwatchPicker({
           onClick={() => setCustomOpen((v) => !v)}
           className={cn(
             "py-1.5 px-3.5 rounded-[20px] border-[1.5px] text-[12.5px] font-medium cursor-pointer [font-family:inherit]",
-            customOpen ? "border-primary bg-primary text-card" : "border-[oklch(0.75_0.03_20)] bg-card text-[oklch(0.42_0.02_60)]",
+            customOpen ? "border-primary bg-primary text-card" : "border-input bg-card text-[oklch(0.42_0.02_60)]",
           )}
         >
           Custom…

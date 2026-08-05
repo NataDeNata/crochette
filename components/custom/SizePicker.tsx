@@ -12,7 +12,7 @@ const SIZE_PRESETS = [
 ];
 
 const inputClassName =
-  "py-3 px-4 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
+  "py-3 px-4 rounded-lg border-[1.5px] border-input bg-card text-sm [font-family:inherit]";
 
 function pillLabel(preset: (typeof SIZE_PRESETS)[number]) {
   return `${preset.label} — ${preset.detail}`;
@@ -73,7 +73,7 @@ export function SizePicker({
                   ? "border-[oklch(0.28_0.02_60)]"
                   : isActive
                     ? "border-transparent"
-                    : "border-[oklch(0.75_0.03_20)]",
+                    : "border-input",
               )}
             >
               {isActive && !reduceMotion && (
@@ -100,7 +100,7 @@ export function SizePicker({
           onClick={selectCustom}
           className={cn(
             "py-[9px] px-4 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer [font-family:inherit]",
-            selected === "custom" ? "border-primary bg-primary text-card" : "border-[oklch(0.75_0.03_20)] bg-card text-[oklch(0.42_0.02_60)]",
+            selected === "custom" ? "border-primary bg-primary text-card" : "border-input bg-card text-[oklch(0.42_0.02_60)]",
           )}
         >
           Custom…
