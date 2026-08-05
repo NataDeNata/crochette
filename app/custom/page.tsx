@@ -16,18 +16,17 @@ export const metadata: Metadata = {
 export default function CustomOrderPage() {
   return (
     <>
-      <section className="pt-12 sm:pt-[72px] page-gutter pb-14 text-center">
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-14">
         <FadeIn>
-          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
-            Custom orders
+          <div className="max-w-[1000px] mx-auto">
+            <h1 className="type-akari-display text-[clamp(32px,5vw,58px)] text-ink text-balance mb-5">
+              Have something in mind?
+            </h1>
+            <p className="text-[17px] text-muted-foreground max-w-[540px] leading-[1.7]">
+              Tell us the size, colours and character. We&apos;ll chart it, price it, and
+              make it just for you.
+            </p>
           </div>
-          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
-            Have something in mind?
-          </h1>
-          <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[480px] mx-auto leading-[1.6]">
-            Tell us the size, colors, and character — we&apos;ll turn it into a one-of-a-kind piece, made just for
-            you.
-          </p>
         </FadeIn>
       </section>
 
@@ -35,12 +34,17 @@ export default function CustomOrderPage() {
         <StepThread />
         {CUSTOM_STEPS.map((s, i) => (
           <FadeIn key={s.n} delay={i * 0.08}>
-            <div className="text-center px-3">
-              <div className="w-11 h-11 rounded-full bg-accent flex items-center justify-center font-serif text-[18px] font-semibold mx-auto mb-3.5">
+            {/* The step numbers stay. Craft-floor treats 01/02/03 as a default
+                to refuse, but the exception it names applies exactly here: this
+                is a process you go through in order, so the sequence is the
+                information, not decoration around it. Set as a small charcoal
+                tile, matching the board's primary fill. */}
+            <div className="px-1">
+              <div className="size-10 rounded-lg bg-ink text-washi flex items-center justify-center type-akari-label mb-4">
                 {s.n}
               </div>
-              <div className="text-[15px] font-semibold mb-2">{s.title}</div>
-              <div className="text-[13.5px] leading-[1.6] text-[oklch(0.45_0.02_60)]">{s.body}</div>
+              <div className="text-[15px] font-semibold mb-2 text-ink">{s.title}</div>
+              <div className="text-[14px] leading-[1.65] text-muted-foreground">{s.body}</div>
             </div>
           </FadeIn>
         ))}
@@ -49,8 +53,10 @@ export default function CustomOrderPage() {
       <FadeIn>
         {/* Form + live preview. Stacked below `md`: at 320px the old flat
             `1.1fr 1fr` inside `p-14` left each column about 92px wide. */}
-        <section className="mx-4 sm:mx-8 mb-[100px] p-6 sm:p-10 md:p-14 rounded-[28px] sm:rounded-[36px] bg-accent grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-8 md:gap-14 items-center">
-          <CustomOrderPanel />
+        <section className="page-gutter mb-[100px]">
+          <div className="max-w-[1320px] mx-auto bg-card rounded-lg border border-border p-6 sm:p-10 md:p-14 grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-8 md:gap-14 items-start">
+            <CustomOrderPanel />
+          </div>
         </section>
       </FadeIn>
     </>

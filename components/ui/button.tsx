@@ -10,9 +10,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-[oklch(0.34_0.03_60)] hover:shadow-[0_6px_16px_-8px_oklch(0.28_0.02_60/0.4)]",
+        /* These three hover values were hardcoded cream-palette oklch literals,
+         * which pinned every button on the site to one palette. They are now
+         * derived from whichever tokens are in scope, so /admin renders exactly
+         * as before and the storefront follows the Akari palette. Both mix
+         * toward the surface's own ground, which reads as "recede slightly"
+         * in either direction. */
+        default:
+          "bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary),var(--background)_14%)] hover:shadow-[0_6px_16px_-8px_color-mix(in_oklch,var(--foreground),transparent_60%)]",
         outline:
-          "border-[1.5px] border-primary text-primary bg-transparent hover:bg-primary/[0.06] hover:border-[oklch(0.2_0.02_60)] dark:bg-input/30 dark:hover:bg-input/50",
+          "border-[1.5px] border-primary text-primary bg-transparent hover:bg-primary/[0.06] hover:border-[color-mix(in_oklch,var(--primary),var(--foreground)_25%)] dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]",
         ghost: "hover:bg-muted hover:text-foreground",

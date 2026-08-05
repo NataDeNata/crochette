@@ -18,31 +18,39 @@ export default async function ShopPage() {
 
   return (
     <>
-      <section className="pt-12 sm:pt-[72px] page-gutter pb-10 text-center">
+      {/* No eyebrow above the heading. The old "SHOP" kicker sat over a page
+          whose URL, nav state and heading all already said shop; the heading
+          carries it alone. */}
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-10">
         <FadeIn>
-          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
-            Shop
+          <div className="max-w-[1320px] mx-auto">
+            <h1 className="type-akari-display text-[clamp(32px,5vw,58px)] text-ink text-balance mb-5">
+              The full collection
+            </h1>
+            <p className="text-[17px] text-muted-foreground max-w-[520px] leading-[1.7]">
+              Amigurumi, flowers and cozy decor. Every piece made by hand, in small
+              batches.
+            </p>
           </div>
-          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
-            The full collection
-          </h1>
-          <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
-            Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.
-          </p>
         </FadeIn>
       </section>
 
       <ShopGrid products={products} />
 
       <FadeIn>
-        <section className="mx-4 sm:mx-8 mb-[100px] py-10 sm:py-14 px-6 sm:px-12 rounded-[28px] sm:rounded-[36px] bg-accent text-center">
-          <h2 className="font-serif font-medium text-3xl mb-3.5">
-            Don&apos;t see quite what you want?
-          </h2>
-          <p className="text-[15px] text-[oklch(0.32_0.03_20)] mb-6">
-            We make custom pieces too — any color, size, or character.
-          </p>
-          <Button href="/custom">Request a custom order</Button>
+        {/* The commission hand-off, as the one unworked cell at the end of the
+            chart — madder-deep, which carries raw wool at 5.1:1. */}
+        <section className="page-gutter mb-[100px]">
+          <div className="max-w-[1320px] mx-auto bg-paper rounded-lg border border-border p-8 sm:p-14">
+            <h2 className="type-akari-display text-[clamp(24px,3.2vw,38px)] text-ink text-balance mb-4 max-w-[520px]">
+              Don&apos;t see quite what you want?
+            </h2>
+            <p className="text-[16px] leading-[1.7] text-muted-foreground mb-8 max-w-[460px]">
+              We chart custom pieces too — any colour, size or character. Tell us what
+              you have in mind and we&apos;ll come back with a price.
+            </p>
+            <Button href="/custom">Request a custom order</Button>
+          </div>
         </section>
       </FadeIn>
     </>

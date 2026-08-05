@@ -8,7 +8,7 @@ import type { Product } from "@/lib/data/products";
 
 const SPEED_PX_PER_SEC = 32;
 
-export function ShopMarquee({ products, onDark = false }: { products: Product[]; onDark?: boolean }) {
+export function ShopMarquee({ products }: { products: Product[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const [paused, setPaused] = useState(false);
@@ -64,7 +64,7 @@ export function ShopMarquee({ products, onDark = false }: { products: Product[];
             className={cn("w-[260px] sm:w-[320px] shrink-0", dragging && "pointer-events-none")}
             aria-hidden={i >= products.length || undefined}
           >
-            <ProductCard product={p} onDark={onDark} />
+            <ProductCard product={p} />
           </div>
         ))}
       </motion.div>

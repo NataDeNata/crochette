@@ -18,37 +18,46 @@ export default async function GalleryPage() {
 
   return (
     <>
-      <section className="pt-12 sm:pt-[72px] page-gutter pb-12 text-center">
+      <section className="pt-12 sm:pt-[72px] page-gutter pb-12">
         <FadeIn>
-          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
-            Gallery
+          <div className="max-w-[1320px] mx-auto">
+            <h1 className="type-akari-display text-[clamp(32px,5vw,58px)] text-ink text-balance mb-5">
+              A peek into the studio
+            </h1>
+            <p className="text-[17px] text-muted-foreground max-w-[520px] leading-[1.7]">
+              Works in progress, finished pieces, and the little moments in between.
+            </p>
           </div>
-          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
-            A peek into the studio
-          </h1>
-          <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
-            Works in progress, finished pieces, and the little moments in between.
-          </p>
         </FadeIn>
       </section>
 
-      <section className="pt-5 page-gutter pb-[100px]">
-        {gallery.length === 0 ? (
-          <p className="text-center text-sm text-[oklch(0.55_0.02_60)]">Photos coming soon.</p>
-        ) : (
-          <GallerySection items={gallery} rowHeight={180} />
-        )}
+      <section className="page-gutter pb-[100px]">
+        <div className="max-w-[1320px] mx-auto">
+          {gallery.length === 0 ? (
+            // A blank sheet rather than an apology in grey text — the panel is
+            // still there, visibly waiting for work.
+            <div className="bg-paper rounded-lg border border-border min-h-[280px] flex items-center justify-center p-8">
+              <p className="type-akari-label text-muted-foreground text-center">
+                Photos coming soon
+              </p>
+            </div>
+          ) : (
+            <GallerySection items={gallery} rowHeight={180} />
+          )}
+        </div>
       </section>
 
       <FadeIn>
-        <section className="mx-4 sm:mx-8 mb-[100px] py-10 sm:py-14 px-6 sm:px-12 rounded-[28px] sm:rounded-[36px] bg-[oklch(0.91_0.04_150)] text-center">
-          <h2 className="font-serif font-medium text-3xl mb-3.5">
-            Follow along on Instagram
-          </h2>
-          <p className="text-[15px] text-[oklch(0.3_0.03_150)] mb-6">
-            New pieces, works in progress, and behind-the-scenes.
-          </p>
-          <Button href="https://instagram.com">@crochette.studio</Button>
+        <section className="page-gutter mb-[100px]">
+          <div className="max-w-[1320px] mx-auto bg-paper rounded-lg border border-border p-8 sm:p-14">
+            <h2 className="type-akari-display text-[clamp(24px,3.2vw,38px)] text-ink text-balance mb-4 max-w-[520px]">
+              Follow along on Instagram
+            </h2>
+            <p className="text-[16px] leading-[1.7] text-muted-foreground mb-8 max-w-[460px]">
+              New pieces, works in progress and behind-the-scenes.
+            </p>
+            <Button href="https://instagram.com">@crochette.studio</Button>
+          </div>
         </section>
       </FadeIn>
     </>

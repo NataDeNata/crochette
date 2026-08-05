@@ -43,11 +43,15 @@ export function ShopGrid({ products }: { products: Product[] }) {
             }}
             placeholder="Search products…"
             aria-label="Search products"
-            className="w-full py-3 px-5 rounded-[24px] border-[1.5px] border-[oklch(0.85_0.02_60)] text-sm [font-family:inherit] bg-card text-foreground"
+            className="w-full py-3 px-4 rounded-lg border border-input text-sm [font-family:inherit] bg-card text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
-        <div className="flex gap-3.5 justify-center flex-wrap">
+        {/* Filters follow the board's button pair: outlined at rest, charcoal
+            fill when active. Vermilion is deliberately not spent here — it is
+            reserved for the stamp and for directional arrows, and a world with
+            one accent stays coherent only if that rule holds everywhere. */}
+        <div className="flex justify-center flex-wrap gap-2">
           {CATEGORIES.map((c) => {
             const isActive = c.value === active;
             return (
@@ -55,26 +59,23 @@ export function ShopGrid({ products }: { products: Product[] }) {
                 key={c.value}
                 type="button"
                 onClick={() => selectCategory(c.value)}
+                aria-pressed={isActive}
                 className={cn(
-                  "relative py-[9px] px-5 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-transparent [font-family:inherit]",
-                  isActive && reduceMotion
-                    ? "border-[oklch(0.28_0.02_60)]"
-                    : isActive
-                      ? "border-transparent"
-                      : "border-[oklch(0.85_0.02_60)]",
+                  "relative py-3 px-5 rounded-lg type-akari-label cursor-pointer border border-border overflow-hidden",
+                  isActive && reduceMotion ? "bg-ink text-washi" : "bg-transparent",
                 )}
               >
                 {isActive && !reduceMotion && (
                   <motion.span
                     layoutId="shop-filter-active"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    className="absolute inset-0 rounded-[20px] bg-primary z-0"
+                    className="absolute inset-0 bg-ink z-0"
                   />
                 )}
                 <span
                   className={cn(
                     "relative z-[1]",
-                    isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-muted-foreground",
+                    isActive ? "text-washi" : "text-muted-foreground",
                   )}
                 >
                   {c.name}
@@ -91,10 +92,20 @@ export function ShopGrid({ products }: { products: Product[] }) {
             No products match &ldquo;{query}&rdquo;.
           </p>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,320px))] justify-center gap-8">
+          // Cards sit apart on the paper ground with real air between them.
+          // `auto-fill` with a 1fr max so the row always closes flush to both
+          // gutters rather than leaving a ragged right edge.
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8 sm:gap-10">
             <AnimatePresence mode="popLayout">
               {visible.map((p, i) => (
-                <FadeIn key={p.id} delay={(i % 6) * 0.05} layout exit={{ opacity: 0, scale: 0.92 }}>
+                <FadeIn
+                  key={p.id}
+                  delay={(i % 6) * 0.05}
+                  layout
+                  // Opacity only on exit. Scaling a card on its way out drags
+                  // the reflow with it, and the grid visibly stutters.
+                  exit={{ opacity: 0 }}
+                >
                   <ProductCard product={p} />
                 </FadeIn>
               ))}
@@ -103,26 +114,29 @@ export function ShopGrid({ products }: { products: Product[] }) {
         )}
       </section>
 
+      {/* Same button vocabulary as the filters: outlined, charcoal when current. */}
       {totalPages > 1 && (
-        <section aria-label="Shop pagination" className="page-gutter pb-[100px] flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setPage(n)}
-              aria-current={n === currentPage ? "page" : undefined}
-              aria-label={`Page ${n}`}
-              className={cn(
-                // 44px on touch, back to the design's 36px from `sm` up.
-                "w-11 h-11 sm:w-9 sm:h-9 rounded-full border-0 text-sm font-medium cursor-pointer [font-family:inherit] transition-colors duration-200",
-                n === currentPage
-                  ? "bg-primary text-card"
-                  : "bg-transparent text-[oklch(0.42_0.02_60)] hover:bg-[oklch(0.9_0.02_60)] focus-visible:bg-[oklch(0.9_0.02_60)]",
-              )}
-            >
-              {n}
-            </button>
-          ))}
+        <section aria-label="Shop pagination" className="page-gutter pb-[100px] flex justify-center">
+          <div className="flex gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPage(n)}
+                aria-current={n === currentPage ? "page" : undefined}
+                aria-label={`Page ${n}`}
+                className={cn(
+                  // 44px on touch, back to 36px from `sm` up.
+                  "w-11 h-11 sm:w-9 sm:h-9 rounded-lg border border-border type-akari-label cursor-pointer transition-colors duration-200",
+                  n === currentPage
+                    ? "bg-ink text-washi"
+                    : "bg-background text-muted-foreground hover:bg-ash hover:text-ink focus-visible:bg-ash focus-visible:text-ink",
+                )}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
         </section>
       )}
     </>

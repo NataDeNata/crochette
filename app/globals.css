@@ -7,8 +7,18 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-serif: var(--font-cormorant), Georgia, serif;
-  --font-sans: var(--font-work), ui-sans-serif, system-ui, sans-serif;
+  /* Jost, a geometric humanist sans with a double-storey `a`, matching the
+   * quality-bar board's specimen: light for display, regular for body. The
+   * world is paper and bamboo, so the face has to hold at 300 weight without
+   * falling apart — a heavier display face turns the paper into signage.
+   *
+   * `--font-serif` is a transition alias, not a serif. It still resolves for
+   * the routes this overhaul has not reached yet (/about, /contact, /cart,
+   * /checkout, /account) so they keep rendering while the front-of-funnel is
+   * rebuilt. It goes when they do. */
+  --font-display: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* The sitewide horizontal page gutter, as one utility instead of the flat
@@ -328,8 +338,16 @@
  ---break---
  */
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  /* `--font-sans: var(--font-sans)` used to sit here and was a self-reference:
+   * it made the :root value cyclical and therefore invalid, so every rule
+   * reading the custom property raw — `body { font-family: var(--font-sans) }`
+   * in the base layer — silently fell back to the initial value and rendered
+   * in Times New Roman. It was masked for as long as it existed because
+   * `html` also carries the `font-sans` *utility*, which Tailwind resolves
+   * from the theme correctly, and the utility covers almost everything.
+   * Removed rather than repointed; `--font-heading` now names the real stack
+   * for the same reason. */
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -353,6 +371,19 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-soft: var(--destructive-soft);
   --color-destructive-soft-foreground: var(--destructive-soft-foreground);
+  /* The Akari material range, exposed so `bg-washi` / `border-bamboo` /
+   * `text-vermilion-ink` exist as utilities. The values themselves are
+   * declared only inside [data-surface="storefront"], so these resolve to
+   * nothing outside it — which is correct, since nothing outside the
+   * storefront should be reaching for them. */
+  --color-washi: var(--washi);
+  --color-paper: var(--paper);
+  --color-ash: var(--ash);
+  --color-bamboo: var(--bamboo);
+  --color-ink: var(--ink);
+  --color-vermilion: var(--vermilion);
+  --color-vermilion-ink: var(--vermilion-ink);
+
   /* Status/accent roles — see the commentary beside their :root values. */
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
@@ -556,3 +587,202 @@
  * through components/ui/* are vendored shadcn defaults — inert without the
  * class, and `shadcn add` would reintroduce them anyway, so they are left
  * alone. */
+
+/*
+ ---break---
+ */
+
+/* ==========================================================================
+ * AKARI WORKSHOP — storefront visual world
+ *
+ * Scoped to [data-surface="storefront"] rather than :root. /admin shares this
+ * stylesheet and was deliberately designed for dense one-operator work;
+ * repainting it as a side effect of a storefront overhaul would be a
+ * regression. SiteChrome already knows which surface it is rendering, so it
+ * stamps the attribute and every token below resolves inside it.
+ *
+ * Values are taken from the chosen world's quality-bar board, not invented:
+ * washi ivory #F7F2E6, paper beige #F0E8D5, soft ash #E6E1D6, bamboo tan
+ * #D8BF94, charcoal ink #1E1E1C, vermilion stamp #D6452D. Written in oklch to
+ * match the rest of the file, with the source hex noted on each.
+ *
+ * The world is a paper-and-bamboo workshop: one humble material, hand-bent
+ * structure, and a single stamp of colour. Vermilion is an accent in the
+ * strict sense — a stamp, an arrow, an active state — and never a field. The
+ * discipline this world lives or dies by is that restraint.
+ * ========================================================================== */
+
+[data-surface="storefront"] {
+  /* --- the material ----------------------------------------------------- */
+  --washi: oklch(0.962 0.014 85); /* #F7F2E6 */
+  --paper: oklch(0.933 0.024 84); /* #F0E8D5 */
+  --ash: oklch(0.9 0.012 85); /* #E6E1D6 */
+  --bamboo: oklch(0.805 0.055 80); /* #D8BF94 */
+  --ink: oklch(0.215 0.003 90); /* #1E1E1C */
+  --vermilion: oklch(0.578 0.185 33); /* #D6452D */
+
+  /* Two vermilions, and the split is a contrast rule rather than a taste one.
+   * The board uses vermilion for "View Details" links at body size, and
+   * #D6452D on washi measures 3.5:1 — fine for a stamp or a 24px arrow, under
+   * the 4.5:1 floor for text. --vermilion stays exact for marks and fills;
+   * --vermilion-ink is the darkened cut that carries words, at 4.9:1. */
+  --vermilion-ink: oklch(0.5 0.17 33);
+
+  /* --- roles the shadcn primitives consume ------------------------------ */
+  --background: var(--washi);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--washi);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--washi);
+  --secondary: var(--ash);
+  --secondary-foreground: var(--ink);
+  --muted: var(--ash);
+  /* Warmed from the paper's own hue rather than desaturated to grey. 4.9:1 on
+   * --background. */
+  --muted-foreground: oklch(0.44 0.02 80);
+  --accent: var(--paper);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: var(--washi);
+  --border: var(--bamboo);
+  /* --border is the decorative bamboo hairline and is exempt from 1.4.11.
+   * --input is the only thing identifying a text field, so it owes 3:1 against
+   * --card, and bamboo measures 1.4:1 there. This deeper cut reads 3.4:1. */
+  --input: oklch(0.52 0.035 80);
+  /* 3.5:1 against --background, clearing the 3:1 floor for a focus indicator. */
+  --ring: var(--vermilion);
+
+  /* Paper has a soft edge, not a sharp one, and not a pill. The board's cards
+   * and buttons sit around 6px. */
+  --radius: 0.375rem;
+
+  /* The footer is the workshop at night: the same paper, lit from behind by
+   * nothing, so it goes to ink. */
+  --footer: var(--ink);
+  --footer-foreground: var(--washi);
+  --footer-heading: var(--bamboo);
+  --footer-muted: oklch(0.78 0.015 85);
+  --footer-subtle: oklch(0.68 0.015 85);
+  --footer-border: oklch(0.34 0.008 85);
+  --nav-border: var(--bamboo);
+
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+body:has([data-surface="storefront"]) {
+  background-color: oklch(0.962 0.014 85);
+}
+
+/* The rib lines: the bamboo structure showing through the paper. Three
+ * hairlines bowing across a band, which is what the world does instead of a
+ * straight divider rule. Cheap — one element, no DOM — and it reflows. */
+@utility rib-lines {
+  background-image:
+    radial-gradient(120% 100% at 50% -40%, transparent calc(100% - 1px), var(--bamboo) calc(100% - 1px)),
+    radial-gradient(120% 100% at 50% -20%, transparent calc(100% - 1px), var(--bamboo) calc(100% - 1px));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  opacity: 0.55;
+}
+
+/* Display type is set light and large. The board's specimen is explicit about
+ * it: "DISPLAY · LIGHT". A heavy weight here would turn paper into signage. */
+@utility type-akari-display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+/* Small caps labels — section eyebrows on the board's own components, set
+ * wide and quiet. Used for field labels and metadata, never above a heading. */
+@utility type-akari-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Base-layer overrides for the rules that hardcoded cream/terracotta values.
+ * These live inside `@layer base` deliberately: `[data-surface="storefront"] a`
+ * is an attribute selector plus an element, which outranks any single utility
+ * class, so declared outside a layer it would beat `text-primary-foreground`
+ * on every Button rendered as a link and paint the label the wrong colour.
+ * Layer order settles it independently of specificity — base always loses to
+ * utilities, which is the correct relationship for a default element colour. */
+@layer base {
+  [data-surface="storefront"] a {
+    color: var(--vermilion-ink);
+  }
+
+  [data-surface="storefront"] a:hover {
+    color: var(--ink);
+  }
+
+  [data-surface="storefront"] ::selection {
+    background: var(--bamboo);
+    color: var(--ink);
+  }
+
+  [data-surface="storefront"] input:focus,
+  [data-surface="storefront"] textarea:focus,
+  [data-surface="storefront"] select:focus {
+    outline: 2px solid var(--vermilion);
+    outline-offset: 1px;
+  }
+}
+
+[data-surface="storefront"] .nav-link {
+  color: var(--ink);
+}
+
+[data-surface="storefront"] .nav-link:hover,
+[data-surface="storefront"] .nav-link:focus-visible,
+[data-surface="storefront"] .nav-link[data-active="true"] {
+  color: var(--vermilion-ink);
+}
+
+[data-surface="storefront"] .footer-link {
+  color: var(--footer-muted);
+}
+
+[data-surface="storefront"] .footer-link:hover,
+[data-surface="storefront"] .footer-link:focus-visible {
+  color: var(--bamboo);
+}
+
+[data-surface="storefront"] .footer-admin-link {
+  color: var(--footer-subtle);
+}
+
+[data-surface="storefront"] .footer-admin-link:hover,
+[data-surface="storefront"] .footer-admin-link:focus-visible {
+  color: var(--washi);
+}
+
+[data-surface="storefront"] .cart-icon-link {
+  background: var(--paper);
+}
+
+[data-surface="storefront"] .cart-icon-link:hover,
+[data-surface="storefront"] .cart-icon-link:focus-visible {
+  background: var(--bamboo);
+}
+
+[data-surface="storefront"] .account-icon-link:hover,
+[data-surface="storefront"] .account-icon-link:focus-visible {
+  background: var(--paper);
+}
+
+/* Sits on the rotating placeholder tones, so both sides are opaque and taken
+ * from the two ends of the material range: 14.5:1 either way. */
+[data-surface="storefront"] .product-card-placeholder-caption {
+  color: var(--ink);
+  background: var(--washi);
+  border-radius: var(--radius);
+}

@@ -12,7 +12,7 @@ const SIZE_PRESETS = [
 ];
 
 const inputClassName =
-  "py-3 px-4 rounded-lg border-[1.5px] border-input bg-card text-sm [font-family:inherit]";
+  "py-3 px-4 border border-input rounded-lg bg-card text-sm [font-family:inherit] text-foreground placeholder:text-muted-foreground";
 
 function pillLabel(preset: (typeof SIZE_PRESETS)[number]) {
   return `${preset.label} — ${preset.detail}`;
@@ -58,7 +58,9 @@ export function SizePicker({
   return (
     <div className="flex flex-col gap-2">
       <input type="hidden" name={name} value={postedValue} />
-      <div className="flex gap-2.5 flex-wrap">
+      {/* Same button vocabulary as the colour picker and the shop filters:
+          outlined at rest, charcoal fill when chosen. */}
+      <div className="flex gap-2 flex-wrap">
         {SIZE_PRESETS.map((preset) => {
           const isActive = selected === preset.value;
           return (
@@ -68,25 +70,21 @@ export function SizePicker({
               aria-pressed={isActive}
               onClick={() => selectPreset(preset)}
               className={cn(
-                "relative w-11 py-[9px] rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-card [font-family:inherit]",
-                isActive && reduceMotion
-                  ? "border-[oklch(0.28_0.02_60)]"
-                  : isActive
-                    ? "border-transparent"
-                    : "border-input",
+                "relative w-12 h-11 type-akari-label cursor-pointer border-0",
+                isActive && reduceMotion ? "bg-ink" : "bg-card",
               )}
             >
               {isActive && !reduceMotion && (
                 <motion.span
                   layoutId="custom-size-active"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 rounded-[20px] bg-primary z-0"
+                  className="absolute inset-0 bg-ink z-0"
                 />
               )}
               <span
                 className={cn(
                   "relative z-[1]",
-                  isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-[oklch(0.42_0.02_60)]",
+                  isActive ? "text-washi" : "text-muted-foreground",
                 )}
               >
                 {preset.label}
@@ -99,14 +97,14 @@ export function SizePicker({
           aria-pressed={selected === "custom"}
           onClick={selectCustom}
           className={cn(
-            "py-[9px] px-4 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer [font-family:inherit]",
-            selected === "custom" ? "border-primary bg-primary text-card" : "border-input bg-card text-[oklch(0.42_0.02_60)]",
+            "px-4 h-11 type-akari-label cursor-pointer border-0",
+            selected === "custom" ? "bg-ink text-washi" : "bg-card text-muted-foreground",
           )}
         >
-          Custom…
+          Custom
         </button>
       </div>
-      {activeDetail && <div className="text-[12.5px] text-[oklch(0.45_0.02_60)]">{activeDetail}</div>}
+      {activeDetail && <div className="text-[13px] text-muted-foreground">{activeDetail}</div>}
       {selected === "custom" && (
         <input
           placeholder="Describe your size…"

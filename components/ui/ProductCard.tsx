@@ -9,9 +9,12 @@ import { formatPrice } from "@/lib/data/products";
 import { useCart } from "@/lib/cart/CartContext";
 import { cn } from "@/lib/utils";
 
-const imageWrapClassName = "aspect-square rounded-[20px] overflow-hidden flex items-center justify-center relative";
+/* A product sits on paper: a soft-edged panel with a bamboo hairline, matching
+ * the card component on the quality-bar board. */
+const imageWrapClassName =
+  "aspect-square overflow-hidden flex items-center justify-center relative rounded-lg border border-border";
 
-export function ProductCard({ product, onDark = false }: { product: Product; onDark?: boolean }) {
+export function ProductCard({ product }: { product: Product }) {
   const reduceMotion = useReducedMotion();
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
@@ -33,9 +36,11 @@ export function ProductCard({ product, onDark = false }: { product: Product; onD
       disabled={outOfStock}
       aria-label={outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
       className={cn(
-        "absolute bottom-3 right-3 z-[2] w-[38px] h-[38px] rounded-full border-0 flex items-center justify-center",
-        "shadow-[0_4px_10px_-4px_oklch(0.28_0.02_60/0.35)] bg-[oklch(0.98_0.01_85/0.92)] text-[oklch(0.28_0.02_60)]",
-        "transition-colors duration-200 enabled:hover:bg-primary enabled:hover:text-card enabled:focus-visible:bg-primary enabled:focus-visible:text-card",
+        // Inset from the corner and filled with near-opaque washi, so it reads
+        // as a small paper tab laid on the photograph rather than a floating pill.
+        "absolute bottom-2.5 right-2.5 z-[2] w-11 h-11 rounded-lg border border-border flex items-center justify-center",
+        "bg-washi/95 text-ink",
+        "transition-colors duration-200 enabled:hover:bg-bamboo enabled:focus-visible:bg-bamboo",
         outOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer opacity-100",
       )}
     >
@@ -84,13 +89,14 @@ export function ProductCard({ product, onDark = false }: { product: Product; onD
   );
 
   const tag = product.tag && (
-    <div className="absolute top-3.5 left-3.5 bg-[oklch(0.98_0.01_85/0.9)] py-[5px] px-3 rounded-[14px] text-[11px] font-semibold tracking-[0.5px] uppercase text-[oklch(0.5_0.09_20)]">
+    // The same paper tab, top-left, in the world's small-caps label face.
+    <div className="absolute top-2.5 left-2.5 bg-washi/95 py-1 px-2.5 rounded-lg type-akari-label text-ink">
       {product.tag}
     </div>
   );
 
   const placeholder = (
-    <span className="[font-family:ui-monospace,monospace] text-xs text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.6)] px-3 py-1.5 rounded-[6px] text-center">
+    <span className="product-card-placeholder-caption text-center">
       {product.placeholder}
     </span>
   );
@@ -119,9 +125,11 @@ export function ProductCard({ product, onDark = false }: { product: Product; onD
           initial="rest"
           whileHover="hover"
           whileTap={{ scale: 0.98 }}
+          // The panel lifts rather than grows. The shadow carries a real offset
+          // and blur and is mixed from the ground's own ink, never a grey.
           variants={{
-            rest: { y: 0, scale: 1, boxShadow: "0 0px 0px 0px oklch(0.28 0.02 60 / 0)" },
-            hover: { y: -6, scale: 1.015, boxShadow: "0 18px 30px -12px oklch(0.28 0.02 60 / 0.25)" },
+            rest: { y: 0, boxShadow: "0 0px 0px 0px oklch(0.215 0.003 90 / 0)" },
+            hover: { y: -4, boxShadow: "0 12px 24px -12px oklch(0.215 0.003 90 / 0.28)" },
           }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className={cn(imageWrapClassName, product.bgClassName)}
@@ -136,16 +144,18 @@ export function ProductCard({ product, onDark = false }: { product: Product; onD
           {quickAddButton}
         </motion.div>
       )}
-      <div className="flex justify-between items-baseline">
-        <span className={cn("text-[17px] font-medium", onDark && "text-[oklch(0.98_0.01_85)]")}>
-          {product.name}
-        </span>
-        <span
-          className={cn(
-            "text-[17px] font-bold",
-            onDark ? "text-[oklch(0.88_0.07_20)]" : "text-[oklch(0.5_0.09_20)]",
-          )}
-        >
+      {/* Name left, price right and tabular so a column of cards keeps its
+          figures aligned.
+
+          The `onDark` prop this component used to take is gone. It existed to
+          switch the caption between two palettes because the old design put
+          product cards on both a cream page and a dark photographic band; the
+          storefront is now one ground, so the branch had exactly one live
+          answer and was deleted rather than left as a parameter that could only
+          be passed one way. */}
+      <div className="flex justify-between items-baseline gap-3">
+        <span className="text-[15px] text-ink truncate">{product.name}</span>
+        <span className="text-[15px] text-muted-foreground shrink-0 tabular-nums">
           {formatPrice(product.priceCents)}
         </span>
       </div>

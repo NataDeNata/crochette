@@ -6,8 +6,37 @@ export function Footer() {
       <div className="max-w-[1344px] mx-auto">
         <div className="footer-grid grid gap-12 mb-12">
           <div>
-            <div className="font-serif text-[26px] italic font-semibold mb-3.5">
-              Crochette
+            {/* The footer is the workshop after dark: the same paper, gone to
+                ink. The stamp is the one mark that stays lit. */}
+            <div className="flex items-center gap-3 mb-4">
+              <svg
+                aria-hidden
+                width="24"
+                height="24"
+                viewBox="0 0 26 26"
+                fill="none"
+                className="shrink-0 text-vermilion"
+              >
+                <rect
+                  x="1.2"
+                  y="1.2"
+                  width="23.6"
+                  height="23.6"
+                  rx="1.5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M6.5 7.2v11.6M11 6.6v12.8M15.6 8v10.4M20 7v11"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+                <path d="M6 12.6h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              <span className="type-akari-label text-[13px] tracking-[0.22em] text-washi">
+                Crochette
+              </span>
             </div>
             <p className="text-sm leading-[1.7] text-footer-muted max-w-[280px]">
               Handmade crochet decor and companions, stitched with quiet care.
@@ -15,7 +44,7 @@ export function Footer() {
           </div>
 
           <div>
-            <div className="text-[13px] font-semibold tracking-[1px] uppercase mb-4 text-footer-heading">
+            <div className="type-akari-label mb-4 text-footer-heading">
               Explore
             </div>
             <div className="flex flex-col gap-2.5 text-sm">
@@ -27,7 +56,7 @@ export function Footer() {
           </div>
 
           <div>
-            <div className="text-[13px] font-semibold tracking-[1px] uppercase mb-4 text-footer-heading">
+            <div className="type-akari-label mb-4 text-footer-heading">
               Get in touch
             </div>
             <div className="flex flex-col gap-2.5 text-sm text-footer-muted">

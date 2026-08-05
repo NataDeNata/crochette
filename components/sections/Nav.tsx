@@ -23,6 +23,40 @@ const LINKS = [
 const DRAWER_CLASS =
   "absolute top-full left-0 right-0 bg-background/98 backdrop-blur border-b border-nav-border flex flex-col px-5 py-2";
 
+/* The studio's seal: a hand-cut square stamp, drawn rather than typeset. Four
+ * uneven strokes inside a rough border, which is what a carved seal actually
+ * looks like — a perfectly even one would read as an icon-library glyph and
+ * this world does not use those. */
+function StudioStamp() {
+  return (
+    <svg
+      aria-hidden
+      width="26"
+      height="26"
+      viewBox="0 0 26 26"
+      fill="none"
+      className="shrink-0 text-vermilion"
+    >
+      <rect
+        x="1.2"
+        y="1.2"
+        width="23.6"
+        height="23.6"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M6.5 7.2v11.6M11 6.6v12.8M15.6 8v10.4M20 7v11"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path d="M6 12.6h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
@@ -64,8 +98,13 @@ export function Nav({ session }: { session: Session | null }) {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-background/85 backdrop-blur border-b border-nav-border">
-      <Link href="/" className="font-serif text-[26px] italic font-semibold tracking-[0.5px] text-inherit">
-        Crochette
+      {/* The wordmark, with the studio's stamp beside it. The stamp is authored
+          SVG in the world's own grammar — a hand-cut seal, not a glyph pulled
+          from a font — and it is the single place vermilion appears in the
+          chrome. */}
+      <Link href="/" className="group flex items-center gap-3 text-inherit">
+        <StudioStamp />
+        <span className="type-akari-label text-[13px] tracking-[0.22em] text-ink">Crochette</span>
       </Link>
 
       <div className="nav-desktop-links gap-9 text-sm font-medium tracking-[0.3px]">
@@ -80,10 +119,13 @@ export function Nav({ session }: { session: Session | null }) {
             >
               {link.label}
               {isActive && !reduceMotion && (
+                // A single vermilion hairline. This world spends its one colour
+                // on marks, never on fills, so "you are here" is a stroke of
+                // ink rather than a filled shape.
                 <motion.div
                   layoutId="nav-active-underline"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 rounded-[2px] bg-brand"
+                  className="absolute left-0 right-0 -bottom-1.5 h-px bg-vermilion"
                 />
               )}
             </Link>
@@ -110,15 +152,15 @@ export function Nav({ session }: { session: Session | null }) {
         >
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? 45 : 0, y: open ? 6 : 0 }}
-            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
+            className="block w-[22px] h-px bg-ink"
           />
           <motion.span
             animate={reduceMotion ? undefined : { opacity: open ? 0 : 1 }}
-            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
+            className="block w-[22px] h-px bg-ink"
           />
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? -45 : 0, y: open ? -6 : 0 }}
-            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
+            className="block w-[22px] h-px bg-ink"
           />
         </button>
       </div>

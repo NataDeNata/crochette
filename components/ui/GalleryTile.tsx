@@ -25,13 +25,13 @@ export function GalleryTile({
       className="object-cover"
     />
   ) : (
-    <span className="[font-family:ui-monospace,monospace] text-[11px] text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.6)] px-2.5 py-[5px] rounded-[6px] text-center">
+    <span className="product-card-placeholder-caption text-center">
       {item.placeholder}
     </span>
   );
 
   const baseClassName = cn(
-    "h-full rounded-[18px] overflow-hidden relative flex items-center justify-center",
+    "h-full overflow-hidden relative flex items-center justify-center rounded-lg border border-border",
     item.image ? undefined : item.bgClassName,
   );
 
@@ -72,8 +72,8 @@ export function GalleryTile({
         layoutId={layoutId}
         onClick={onClick}
         aria-label={label}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={{ y: -4 }}
+        whileTap={{ y: 0 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className={interactiveClassName}
       >
@@ -89,8 +89,8 @@ export function GalleryTile({
   return (
     <motion.div
       layoutId={layoutId}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ y: -4 }}
+      whileTap={{ y: 0 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className={baseClassName}
     >
