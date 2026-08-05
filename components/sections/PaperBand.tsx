@@ -15,15 +15,32 @@ import { cn } from "@/lib/utils";
  */
 export function PaperBand({
   fill = "var(--washi)",
+  edge = "bottom",
   className = "",
 }: {
-  /** The colour of the sheet that is rising — i.e. the background of whatever
-   * section comes *after* this band. The area above the curve is transparent,
-   * so whatever sits behind (the previous section, or a photograph when the
-   * band is positioned absolutely over one) shows through. There is no `flip`:
-   * every band in this world is the next sheet lifting over the last one, and
-   * a rotated copy pointed the solid fill at the wrong side, which is what put
-   * a black strip under the hero. */
+  /** Which side of the band the sheet occupies.
+   *
+   * `bottom` (default) is a sheet *rising* from below: transparent on top so
+   * the previous section or a photograph shows through, solid underneath, with
+   * the curve as the boundary. That is every band between two sections.
+   *
+   * `top` is a sheet *hanging* from above — the case the nav needs, where the
+   * header's own paper continues downward and its lower edge sags into
+   * whatever is beneath. Getting this wrong is not subtle: a `bottom` band used
+   * under the nav lays an opaque strip across the top of the hero with a hard
+   * straight lower edge, which reads exactly like a white bar clipping the
+   * photograph, because that is what it is.
+   *
+   * Implemented as a vertical flip rather than a second set of paths, so there
+   * is one curve in this file and the two orientations cannot drift. The flip
+   * also reverses the bow, which is correct: a sheet resting on something bulges
+   * up, a sheet hanging off something sags down. */
+  edge?: "top" | "bottom";
+  /** The colour of the sheet. For `edge="bottom"` that is the background of the
+   * section *after* the band; for `edge="top"` it is the background of the
+   * element the band hangs from. The other side of the curve is transparent, so
+   * whatever sits behind — the adjacent section, or a photograph when the band
+   * is positioned absolutely over one — shows through. */
   fill?: string;
   className?: string;
 }) {
@@ -40,7 +57,7 @@ export function PaperBand({
       <svg
         viewBox="0 0 1440 72"
         preserveAspectRatio="none"
-        className="block w-full h-[40px] sm:h-[64px]"
+        className={cn("block w-full h-[40px] sm:h-[64px]", edge === "top" && "-scale-y-100")}
       >
         {/* The sheet itself. */}
         <path d="M0 72 L0 30 C 360 -6, 1080 -6, 1440 30 L1440 72 Z" fill={fill} />

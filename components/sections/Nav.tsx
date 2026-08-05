@@ -202,7 +202,7 @@ export function Nav({ session }: { session: Session | null }) {
 
       {/* The sheet the header sits on, bowing into the page below. Sits under
           the drawer in source order so an open mobile drawer covers it. */}
-      <PaperBand className="absolute top-full left-0 right-0 -z-10" />
+      <PaperBand edge="top" className="absolute top-full left-0 right-0 -z-10" />
     </nav>
   );
 }
