@@ -536,36 +536,23 @@
 /*
  ---break---
  */
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* There is deliberately no dark theme.
+ *
+ * A `.dark` block used to sit here: 32 lines of shadcn's stock neutral greys,
+ * including a violet --sidebar-primary, with no relationship to the cream and
+ * terracotta palette above. It was also unreachable — next-themes is a
+ * dependency, but no ThemeProvider is mounted anywhere and nothing ever puts
+ * the class on an element, so not one of those values had ever rendered.
+ *
+ * Removed rather than wired up, because those are different jobs. Wiring it up
+ * would have shipped a dark mode in the wrong colours; designing a real one
+ * means choosing a dark counterpart for this palette, which is a design
+ * decision rather than an audit fix. Deleting it makes the absence honest,
+ * instead of leaving a block that reads to the next person as though a dark
+ * theme exists and merely needs switching on.
+ *
+ * To bring one back: restore the block from git, retone every value to the
+ * brand, and mount a ThemeProvider. The `dark:` variants still scattered
+ * through components/ui/* are vendored shadcn defaults — inert without the
+ * class, and `shadcn add` would reintroduce them anyway, so they are left
+ * alone. */
