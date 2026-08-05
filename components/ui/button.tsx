@@ -20,14 +20,18 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:outline-destructive/40",
         link: "rounded-none text-primary underline-offset-4 hover:underline motion-safe:hover:translate-y-0",
       },
+      /* `xs` (h-6) and `icon-xs` (size-6) were removed: both were 24px, which
+       * is exactly WCAG 2.5.8's AA floor with no margin and well under this
+       * project's own 44px standard, and neither had a single call site in the
+       * repo. Leaving them was leaving a loaded footgun for whoever next needs
+       * "a slightly smaller button". The remaining small sizes are reachable
+       * but grow to 44px under a coarse pointer -- see globals.css. */
       size: {
         default: "h-8 gap-1.5 px-2.5",
-        xs: "h-6 gap-1 px-2 text-xs",
         sm: "h-auto px-5 py-[9px] text-[13px]",
         md: "h-auto px-7 py-3 text-sm",
         lg: "h-auto px-[30px] py-3.5 text-sm",
         icon: "size-8",
-        "icon-xs": "size-6",
         "icon-sm": "size-7",
         "icon-lg": "size-9",
       },

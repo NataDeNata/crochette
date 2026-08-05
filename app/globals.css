@@ -91,6 +91,47 @@
   }
 }
 
+/* Touch targets.
+ *
+ * The docs have claimed "44px touch targets" sitewide since the responsive
+ * pass, and it was not true. The most-used button size is `sm` (51 call sites)
+ * at roughly 34px tall, `Input` is h-8 (32px), and the dialog close button is
+ * 28px. None of those violate WCAG 2.5.8, whose AA minimum is only 24x24 --
+ * they miss the project's own, stricter standard, which is the one worth
+ * keeping because it comes from how phones are actually used.
+ *
+ * Applied under `pointer: coarse` rather than globally, because the two cases
+ * genuinely differ. A mouse is precise and the /admin redesign deliberately
+ * chose compact controls for dense list and filter surfaces; growing all 51
+ * buttons everywhere would restyle that on a desktop it does not help. A
+ * finger has the same contact area regardless of which page it lands on.
+ *
+ * min-height only ever grows a control, so nothing here can crop content, and
+ * the `lg` default (~48px) and Lightbox's size-11 close are already above the
+ * floor and unaffected. `link` buttons are excluded: they are inline text, and
+ * a 44px box around a word in a sentence would be wrong rather than kind. */
+@media (pointer: coarse) {
+  button:not([data-variant="link"]),
+  [data-slot="button"]:not([data-variant="link"]),
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"] {
+    min-height: 44px;
+  }
+
+  /* Square controls need the width too, or a 44px-tall 28px-wide icon button
+   * is still a miss on the axis that matters for a thumb.
+   *
+   * Checkboxes are deliberately not in here. A min-width alone would stretch
+   * the visible box into a 44x16 rectangle, and sizing the box itself to 44px
+   * is not what a checkbox should look like -- the fix there is hit area on
+   * the label, not geometry on the control, and the admin's are already inside
+   * clickable rows. They also clear 2.5.8's 24px floor as they are. */
+  [data-slot="button"][data-size^="icon"] {
+    min-width: 44px;
+  }
+}
+
 /*
  * As of the 2026-07 inline-style removal, base styling sitewide is Tailwind
  * classes (see Cro_Documentation.md). Inline `style={{}}` now survives in
