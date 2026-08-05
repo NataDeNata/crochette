@@ -21,7 +21,7 @@ const LINKS = [
  * the render site. `py-3` on the rows rather than pure `gap`, so each tap
  * target clears 44px on a phone. */
 const DRAWER_CLASS =
-  "absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col px-5 py-2";
+  "absolute top-full left-0 right-0 bg-background/98 backdrop-blur border-b border-nav-border flex flex-col px-5 py-2";
 
 export function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
@@ -63,7 +63,7 @@ export function Nav({ session }: { session: Session | null }) {
   );
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-[oklch(0.975_0.012_85/0.85)] backdrop-blur border-b border-[oklch(0.9_0.015_60)]">
+    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-background/85 backdrop-blur border-b border-nav-border">
       <Link href="/" className="font-serif text-[26px] italic font-semibold tracking-[0.5px] text-inherit">
         Crochette
       </Link>
@@ -83,7 +83,7 @@ export function Nav({ session }: { session: Session | null }) {
                 <motion.div
                   layoutId="nav-active-underline"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 rounded-[2px] bg-[oklch(0.55_0.09_20)]"
+                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 rounded-[2px] bg-brand"
                 />
               )}
             </Link>

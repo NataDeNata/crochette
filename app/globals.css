@@ -150,7 +150,7 @@
 }
 
 .footer-link {
-  color: oklch(0.72 0.03 60);
+  color: var(--footer-muted);
   transition: color 0.2s ease;
 }
 
@@ -162,7 +162,7 @@
 /* 0.55 measured exactly 3.00:1 on the footer's dark ink — the admin link was
  * the lowest-contrast text anywhere on the site. 0.65 reads 4.51:1. */
 .footer-admin-link {
-  color: oklch(0.65 0.02 60);
+  color: var(--footer-subtle);
   transition: color 0.2s ease;
 }
 
@@ -327,6 +327,14 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-info-soft-foreground: var(--info-soft-foreground);
+  /* Footer surface + the one nav hairline — see the :root values. */
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
+  --color-footer-heading: var(--footer-heading);
+  --color-footer-muted: var(--footer-muted);
+  --color-footer-subtle: var(--footer-subtle);
+  --color-footer-border: var(--footer-border);
+  --color-nav-border: var(--nav-border);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -402,6 +410,33 @@
    * py-[22px] + the 44px icon buttons + the 1px bottom border. Same at every
    * breakpoint: the icons don't shrink, so neither does the nav. */
   --nav-h: 89px;
+
+  /* Footer — a dark surface with its own colour roles, given a namespace for
+   * the same reason --sidebar has one: these are not the page's tokens at
+   * different opacities, they are six distinct values that only make sense
+   * against the footer's ink background, and every one of them was previously
+   * a hardcoded oklch literal in Footer.tsx. Values are carried over exactly,
+   * so this is a rename and not a restyle -- except --footer-subtle, which the
+   * WCAG pass had already lifted from 0.6/0.55 to 0.65 (it now backs both the
+   * copyright row and the admin link, which had drifted to different greys
+   * while meaning the same thing).
+   *
+   * --footer is the same ink as --foreground/--primary today. It is still
+   * written out rather than aliased: the footer being exactly the body-text
+   * colour is a coincidence of the current palette, not a rule, and aliasing
+   * would silently repaint the footer the day --foreground is retuned. */
+  --footer: oklch(0.28 0.02 60);
+  --footer-foreground: oklch(0.97 0.01 85);
+  --footer-heading: oklch(0.85 0.03 60);
+  --footer-muted: oklch(0.72 0.03 60);
+  --footer-subtle: oklch(0.65 0.025 60);
+  --footer-border: oklch(0.4 0.02 60);
+
+  /* The nav's bottom hairline. Deliberately lighter than --border: it is a
+   * seam under a translucent sticky bar, not a card edge, and at --border's
+   * 0.85 it reads as a hard rule across the top of every page. Decorative, so
+   * 1.4.11's 3:1 does not apply -- see the audit note in Footer.tsx. */
+  --nav-border: oklch(0.9 0.015 60);
 
   /* Sidebar — retuned 2026-07-30 for the /admin redesign. These were all
    * verbatim copies of the base tokens above, which made the shadcn sidebar
