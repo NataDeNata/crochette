@@ -132,7 +132,7 @@ export async function notifyOrderPaid(order: {
   const itemRows = items
     .map(
       (item) =>
-        `<li>${escapeHtml(item.productName)} × ${item.quantity} — ${escapeHtml(formatPrice(item.unitPriceCents * item.quantity))}</li>`
+        `<li>${escapeHtml(item.productName)} × ${item.quantity}: ${escapeHtml(formatPrice(item.unitPriceCents * item.quantity))}</li>`
     )
     .join("");
 
@@ -160,7 +160,7 @@ export async function notifyOrderPaid(order: {
       ? sendEmailSafe(
           {
             to: STUDIO_NOTIFY_EMAIL,
-            subject: `New paid order from ${order.customerName} — ${formatPrice(order.totalCents)}`,
+            subject: `New paid order from ${order.customerName}: ${formatPrice(order.totalCents)}`,
             html: wrapEmail(`
               <p>New paid order:</p>
               <ul style="font-size: 13px; color: #6b6257; padding-left: 18px;">${itemRows}</ul>
@@ -192,7 +192,7 @@ export async function notifyOrderShipped(order: {
       subject: "Your Crochette order has shipped!",
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
-        <p>Good news — your order is on its way!</p>
+        <p>Good news, your order is on its way!</p>
         ${detailList([
           ["Carrier", order.carrier],
           ["Tracking number", order.trackingNumber],
@@ -217,7 +217,7 @@ export async function notifyOrderDelivered(order: {
       subject: "Your Crochette order is complete",
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
-        <p>Your order is marked complete — we hope you love your piece! If anything's not quite right, just reply and let us know.</p>
+        <p>Your order is marked complete. We hope you love your piece! If anything's not quite right, just reply and let us know.</p>
         <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
       `),
     },
@@ -234,7 +234,7 @@ export async function notifyAccountCreated(data: { email: string; name: string }
       subject: "Welcome to Crochette",
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
-        <p>Your account is ready — you can now save shipping addresses and see your order history any time you're signed in.</p>
+        <p>Your account is ready. You can now save shipping addresses and see your order history any time you're signed in.</p>
         <p style="font-size: 13px;"><a href="${SITE_URL}/account">Go to your account</a></p>
       `),
     },

@@ -1,9 +1,7 @@
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
-import { WorkshopHero } from "@/components/sections/WorkshopHero";
-import { PaperBand } from "@/components/sections/PaperBand";
-import { ShopMarquee } from "@/components/shop/ShopMarquee";
+import { CutoutHero } from "@/components/sections/CutoutHero";
+import { Cutout } from "@/components/ui/Cutout";
 import { GallerySection } from "@/components/gallery/GallerySection";
 import { getProducts } from "@/lib/data/products.server";
 import { getHomeGallery } from "@/lib/data/gallery";
@@ -14,80 +12,96 @@ export default async function Home() {
 
   return (
     <>
-      <WorkshopHero
-        imageSrc="https://images.unsplash.com/photo-1605560213808-2c28bcfbc0b8?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=2400"
-        imageAlt="A handmade crochet bear amigurumi sitting on a wooden table"
-        pieceCount={products.length}
-      />
+      {/* The stock workshop photograph that used to fill this viewport is gone,
+          along with the decorative photograph on the studio panel below. This
+          world has no background imagery at all: a photograph appears only
+          inside a die-cut window, at the size a buyer needs to judge the piece
+          by. The pieces on the sheet are read live from the catalogue, so the
+          first viewport is real inventory rather than a chosen still. */}
+      <CutoutHero pieces={products.slice(0, 4)} pieceCount={products.length} />
 
-      {/* From here the page is a stack of sheets, each one bowing over the last.
-       * Every section alternates washi and paper so the curve between them has
-       * two tones to separate — a band drawn between two identical grounds is
-       * just a decorative swoosh, and this world does not do decoration.
+      {/* Below the first viewport the page continues on the same sheet. It used
+       * to break into separately framed sheets, each with a viridian margin and
+       * a 2px key rule around it; those frames are gone (see Sheet.tsx). The
+       * sections still divide, but in the world's own furniture — a ruled
+       * colophon across the head of each one — rather than by being boxed.
        *
-       * The collection gets a sheet of its own so the card row sits on the bow
-       * rather than floating above a flat edge. Chrome stays deliberately quiet:
-       * the pieces are the only saturated thing on the page. */}
-      <PaperBand fill="var(--paper)" className="bg-washi" />
-      <section className="bg-paper pt-4 pb-20 sm:pb-28 overflow-x-hidden">
-        <FadeIn>
-          <div className="page-gutter mb-10 max-w-[1320px] mx-auto">
-            <h2 className="type-akari-display text-[clamp(28px,4vw,46px)] text-balance max-w-[560px]">
-              The collection
-            </h2>
-          </div>
-        </FadeIn>
-        <FadeIn>
-          <ShopMarquee products={products} />
-        </FadeIn>
-        <div className="page-gutter mt-12 max-w-[1320px] mx-auto">
-          <Button href="/shop" variant="outline" size="md">
-            See everything
-          </Button>
-        </div>
-      </section>
-
-      {/* The studio, back on washi. */}
-      <PaperBand fill="var(--washi)" className="bg-paper" />
-      <section className="bg-washi page-gutter pb-20 sm:pb-28 pt-4">
-        <div className="max-w-[1320px] mx-auto grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-20 items-center">
-          <div>
-            <h2 className="type-akari-display text-[clamp(26px,3.4vw,42px)] text-balance mb-6">
-              One person, a hook, and a lot of patience
-            </h2>
-            <p className="text-[17px] leading-[1.75] text-muted-foreground mb-4">
-              Crochette began as a way to slow down: turning simple skeins into bears,
-              blossoms and little companions for cozy homes.
-            </p>
-            <p className="text-[17px] leading-[1.75] text-muted-foreground">
-              Every piece is stitched by hand in small batches, so no two are quite the
-              same. That is the honest version of handmade — and the reason nothing here
-              is ever an exact copy of its photograph.
-            </p>
-          </div>
-
-          <div className="relative aspect-4/3 rounded-lg overflow-hidden border border-border">
-            <Image
-              src="https://images.unsplash.com/photo-1675510183251-121659ee8b87?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600"
-              alt="Close-up of hands crocheting with yarn"
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
-      <PaperBand fill="var(--paper)" className="bg-washi" />
-
-      {gallery.length > 0 && (
-        <section className="bg-paper page-gutter pb-28 pt-6">
+       * The collection was a draggable Framer marquee. It is a sheet of
+       * figures now — the same construction as the hero, which is the whole
+       * argument: a drag strip is a different interaction model bolted onto a
+       * page whose grammar is "cut this out", and it was also the single
+       * reason `body { overflow-x: hidden }` had to stay, which in turn made
+       * the standard overflow check read clean for ten days while every phone
+       * width was overflowing. */}
+      <section className="bg-sheet">
+        <div className="page-gutter pb-16 pt-10 sm:pb-20">
           <div className="max-w-[1320px] mx-auto">
             <FadeIn>
-              <h2 className="type-akari-display text-[clamp(26px,3.4vw,42px)] text-balance mb-10">
-                Inside the studio
+              <h2 className="type-sheet-display text-[clamp(30px,4.4vw,52px)] text-balance max-w-[620px] mb-10">
+                Everything currently available
               </h2>
             </FadeIn>
-            <GallerySection items={gallery} rowHeight={150} />
+
+            <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10">
+              {products.slice(0, 8).map((product) => (
+                <Cutout key={product.id} product={product} />
+              ))}
+            </div>
+
+            <div className="mt-14">
+              <Button href="/shop" variant="outline" size="md">
+                See the full collection
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* The studio. The stock close-up of hands that sat beside this copy is
+          deleted rather than restyled: it was atmosphere, and this world only
+          prints photographs that are evidence of a piece for sale.
+
+          The hairline above it is the only thing dividing this section from the
+          collection now that neither is boxed. It is drawn *inside* the gutter,
+          at the content's own width, so it reads as a rule on the sheet rather
+          than as an edge of the page — the distinction the whole frame removal
+          turns on. Deliberately a hairline in the keyline at low alpha rather
+          than the 2px key used for a colophon rule: this divides, it does not
+          announce a new artifact. */}
+      <section className="bg-sheet">
+        <div className="page-gutter pb-16 pt-4 sm:pb-20 sm:pt-6">
+          <div className="max-w-[1320px] mx-auto mb-14 border-t border-keyline/15 sm:mb-16" />
+          <div className="max-w-[1320px] mx-auto grid gap-10 lg:grid-cols-[1fr_1fr] lg:gap-20">
+            <h2 className="type-sheet-display text-[clamp(26px,3.4vw,42px)] text-balance">
+              One person, a hook, and a lot of patience
+            </h2>
+            <div>
+              <p className="text-[17px] leading-[1.7] text-muted-foreground mb-4 max-w-[65ch]">
+                Crochette began as a way to slow down: turning simple skeins into bears,
+                blossoms and little companions for cozy homes.
+              </p>
+              <p className="text-[17px] leading-[1.7] text-muted-foreground max-w-[65ch]">
+                Every piece is stitched by hand in small batches, so no two are quite the
+                same. That is the honest version of handmade, and the reason nothing here
+                is ever an exact copy of its photograph.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {gallery.length > 0 && (
+        <section className="bg-sheet">
+          <div className="page-gutter pb-16 pt-4 sm:pb-20 sm:pt-6">
+            <div className="max-w-[1320px] mx-auto mb-14 border-t border-keyline/15 sm:mb-16" />
+            <div className="max-w-[1320px] mx-auto">
+              <FadeIn>
+                <h2 className="type-sheet-display text-[clamp(26px,3.4vw,42px)] text-balance mb-10">
+                  Inside the studio
+                </h2>
+              </FadeIn>
+              <GallerySection items={gallery} rowHeight={150} />
+            </div>
           </div>
         </section>
       )}

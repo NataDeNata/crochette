@@ -16,7 +16,7 @@ export async function submitContactMessage(
   if (await isRateLimited("contact", ip)) {
     return {
       status: "error",
-      message: "Too many attempts — please wait a few minutes and try again.",
+      message: "Too many attempts. Please wait a few minutes and try again.",
     };
   }
 
@@ -46,7 +46,7 @@ export async function submitContactMessage(
     logError("contact.submit_failed", err);
     return {
       status: "error",
-      message: "We couldn't send your message right now — please try again in a moment.",
+      message: "We couldn't send your message right now. Please try again in a moment.",
     };
   }
 

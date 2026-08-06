@@ -35,7 +35,7 @@ export default async function ProductImagesPage({ params }: { params: Promise<{ 
       <ProductImageUploadForm productId={product.id} />
 
       {images.length === 0 ? (
-        <p className="m-0 text-sm text-muted-foreground">No photos yet — upload some above.</p>
+        <p className="m-0 text-sm text-muted-foreground">No photos yet. Upload some above.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {images.map((image, i) => (

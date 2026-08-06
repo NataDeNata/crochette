@@ -23,7 +23,7 @@ export function AddressForm({ address, onSaved }: { address?: AddressRow; onSave
     <form action={formAction} className="flex flex-col gap-3">
       {address && <input type="hidden" name="addressId" value={address.id} />}
 
-      <Input name="label" placeholder="Label (e.g. Home) — optional" defaultValue={address?.label ?? ""} className={fieldClassName} />
+      <Input name="label" placeholder="Label (e.g. Home), optional" defaultValue={address?.label ?? ""} className={fieldClassName} />
 
       <div className="flex flex-col gap-1.5">
         <Input name="line1" placeholder="Street address" defaultValue={address?.line1} className={fieldClassName} />

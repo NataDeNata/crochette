@@ -46,7 +46,7 @@ export async function submitCustomOrder(
   if (await isRateLimited("custom-order", ip)) {
     return {
       status: "error",
-      message: "Too many attempts — please wait a few minutes and try again.",
+      message: "Too many attempts. Please wait a few minutes and try again.",
     };
   }
 
@@ -101,7 +101,7 @@ export async function submitCustomOrder(
     });
     return {
       status: "error",
-      message: "We couldn't send your request right now — please try again in a moment.",
+      message: "We couldn't send your request right now. Please try again in a moment.",
     };
   }
 

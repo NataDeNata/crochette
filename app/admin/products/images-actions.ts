@@ -67,7 +67,7 @@ export async function uploadProductImages(
     );
   } catch (err) {
     logError("admin.product_image.blob_upload_failed", err, { productId });
-    return { status: "error", message: "Couldn't upload those photos — please try again." };
+    return { status: "error", message: "Couldn't upload those photos. Please try again." };
   }
 
   const hasAnyExisting = existing.length > 0;
@@ -84,7 +84,7 @@ export async function uploadProductImages(
     );
   } catch (err) {
     logError("admin.product_image.db_insert_failed", err, { productId });
-    return { status: "error", message: "Photos uploaded but couldn't be saved — please try again." };
+    return { status: "error", message: "Photos uploaded but couldn't be saved. Please try again." };
   }
 
   const slug = await getProductSlug(productId);
@@ -126,7 +126,7 @@ export async function deleteProductImage(
     });
   } catch (err) {
     logError("admin.product_image.db_delete_failed", err, { imageId });
-    return { status: "error", message: "Couldn't delete that photo — please try again." };
+    return { status: "error", message: "Couldn't delete that photo. Please try again." };
   }
 
   try {
@@ -180,7 +180,7 @@ export async function reorderProductImage(
     });
   } catch (err) {
     logError("admin.product_image.reorder_failed", err, { imageId, direction });
-    return { status: "error", message: "Couldn't reorder that photo — please try again." };
+    return { status: "error", message: "Couldn't reorder that photo. Please try again." };
   }
 
   revalidatePath(`/admin/products/${row.productId}/images`);
@@ -213,7 +213,7 @@ export async function setPrimaryProductImage(
     });
   } catch (err) {
     logError("admin.product_image.set_primary_failed", err, { imageId });
-    return { status: "error", message: "Couldn't update the cover photo — please try again." };
+    return { status: "error", message: "Couldn't update the cover photo. Please try again." };
   }
 
   const slug = await getProductSlug(row.productId);
@@ -256,7 +256,7 @@ export async function updateProductImageMeta(
       .where(eq(productImages.id, imageId));
   } catch (err) {
     logError("admin.product_image.meta_update_failed", err, { imageId });
-    return { status: "error", message: "Couldn't save changes — please try again." };
+    return { status: "error", message: "Couldn't save changes. Please try again." };
   }
 
   const slug = await getProductSlug(row.productId);

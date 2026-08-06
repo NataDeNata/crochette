@@ -22,13 +22,6 @@ export const EMPTY_PREVIEW: PreviewData = {
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/* Square only once it sits beside the form (`md` and up, see app/custom/
- * page.tsx). Stacked below that it spans the full width, where a square would
- * be a ~280px-tall block hanging off the end of an already-long form — so it
- * takes its natural height with a floor instead. */
-const shellClassName =
-  "min-h-[200px] md:min-h-0 md:aspect-square rounded-[24px] sm:rounded-[32px] p-6 sm:p-9 bg-card border-2 border-dashed border-[oklch(0.75_0.03_20)] flex flex-col justify-center gap-[22px] overflow-hidden";
-
 /** Fades a value in/out only when it toggles between empty and non-empty —
  * typing within an already-filled field just re-renders instantly. */
 function AnimatedSwap({
@@ -56,21 +49,23 @@ function AnimatedSwap({
   );
 }
 
-function MetaRow({ label, value, reduceMotion }: { label: string; value: string; reduceMotion: boolean | null }) {
-  return (
-    <div>
-      <div className="text-[11px] tracking-[1.5px] uppercase text-[oklch(0.5_0.05_20)] mb-1">
-        {label}
-      </div>
-      <AnimatedSwap swapKey={value ? "value" : "empty"} reduceMotion={reduceMotion}>
-        <div className={cn("text-sm", value ? "text-foreground" : "text-[oklch(0.6_0.02_60)]")}>{value || "—"}</div>
-      </AnimatedSwap>
-    </div>
-  );
-}
-
-/** "Stitched postcard" panel that mirrors the custom-order form back at the
- * customer as they fill it in — replaces the old static placeholder image. */
+/* THE FIGURE THAT ISN'T PRINTED YET.
+ *
+ * This is the mechanism the whole storefront is positioned on, so it gets the
+ * world's strongest move rather than a summary card. A commission is, exactly,
+ * a piece that is not on any sheet — so the preview is an empty die-cut: the
+ * cut line and fold tab are printed, and the window inside them is blank
+ * until the customer's own words fill it.
+ *
+ * Every layer is the same construction the catalogue uses (`.diecut-arch`,
+ * the dashed cut line, the trim margin, the butter tab), which is what makes
+ * the promise legible without a caption: what you are describing will end up
+ * looking like the things you were just browsing.
+ *
+ * The customer's reference photo, when they attach one, becomes the figure's
+ * image — the one place on the site where a photograph in a die-cut window is
+ * theirs rather than the studio's.
+ */
 export function LiveRequestPreview({
   pieceType,
   preferredSize,
@@ -79,71 +74,137 @@ export function LiveRequestPreview({
   photoPreviewUrls,
 }: PreviewData) {
   const reduceMotion = useReducedMotion();
-  const hasAnything = Boolean(
-    pieceType || preferredSize || preferredColors || description || photoPreviewUrls.length
-  );
-  const snippet = description.length > 140 ? `${description.slice(0, 140)}…` : description;
+  const snippet =
+    description.length > 150 ? `${description.slice(0, 150)}…` : description;
 
-  if (!hasAnything) {
-    return (
-      <div className={cn(shellClassName, "items-center text-center")}>
-        <div className="font-serif text-[26px] text-[oklch(0.55_0.09_20)] mb-2.5">✂</div>
-        <div className="text-[13.5px] text-[oklch(0.45_0.02_60)] leading-[1.6] max-w-[220px]">
-          Your request will appear here as you type
-        </div>
-      </div>
-    );
-  }
+  // Colours arrive as a free-text list from the picker. Splitting them back
+  // out lets each one print as its own chip, which is how a spec sheet would
+  // list them — and it degrades correctly to a single chip if someone types
+  // prose instead of picking.
+  const colors = preferredColors
+    .split(/[,/]| and /i)
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .slice(0, 6);
 
-  const content = (
-    <>
-      <div className="text-[11px] tracking-[2px] uppercase text-[oklch(0.5_0.05_20)]">
-        Your request
-      </div>
-      <AnimatedSwap swapKey={pieceType ? "value" : "empty"} reduceMotion={reduceMotion}>
-        <div className="font-serif font-medium text-2xl">
-          {pieceType || "Your custom piece"}
-        </div>
-      </AnimatedSwap>
-      <div className="flex flex-wrap gap-x-7 gap-y-3">
-        <MetaRow label="Size" value={preferredSize} reduceMotion={reduceMotion} />
-        <MetaRow label="Colors" value={preferredColors} reduceMotion={reduceMotion} />
-      </div>
-      <AnimatedSwap swapKey={description ? "value" : "empty"} reduceMotion={reduceMotion}>
-        <div
-          className={cn(
-            "text-[13.5px] leading-[1.6]",
-            description ? "text-[oklch(0.42_0.02_60)]" : "text-[oklch(0.6_0.02_60)]",
-          )}
-        >
-          {snippet || "Describe your dream piece to see it summarized here."}
-        </div>
-      </AnimatedSwap>
-      {photoPreviewUrls.length > 0 && (
-        <AnimatedSwap swapKey="photos" reduceMotion={reduceMotion}>
-          <div className="flex gap-2">
-            {photoPreviewUrls.map((url) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={url}
-                src={url}
-                alt=""
-                className="w-10 h-10 rounded-[8px] object-cover border-[1.5px] border-[oklch(0.75_0.03_20)]"
-              />
-            ))}
-          </div>
+  const hero = photoPreviewUrls[0];
+
+  const figure = (
+    <div className="mx-auto w-full max-w-[330px]">
+      {/* The tab. Blank stock until there is something to letter on it. */}
+      <div
+        className={cn(
+          "relative z-[1] mx-auto w-fit max-w-full border-2 border-keyline border-b-0 px-4 pb-2 pt-1.5 text-center transition-colors duration-300",
+          pieceType ? "bg-butter" : "bg-secondary",
+        )}
+      >
+        <AnimatedSwap swapKey={pieceType ? "named" : "blank"} reduceMotion={reduceMotion}>
+          <p
+            className={cn(
+              "type-sheet-display truncate text-[19px]",
+              pieceType ? "text-keyline" : "text-keyline/35",
+            )}
+          >
+            {pieceType || "Not named yet"}
+          </p>
         </AnimatedSwap>
+        <AnimatedSwap
+          swapKey={preferredSize ? "sized" : "unsized"}
+          reduceMotion={reduceMotion}
+        >
+          <p
+            className={cn(
+              "type-sheet-spec text-[10px]",
+              preferredSize ? "text-keyline/75" : "text-keyline/30",
+            )}
+          >
+            {preferredSize || "Size to be decided"}
+          </p>
+        </AnimatedSwap>
+        <span className="pointer-events-none absolute inset-x-2 bottom-0 border-b border-dashed border-keyline/50" />
+      </div>
+
+      {/* Cut line → trim margin → the window that is still blank. */}
+      <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
+        <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
+          <div className="diecut-arch relative flex aspect-4/5 flex-col items-center justify-center overflow-hidden bg-secondary px-6 text-center">
+            {hero ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={hero} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                <span className="type-sheet-spec absolute bottom-4 border-2 border-keyline bg-sheet px-2 py-1 text-keyline">
+                  Your reference
+                </span>
+              </>
+            ) : (
+              <AnimatedSwap
+                swapKey={snippet ? "described" : "blank"}
+                reduceMotion={reduceMotion}
+              >
+                {snippet ? (
+                  <p className="text-[14px] leading-[1.6] text-keyline">
+                    &ldquo;{snippet}&rdquo;
+                  </p>
+                ) : (
+                  <p className="type-sheet-spec max-w-[20ch] text-keyline/35">
+                    This one hasn&apos;t been printed yet
+                  </p>
+                )}
+              </AnimatedSwap>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Colours print below the figure as chips, the way a spec sheet lists
+          the inks a plate will be run in. */}
+      <div className="mt-5 min-h-[46px]">
+        <p className="type-sheet-spec text-keyline/50">Colours</p>
+        <AnimatedSwap
+          swapKey={colors.length ? "colors" : "nocolors"}
+          reduceMotion={reduceMotion}
+        >
+          {colors.length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {colors.map((c) => (
+                <span
+                  key={c}
+                  className="type-sheet-spec border-2 border-keyline bg-sheet px-2 py-1 text-[10px] text-keyline"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-[13px] text-muted-foreground">
+              Not chosen yet
+            </p>
+          )}
+        </AnimatedSwap>
+      </div>
+
+      {/* Any further references ride as small cut chips under the figure. */}
+      {photoPreviewUrls.length > 1 && (
+        <div className="mt-4 flex gap-2">
+          {photoPreviewUrls.slice(1).map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={url}
+              src={url}
+              alt=""
+              className="h-11 w-11 border-2 border-keyline object-cover"
+            />
+          ))}
+        </div>
       )}
-    </>
+    </div>
   );
 
-  if (reduceMotion) {
-    return <div className={shellClassName}>{content}</div>;
-  }
+  if (reduceMotion) return figure;
 
   return (
-    <motion.div className={shellClassName} layout transition={{ duration: 0.3, ease }}>
-      {content}
+    <motion.div layout transition={{ duration: 0.3, ease }}>
+      {figure}
     </motion.div>
   );
 }

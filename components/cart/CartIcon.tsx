@@ -18,8 +18,11 @@ export function CartIcon({ className }: { className?: string }) {
         <circle cx="20" cy="21" r="1" />
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
+      {/* The count badge was two hardcoded oklch literals left over from the
+          cream palette, so it kept printing terracotta on a page that has no
+          terracotta in it. Tokens now, like everything else. */}
       {count > 0 && (
-        <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-0.75 rounded-[9px] bg-[oklch(0.55_0.09_20)] text-[oklch(0.98_0.01_85)] text-[10px] font-semibold flex items-center justify-center leading-none">
+        <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-0.75 rounded-[9px] bg-press-red text-sheet text-[10px] font-semibold flex items-center justify-center leading-none">
           {count > 99 ? "99+" : count}
         </span>
       )}

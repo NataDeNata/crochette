@@ -7,8 +7,6 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { AccountIcon } from "@/components/account/AccountIcon";
-import { Button } from "@/components/ui/button";
-import { PaperBand } from "@/components/sections/PaperBand";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -22,13 +20,14 @@ const LINKS = [
  * the render site. `py-3` on the rows rather than pure `gap`, so each tap
  * target clears 44px on a phone. */
 const DRAWER_CLASS =
-  "absolute top-full left-0 right-0 bg-background/98 backdrop-blur border-b border-nav-border flex flex-col px-5 py-2";
+  "nav-drawer absolute top-full left-0 right-0 bg-sheet border-b-2 border-keyline flex flex-col px-5 py-2";
 
-/* The studio's seal: a hand-cut square stamp, drawn rather than typeset. Four
- * uneven strokes inside a rough border, which is what a carved seal actually
- * looks like — a perfectly even one would read as an icon-library glyph and
- * this world does not use those. */
-function StudioStamp() {
+/* The studio's mark, in this world's own grammar: a press-out. A solid keyline
+ * square with a dashed die line inside it and a fold tab on top — the same
+ * three-part construction every figure on the sheet is built from, reduced to
+ * 26px. Authored SVG rather than a glyph, because a font character here would
+ * be the one mark on the page that did not come off the sheet. */
+function PressOutMark() {
   return (
     <svg
       aria-hidden
@@ -36,24 +35,26 @@ function StudioStamp() {
       height="26"
       viewBox="0 0 26 26"
       fill="none"
-      className="shrink-0 text-vermilion"
+      className="shrink-0 text-keyline"
     >
+      <path d="M9.5 5.5V3.2h7v2.3" stroke="currentColor" strokeWidth="1.8" />
       <rect
-        x="1.2"
-        y="1.2"
-        width="23.6"
-        height="23.6"
-        rx="1.5"
+        x="1.4"
+        y="5.5"
+        width="23.2"
+        height="19.1"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="1.8"
       />
-      <path
-        d="M6.5 7.2v11.6M11 6.6v12.8M15.6 8v10.4M20 7v11"
+      <rect
+        x="5.4"
+        y="9.2"
+        width="15.2"
+        height="11.6"
         stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
+        strokeWidth="1.4"
+        strokeDasharray="2.6 2.4"
       />
-      <path d="M6 12.6h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -98,24 +99,28 @@ export function Nav({ session }: { session: Session | null }) {
   );
 
   return (
-    /* The nav rides its own sheet of paper, and the sheet bows into whatever is
-       below it — which on the landing page is the photograph.
-       The band hangs off the bottom with `absolute top-full`, so it costs no
-       layout height and `--nav-h` stays the 89px every full-bleed hero measures
-       itself against. It also means the curve overlaps the content rather than
-       pushing it down, which is what makes it read as one sheet lying over
-       another instead of a divider between two blocks.
-       `border-b` is gone: the sheet's own drawn edge is the boundary now, and a
-       straight rule under a curved one was the thing that made the header look
-       bolted on. */
-    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-background/85 backdrop-blur">
-      {/* The wordmark, with the studio's stamp beside it. The stamp is authored
-          SVG in the world's own grammar — a hand-cut seal, not a glyph pulled
-          from a font — and it is the single place vermilion appears in the
-          chrome. */}
-      <Link href="/" className="group flex items-center gap-3 text-inherit">
-        <StudioStamp />
-        <span className="type-akari-label text-[13px] tracking-[0.22em] text-ink">Crochette</span>
+    /* The nav is the sheet's masthead. It still sits on the ground rather than
+       on the sheet, but with both of them cream that is now a difference of
+       about one percent of luminance rather than of viridian against white — so
+       the 2px key rule that used to be the trimmed edge between them has come
+       down to a hairline in --nav-border. It exists to keep the bar legible once
+       content scrolls underneath it, which is the only job left for it.
+
+       The bar stays opaque rather than translucent: the figures that scroll
+       under it carry dashed cut lines and 2px keylines, and a blurred bar over
+       printed rules reads as a smudge on the press. */
+    <nav className="sticky top-0 z-50 flex items-center justify-between gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
+      {/* The wordmark, with the press-out mark beside it, both printed on a
+          sand plate so the masthead reads as a printed label lying on the
+          ground rather than as text floating on a colour. */}
+      <Link
+        href="/"
+        className="group flex items-center gap-2.5 bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
+      >
+        <PressOutMark />
+        <span className="type-sheet-display text-[17px] uppercase text-keyline">
+          Crochette
+        </span>
       </Link>
 
       <div className="nav-desktop-links gap-9 text-sm font-medium tracking-[0.3px]">
@@ -130,13 +135,15 @@ export function Nav({ session }: { session: Session | null }) {
             >
               {link.label}
               {isActive && !reduceMotion && (
-                // A single vermilion hairline. This world spends its one colour
-                // on marks, never on fills, so "you are here" is a stroke of
-                // ink rather than a filled shape.
+                // The die line under the page you are on: a press-red rule at
+                // the same 2px weight every keyline on the sheet is printed at,
+                // so "you are here" is drawn in the world's own stroke rather
+                // than in a hairline borrowed from somewhere else. It was butter
+                // when the bar was viridian; on cream, butter *is* the bar.
                 <motion.div
                   layoutId="nav-active-underline"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute left-0 right-0 -bottom-1.5 h-px bg-vermilion"
+                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 bg-press-red"
                 />
               )}
             </Link>
@@ -145,13 +152,23 @@ export function Nav({ session }: { session: Session | null }) {
       </div>
 
       {!isShopPage && (
-        <Button href="/shop" size="sm" className="nav-cta">
+        // A tab, not the stock pill. Every actionable thing in this world is
+        // taken by its tab, and the one control in the masthead is where that
+        // would be most conspicuous to get wrong.
+        <Link
+          href="/shop"
+          data-slot="button"
+          // The focus outline is press red, not butter. Butter measures 1.2:1
+          // against the cream ground it would be drawn on — a focus indicator
+          // owes 3:1, and this one is the control a keyboard user reaches first.
+          className="nav-cta inline-flex items-center border-2 border-keyline bg-sheet px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-keyline transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+        >
           Shop now
-        </Button>
+        </Link>
       )}
 
       <div className="flex items-center gap-1">
-        <AccountIcon href={accountHref} className="account-icon-link" />
+        <AccountIcon href={accountHref} className="nav-account-icon account-icon-link" />
         <CartIcon className="cart-icon-link" />
 
         <button
@@ -163,15 +180,15 @@ export function Nav({ session }: { session: Session | null }) {
         >
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? 45 : 0, y: open ? 6 : 0 }}
-            className="block w-[22px] h-px bg-ink"
+            className="block w-[22px] h-0.5 bg-keyline"
           />
           <motion.span
             animate={reduceMotion ? undefined : { opacity: open ? 0 : 1 }}
-            className="block w-[22px] h-px bg-ink"
+            className="block w-[22px] h-0.5 bg-keyline"
           />
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? -45 : 0, y: open ? -6 : 0 }}
-            className="block w-[22px] h-px bg-ink"
+            className="block w-[22px] h-0.5 bg-keyline"
           />
         </button>
       </div>
@@ -200,9 +217,6 @@ export function Nav({ session }: { session: Session | null }) {
         </AnimatePresence>
       )}
 
-      {/* The sheet the header sits on, bowing into the page below. Sits under
-          the drawer in source order so an open mobile drawer covers it. */}
-      <PaperBand edge="top" className="absolute top-full left-0 right-0 -z-10" />
     </nav>
   );
 }

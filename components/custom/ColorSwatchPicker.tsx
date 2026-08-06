@@ -17,7 +17,7 @@ const SWATCHES = [
  * than palette — renaming Rose to Madder to match the site's dyes would change
  * what the owner reads on an order for the sake of a visual rhyme. */
 const inputClassName =
-  "py-3 px-4 border border-input rounded-lg bg-card text-sm [font-family:inherit] text-foreground placeholder:text-muted-foreground";
+  "py-3 px-4 border-2 border-keyline bg-sheet text-sm [font-family:inherit] text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 function joinValue(selected: Set<string>, custom: string) {
   return [...selected, custom.trim()].filter(Boolean).join(", ").slice(0, 200);
@@ -70,14 +70,17 @@ export function ColorSwatchPicker({
               animate={{ y: isActive ? -3 : 0 }}
               transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
               className={cn(
-                "size-11 rounded-lg cursor-pointer p-0 border border-border relative overflow-hidden",
+                "size-11 cursor-pointer p-0 border-2 border-keyline relative overflow-hidden",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
                 s.swatchClass,
               )}
             >
               {isActive && (
+                // The chosen ink gets a press-red ring inside its keyline —
+                // the same colour the sheet uses for "this is the live one".
                 <span
                   aria-hidden
-                  className="absolute inset-0 rounded-lg border-2 border-ink"
+                  className="absolute inset-0 border-[3px] border-press-red"
                 />
               )}
             </motion.button>
@@ -88,8 +91,9 @@ export function ColorSwatchPicker({
           aria-pressed={customOpen}
           onClick={() => setCustomOpen((v) => !v)}
           className={cn(
-            "px-4 rounded-lg type-akari-label cursor-pointer border border-border",
-            customOpen ? "bg-ink text-washi" : "bg-transparent text-muted-foreground",
+            "type-sheet-spec cursor-pointer border-2 border-keyline px-4 transition-colors duration-200",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+            customOpen ? "bg-butter text-keyline" : "bg-sheet text-keyline/70",
           )}
         >
           Custom

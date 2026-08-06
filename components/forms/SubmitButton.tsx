@@ -28,7 +28,10 @@ export function SubmitButton({
               scale: { duration: 0.2 },
               rotate: { repeat: Infinity, duration: 0.7, ease: "linear" },
             }}
-            className="w-3.5 h-3.5 rounded-full border-2 border-[oklch(0.98_0.01_85/0.4)] border-t-[oklch(0.98_0.01_85)] inline-block"
+            // `currentColor` rather than two palette literals: the spinner sits
+            // inside a Button whose fill differs per surface and per variant,
+            // so the one correct value is whatever the label is already using.
+            className="w-3.5 h-3.5 rounded-full border-2 border-current/30 border-t-current inline-block"
           />
         )}
       </AnimatePresence>

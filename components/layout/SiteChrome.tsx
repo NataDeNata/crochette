@@ -36,7 +36,12 @@ export function SiteChrome({ children, session }: { children: ReactNode; session
     // deliberately designed around. This component was already the place that
     // knows which of the two surfaces is rendering, so it is the place that
     // says so.
-    <div data-surface="storefront" className="flex min-h-dvh flex-col">
+    // `data-world` is stamped alongside `data-surface` and is what selects the
+    // cut-out sheet's token block over the Akari one it is replacing. Both
+    // blocks are complete, so removing this one attribute is a working
+    // rollback for the whole visual world — which is the only reason the old
+    // block is still in the stylesheet while the overhaul is in flight.
+    <div data-surface="storefront" data-world="cutout" className="flex min-h-dvh flex-col">
       <Nav session={session} />
       <main className="flex-1">
         <PageTransition>{children}</PageTransition>

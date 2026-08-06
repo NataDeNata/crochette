@@ -6,10 +6,10 @@ import { getProducts } from "@/lib/data/products.server";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.",
+  description: "Amigurumi, flowers, and cozy decor. Every piece made by hand, in small batches.",
   openGraph: {
-    title: "Shop — Crochette",
-    description: "Amigurumi, flowers, and cozy decor — every piece made by hand, in small batches.",
+    title: "Shop | Crochette",
+    description: "Amigurumi, flowers, and cozy decor. Every piece made by hand, in small batches.",
   },
 };
 
@@ -18,38 +18,32 @@ export default async function ShopPage() {
 
   return (
     <>
-      {/* No eyebrow above the heading. The old "SHOP" kicker sat over a page
-          whose URL, nav state and heading all already said shop; the heading
-          carries it alone. */}
-      <section className="pt-12 sm:pt-[72px] page-gutter pb-10">
-        <FadeIn>
-          <div className="max-w-[1320px] mx-auto">
-            <h1 className="type-akari-display text-[clamp(32px,5vw,58px)] text-ink text-balance mb-5">
-              The full collection
-            </h1>
-            <p className="text-[17px] text-muted-foreground max-w-[520px] leading-[1.7]">
-              Amigurumi, flowers and cozy decor. Every piece made by hand, in small
-              batches.
-            </p>
-          </div>
-        </FadeIn>
-      </section>
-
+      {/* The heading, masthead and controls all live inside ShopGrid now. The
+          sheet number is derived from the current page, which is client state,
+          so the title block has to sit where that state does — splitting it
+          across two components is how the masthead ends up claiming No. 01 on
+          sheet three. */}
       <ShopGrid products={products} />
 
+      {/* The commission hand-off: the figure that is not printed on any of the
+          sheets above, divided off by a rule on the sheet rather than by a box
+          around itself. */}
       <FadeIn>
-        {/* The commission hand-off, as the one unworked cell at the end of the
-            chart — madder-deep, which carries raw wool at 5.1:1. */}
-        <section className="page-gutter mb-[100px]">
-          <div className="max-w-[1320px] mx-auto bg-paper rounded-lg border border-border p-8 sm:p-14">
-            <h2 className="type-akari-display text-[clamp(24px,3.2vw,38px)] text-ink text-balance mb-4 max-w-[520px]">
-              Don&apos;t see quite what you want?
-            </h2>
-            <p className="text-[16px] leading-[1.7] text-muted-foreground mb-8 max-w-[460px]">
-              We chart custom pieces too — any colour, size or character. Tell us what
-              you have in mind and we&apos;ll come back with a price.
-            </p>
-            <Button href="/custom">Request a custom order</Button>
+        <section className="bg-sheet">
+          <div className="page-gutter pb-14 pt-4 sm:pb-16 sm:pt-6">
+            <div className="max-w-[1320px] mx-auto mb-14 border-t border-keyline/15" />
+            <div className="max-w-[1320px] mx-auto grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <h2 className="type-sheet-display text-[clamp(26px,3.6vw,44px)] text-keyline text-balance max-w-[16ch]">
+                  Don&apos;t see quite what you want?
+                </h2>
+                <p className="text-[16px] leading-[1.7] text-muted-foreground mt-4 max-w-[52ch]">
+                  We make custom pieces too, in any colour, size or character. Tell us
+                  what you have in mind and we&apos;ll come back with a price.
+                </p>
+              </div>
+              <Button href="/custom">Request a custom order</Button>
+            </div>
           </div>
         </section>
       </FadeIn>

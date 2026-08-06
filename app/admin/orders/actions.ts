@@ -71,7 +71,7 @@ export async function updateOrder(
     });
   } catch (err) {
     logError("admin.order.update_failed", err, { orderId: id, nextStatus: parsed.data.status });
-    return { status: "error", message: "Couldn't save changes — please try again." };
+    return { status: "error", message: "Couldn't save changes. Please try again." };
   }
 
   revalidatePath("/admin/orders");

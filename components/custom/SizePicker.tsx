@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const SIZE_PRESETS = [
@@ -12,10 +11,10 @@ const SIZE_PRESETS = [
 ];
 
 const inputClassName =
-  "py-3 px-4 border border-input rounded-lg bg-card text-sm [font-family:inherit] text-foreground placeholder:text-muted-foreground";
+  "py-3 px-4 border-2 border-keyline bg-sheet text-sm [font-family:inherit] text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 function pillLabel(preset: (typeof SIZE_PRESETS)[number]) {
-  return `${preset.label} — ${preset.detail}`;
+  return `${preset.label}, ${preset.detail}`;
 }
 
 /** Single-select size picker: S/M/L/XL presets carry a default stitch size
@@ -32,7 +31,6 @@ export function SizePicker({
 }) {
   const [selected, setSelected] = useState<string>("");
   const [customText, setCustomText] = useState("");
-  const reduceMotion = useReducedMotion();
 
   function selectPreset(preset: (typeof SIZE_PRESETS)[number]) {
     setSelected(preset.value);
@@ -58,8 +56,10 @@ export function SizePicker({
   return (
     <div className="flex flex-col gap-2">
       <input type="hidden" name={name} value={postedValue} />
-      {/* Same button vocabulary as the colour picker and the shop filters:
-          outlined at rest, charcoal fill when chosen. */}
+      {/* Same vocabulary as the colour picker and the sheet filters: keyline
+          box at rest, butter when chosen. The sliding indicator is gone with
+          the world that had one — this sheet marks a chosen thing by filling
+          it, not by animating a token between positions. */}
       <div className="flex gap-2 flex-wrap">
         {SIZE_PRESETS.map((preset) => {
           const isActive = selected === preset.value;
@@ -70,25 +70,14 @@ export function SizePicker({
               aria-pressed={isActive}
               onClick={() => selectPreset(preset)}
               className={cn(
-                "relative w-12 h-11 type-akari-label cursor-pointer border-0",
-                isActive && reduceMotion ? "bg-ink" : "bg-card",
+                "type-sheet-spec h-11 w-12 cursor-pointer border-2 border-keyline transition-colors duration-200",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+                isActive
+                  ? "bg-butter text-keyline"
+                  : "bg-sheet text-keyline/70 hover:bg-secondary hover:text-keyline",
               )}
             >
-              {isActive && !reduceMotion && (
-                <motion.span
-                  layoutId="custom-size-active"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 bg-ink z-0"
-                />
-              )}
-              <span
-                className={cn(
-                  "relative z-[1]",
-                  isActive ? "text-washi" : "text-muted-foreground",
-                )}
-              >
-                {preset.label}
-              </span>
+              {preset.label}
             </button>
           );
         })}
@@ -97,8 +86,11 @@ export function SizePicker({
           aria-pressed={selected === "custom"}
           onClick={selectCustom}
           className={cn(
-            "px-4 h-11 type-akari-label cursor-pointer border-0",
-            selected === "custom" ? "bg-ink text-washi" : "bg-card text-muted-foreground",
+            "type-sheet-spec h-11 cursor-pointer border-2 border-keyline px-4 transition-colors duration-200",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+            selected === "custom"
+              ? "bg-butter text-keyline"
+              : "bg-sheet text-keyline/70 hover:bg-secondary hover:text-keyline",
           )}
         >
           Custom

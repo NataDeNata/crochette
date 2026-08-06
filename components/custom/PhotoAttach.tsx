@@ -71,7 +71,7 @@ export function PhotoAttach({
     setAttached(next);
     syncInputFiles(next);
     onValueChange?.(next.map((a) => a.previewUrl));
-    setError(rejected ? `Photos must be JPG, PNG, or WebP, up to ${Math.round(maxBytes / (1024 * 1024))}MB — ${maxPhotos} max.` : undefined);
+    setError(rejected ? `Photos must be JPG, PNG, or WebP, up to ${Math.round(maxBytes / (1024 * 1024))}MB, ${maxPhotos} max.` : undefined);
   }
 
   function removeAt(index: number) {
@@ -95,40 +95,60 @@ export function PhotoAttach({
         onChange={handleChange}
         className="hidden"
       />
-      <div className="flex gap-2.5 flex-wrap items-center">
+      <div className="flex flex-wrap items-center gap-2.5">
         {attached.map((a, i) => (
-          <div key={a.previewUrl} className="relative w-14 h-14">
+          <div key={a.previewUrl} className="relative h-14 w-14">
             {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview, next/image can't optimize it */}
             <img
               src={a.previewUrl}
               alt=""
-              className="w-14 h-14 rounded-[10px] object-cover border-[1.5px] border-[oklch(0.75_0.03_20)] block"
+              className="block h-14 w-14 border-2 border-keyline object-cover"
             />
             <button
               type="button"
               onClick={() => removeAt(i)}
               aria-label="Remove photo"
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full border-0 bg-primary text-card text-xs leading-none cursor-pointer flex items-center justify-center p-0"
+              className="absolute -right-2 -top-2 flex h-6 w-6 cursor-pointer items-center justify-center border-2 border-keyline bg-sheet p-0 text-keyline transition-colors duration-200 hover:bg-press-red hover:text-sheet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
             >
-              ×
+              <CrossMark />
             </button>
           </div>
         ))}
         {attached.length < maxPhotos && (
+          // The slot the next reference goes in, drawn as an empty die: dashed
+          // where a cut would be, so an unattached photo reads as a blank on
+          // the sheet rather than as a disabled control.
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             aria-label="Attach photos"
-            className="w-14 h-14 rounded-[10px] border-[1.5px] border-dashed border-input bg-card cursor-pointer text-xl text-[oklch(0.5_0.05_20)] [font-family:inherit]"
+            className="flex h-14 w-14 cursor-pointer items-center justify-center border-2 border-dashed border-keyline bg-sheet text-keyline [font-family:inherit] transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
           >
-            +
+            <PlusMark />
           </button>
         )}
       </div>
-      <div className="text-xs text-[oklch(0.45_0.02_60)]">
-        {helpText ?? `Optional — up to ${maxPhotos} reference photos, JPG/PNG/WebP, 5MB each.`}
+      <div className="text-xs text-muted-foreground">
+        {helpText ?? `Optional. Up to ${maxPhotos} reference photos, JPG/PNG/WebP, 5MB each.`}
       </div>
-      {error && <span className="text-[12.5px] text-[oklch(0.5_0.18_25)]">{error}</span>}
+      {error && <span className="text-[12.5px] text-destructive">{error}</span>}
     </div>
+  );
+}
+
+/* Drawn at the keyline weight, replacing a `×` and a `+` set as text. */
+function CrossMark() {
+  return (
+    <svg aria-hidden width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+    </svg>
+  );
+}
+
+function PlusMark() {
+  return (
+    <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M8 1v14M1 8h14" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+    </svg>
   );
 }

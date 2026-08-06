@@ -47,7 +47,7 @@ async function fetchActiveProducts(): Promise<Product[]> {
       category: row.category as ProductCategory,
       tag: row.tag ?? undefined,
       bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
-      placeholder: `product shot — ${row.name.toLowerCase()}`,
+      placeholder: `product shot: ${row.name.toLowerCase()}`,
       stockQty: row.stockQty,
       images,
       primaryImageUrl: images.find((img) => img.isPrimary)?.url ?? images[0]?.url,

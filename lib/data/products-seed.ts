@@ -17,7 +17,7 @@ const CATALOG: Array<{
   },
   {
     name: "Sunny Daisy Bouquet",
-    description: "A cheerful bouquet of crocheted daisies on wire stems — never wilts, always sunny.",
+    description: "A cheerful bouquet of crocheted daisies on wire stems. Never wilts, always sunny.",
     priceCents: 45000,
     category: "flowers",
   },
@@ -87,7 +87,7 @@ export function getSeedProducts(): Product[] {
     category: item.category,
     tag: item.tag,
     bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
-    placeholder: `product shot — ${item.name.toLowerCase()}`,
+    placeholder: `product shot: ${item.name.toLowerCase()}`,
     // Not written by the seed insert (see seed.ts) — the DB column's own default (0) applies on insert.
     stockQty: 0,
     images: [],

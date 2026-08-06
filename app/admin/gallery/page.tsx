@@ -49,7 +49,7 @@ export default async function AdminGalleryPage() {
       <div className="flex flex-col gap-3">
         <h2 className="m-0 font-serif text-xl font-medium">Featured (in order)</h2>
         {featured.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No photos featured yet — add some below.</p>
+          <p className="text-sm text-muted-foreground">No photos featured yet. Add some below.</p>
         ) : (
           <div className="flex flex-col gap-2.5">
             {featured.map((row, i) => (

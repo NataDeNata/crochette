@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
             </div>
             {pendingQuotes.length === 0 ? (
               <p className="m-0 py-2 text-sm text-muted-foreground">
-                All caught up — no requests waiting on a quote.
+                All caught up. No requests waiting on a quote.
               </p>
             ) : (
               <div className="flex flex-col gap-0.5">

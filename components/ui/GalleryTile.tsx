@@ -30,8 +30,11 @@ export function GalleryTile({
     </span>
   );
 
+  /* A plate, not a card: square trim and a 2px key rule, the same weight every
+   * other edge on the sheet is printed at. No die-cut arch here — the gallery
+   * is the uncut centrefold, and an arch would promise a piece for sale. */
   const baseClassName = cn(
-    "h-full overflow-hidden relative flex items-center justify-center rounded-lg border border-border",
+    "h-full overflow-hidden relative flex items-center justify-center border-2 border-keyline",
     item.image ? undefined : item.bgClassName,
   );
 
@@ -48,7 +51,7 @@ export function GalleryTile({
    * button unconditionally. */
   const interactiveClassName = cn(
     baseClassName,
-    "w-full cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+    "w-full cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
   );
 
   /* The image alt already describes the photo; "View" states what activating

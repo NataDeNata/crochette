@@ -10,7 +10,8 @@ import { FieldError } from "@/components/forms/FieldError";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const fieldClassName = "h-auto rounded-xl border-[1.5px] border-input bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
+const fieldClassName =
+  "h-auto rounded-none border-2 border-keyline bg-sheet px-4 py-3.5 text-sm text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 export function ContactForm() {
   const [state, formAction, isPending] = useActionState(submitContactMessage, IDLE_STATE);

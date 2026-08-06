@@ -50,6 +50,11 @@ devserver*.log
 # Committing this directory would take CI's lint step down with it.
 .claude/
 
+# Local run state for the design-review hook: a cache keyed by file, plus one
+# state file per question holding a live pid, port and heartbeat. All of it is
+# per-machine and none of it means anything on another checkout.
+.impeccable/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

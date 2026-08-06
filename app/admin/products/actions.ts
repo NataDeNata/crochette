@@ -50,7 +50,7 @@ export async function createProduct(_prevState: FormActionState, formData: FormD
     });
   } catch (err) {
     logError("admin.product.create_failed", err, { slug: parsed.data.slug });
-    const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't create the product — please try again.";
+    const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't create the product. Please try again.";
     return { status: "error", message };
   }
 
@@ -85,7 +85,7 @@ export async function updateProduct(
       .where(eq(products.id, id));
   } catch (err) {
     logError("admin.product.update_failed", err, { productId: id, slug: parsed.data.slug });
-    const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't save the product — please try again.";
+    const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't save the product. Please try again.";
     return { status: "error", message };
   }
 
@@ -111,7 +111,7 @@ export async function deleteProduct(
   if (existingOrderItem) {
     return {
       status: "error",
-      message: 'This product has order history and can’t be deleted — set it to "Draft" or "Sold out" instead to hide it from the storefront.',
+      message: 'This product has order history and can’t be deleted. Set it to "Draft" or "Sold out" instead to hide it from the storefront.',
     };
   }
 
@@ -124,7 +124,7 @@ export async function deleteProduct(
     await db.delete(products).where(eq(products.id, id));
   } catch (err) {
     logError("admin.product.delete_failed", err, { productId: id, slug });
-    return { status: "error", message: "Couldn't delete the product — please try again." };
+    return { status: "error", message: "Couldn't delete the product. Please try again." };
   }
 
   // product_images rows are gone via ON DELETE CASCADE — the Blob files

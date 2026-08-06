@@ -48,7 +48,7 @@ export async function createDiscount(_prevState: FormActionState, formData: Form
     await db.insert(discountCodes).values(toRow(parsed.data));
   } catch (err) {
     logError("admin.discount.create_failed", err);
-    const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't create the discount code — please try again.";
+    const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't create the discount code. Please try again.";
     return { status: "error", message };
   }
 
@@ -70,7 +70,7 @@ export async function updateDiscount(
     await db.update(discountCodes).set(toRow(parsed.data)).where(eq(discountCodes.id, id));
   } catch (err) {
     logError("admin.discount.update_failed", err, { discountCodeId: id });
-    const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't save the discount code — please try again.";
+    const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't save the discount code. Please try again.";
     return { status: "error", message };
   }
 
@@ -84,7 +84,7 @@ export async function deleteDiscount(id: string, _prevState: FormActionState, _f
   if (existingOrder) {
     return {
       status: "error",
-      message: 'This code has been used on an order and can’t be deleted — set it to inactive instead.',
+      message: 'This code has been used on an order and can’t be deleted. Set it to inactive instead.',
     };
   }
 
@@ -92,7 +92,7 @@ export async function deleteDiscount(id: string, _prevState: FormActionState, _f
     await db.delete(discountCodes).where(eq(discountCodes.id, id));
   } catch (err) {
     logError("admin.discount.delete_failed", err, { discountCodeId: id });
-    return { status: "error", message: "Couldn't delete the discount code — please try again." };
+    return { status: "error", message: "Couldn't delete the discount code. Please try again." };
   }
 
   revalidatePath("/admin/discounts");

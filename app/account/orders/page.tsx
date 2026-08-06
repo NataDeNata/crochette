@@ -53,7 +53,7 @@ export default async function AccountOrdersPage() {
 
         {orders.length === 0 ? (
           <p className="text-sm text-[oklch(0.55_0.02_60)]">
-            No orders yet — <Link href="/shop">browse the shop</Link>.
+            No orders yet. <Link href="/shop">Browse the shop</Link>.
           </p>
         ) : (
           // Was a hand-rolled <table> inside `overflow-hidden`, which clipped

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export function Footer() {
   return (
@@ -6,35 +6,38 @@ export function Footer() {
       <div className="max-w-[1344px] mx-auto">
         <div className="footer-grid grid gap-12 mb-12">
           <div>
-            {/* The footer is the workshop after dark: the same paper, gone to
-                ink. The stamp is the one mark that stays lit. */}
-            <div className="flex items-center gap-3 mb-4">
+            {/* The footer is the underside of the sheet: back onto the ground,
+                with the wordmark on its butter plate exactly as the masthead
+                carries it, so the page opens and closes on the same mark. */}
+            <div className="mb-5 inline-flex items-center gap-2.5 border-2 border-keyline bg-butter px-3 py-1.5">
               <svg
                 aria-hidden
-                width="24"
-                height="24"
+                width="22"
+                height="22"
                 viewBox="0 0 26 26"
                 fill="none"
-                className="shrink-0 text-vermilion"
+                className="shrink-0 text-keyline"
               >
+                <path d="M9.5 5.5V3.2h7v2.3" stroke="currentColor" strokeWidth="1.8" />
                 <rect
-                  x="1.2"
-                  y="1.2"
-                  width="23.6"
-                  height="23.6"
-                  rx="1.5"
+                  x="1.4"
+                  y="5.5"
+                  width="23.2"
+                  height="19.1"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.8"
                 />
-                <path
-                  d="M6.5 7.2v11.6M11 6.6v12.8M15.6 8v10.4M20 7v11"
+                <rect
+                  x="5.4"
+                  y="9.2"
+                  width="15.2"
+                  height="11.6"
                   stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
+                  strokeWidth="1.4"
+                  strokeDasharray="2.6 2.4"
                 />
-                <path d="M6 12.6h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
-              <span className="type-akari-label text-[13px] tracking-[0.22em] text-washi">
+              <span className="type-sheet-display text-[16px] uppercase text-keyline">
                 Crochette
               </span>
             </div>
@@ -44,7 +47,7 @@ export function Footer() {
           </div>
 
           <div>
-            <div className="type-akari-label mb-4 text-footer-heading">
+            <div className="type-sheet-spec mb-4 text-footer-heading">
               Explore
             </div>
             <div className="flex flex-col gap-2.5 text-sm">
@@ -56,7 +59,7 @@ export function Footer() {
           </div>
 
           <div>
-            <div className="type-akari-label mb-4 text-footer-heading">
+            <div className="type-sheet-spec mb-4 text-footer-heading">
               Get in touch
             </div>
             <div className="flex flex-col gap-2.5 text-sm text-footer-muted">

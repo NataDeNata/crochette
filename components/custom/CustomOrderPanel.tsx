@@ -13,7 +13,7 @@ export function CustomOrderPanel() {
   return (
     <>
       <div>
-        <h2 className="font-serif font-medium text-[28px] mb-[22px]">Start your request</h2>
+        <h2 className="type-sheet-display text-[30px] text-keyline mb-6">Start your request</h2>
         <CustomOrderForm onPreviewChange={setPreview} />
       </div>
       <LiveRequestPreview {...preview} />

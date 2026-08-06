@@ -69,13 +69,32 @@ type ButtonAsButton = CommonProps & { href?: undefined } & Omit<
     "className"
   >;
 
+/* cva's `defaultVariants` fill in the *classes* for an omitted prop but not the
+ * prop itself, so `data-variant={variant}` rendered null on every button that
+ * did not pass one explicitly — which is most of them. The attribute is not
+ * decoration: globals.css selects on it for the coarse-pointer touch targets,
+ * for icon-button min-width, and for the storefront's variant fills. Resolving
+ * the defaults here means the attribute always describes what was actually
+ * rendered, which is the only thing it was ever supposed to do. */
+const DEFAULT_VARIANT = "default" satisfies Variant
+const DEFAULT_SIZE = "lg" satisfies Size
+
 function Button({ variant, size, className, asChild = false, ...props }: ButtonAsLink | ButtonAsButton) {
   const classes = cn(buttonVariants({ variant, size, className }))
+  const resolvedVariant = variant ?? DEFAULT_VARIANT
+  const resolvedSize = size ?? DEFAULT_SIZE
 
   if ("href" in props && typeof props.href === "string") {
     const { href, ...rest } = props as ButtonAsLink
     return (
-      <Link href={href} data-slot="button" data-variant={variant} data-size={size} className={classes} {...rest}>
+      <Link
+        href={href}
+        data-slot="button"
+        data-variant={resolvedVariant}
+        data-size={resolvedSize}
+        className={classes}
+        {...rest}
+      >
         {rest.children}
       </Link>
     )
@@ -85,8 +104,8 @@ function Button({ variant, size, className, asChild = false, ...props }: ButtonA
   return (
     <Comp
       data-slot="button"
-      data-variant={variant}
-      data-size={size}
+      data-variant={resolvedVariant}
+      data-size={resolvedSize}
       className={classes}
       {...(props as ButtonAsButton)}
     />
