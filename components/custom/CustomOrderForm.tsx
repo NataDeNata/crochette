@@ -15,7 +15,8 @@ import { EMPTY_PREVIEW, type PreviewData } from "@/components/custom/LiveRequest
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const fieldClassName = "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
+const fieldClassName =
+  "h-auto rounded-none border-2 border-keyline bg-sheet px-4 py-3.5 text-sm text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 const PIECE_TYPES = [
   { value: "Amigurumi character", label: "Amigurumi character" },
@@ -106,7 +107,7 @@ export function CustomOrderForm({
           </motion.div>
 
           <motion.div layout className="flex flex-col gap-2">
-            <div className="text-[12.5px] text-[oklch(0.45_0.02_60)]">Budget range (optional)</div>
+            <div className="type-sheet-spec text-keyline/60">Budget range (optional)</div>
             <PillGroup name="budgetRange" options={BUDGET_RANGES} layoutId="custom-budget" ariaLabel="Budget range" />
           </motion.div>
 

@@ -28,7 +28,7 @@ export default async function AdminLoginPage({
         <p className="mb-7 text-center text-[13px] text-muted-foreground">Studio admin sign in</p>
         {changed ? (
           <p className="mb-4 rounded-lg bg-muted px-3 py-2 text-center text-[13px]">
-            Password changed. Sign in with the new one — every other device has been signed out too.
+            Password changed. Sign in with the new one. Every other device has been signed out too.
           </p>
         ) : null}
         <AdminLoginForm />

@@ -49,7 +49,7 @@ export default async function AdminSettingsPage() {
           <div>
             <h2 className="m-0 font-serif text-lg font-medium">Change password</h2>
             <p className="m-0 mt-0.5 text-[13px] text-muted-foreground">
-              Changing this signs you out everywhere, including here — you&apos;ll sign back in with the new one.
+              Changing this signs you out everywhere, including here, and you&apos;ll sign back in with the new one.
             </p>
           </div>
           <AdminPasswordForm />

@@ -1,15 +1,21 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  // Pinned to "light" rather than read from next-themes. There is no
+  // ThemeProvider in this app and no dark theme (see app/globals.css), so
+  // useTheme() returned undefined and the `= "system"` default took over —
+  // which asked Sonner to follow the *OS* preference and render dark toasts
+  // over a permanently light cream UI. `.toaster` happened to mask most of it
+  // by pinning Sonner's colour variables to the light tokens, but the toaster
+  // was still being told the wrong thing. Restore the useTheme() read if a
+  // real dark theme is ever added.
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: (

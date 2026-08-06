@@ -27,7 +27,7 @@ export function GallerySection({
 
   return (
     <>
-      <div className={`gallery-grid grid gap-5 ${ROW_HEIGHT_CLASS[rowHeight]}`}>
+      <div className={`gallery-grid grid gap-4 sm:gap-5 ${ROW_HEIGHT_CLASS[rowHeight]}`}>
         {items.map((g, i) => (
           <FadeIn key={i} delay={(i % 4) * 0.05} className={g.span === 2 ? "row-span-2" : "row-span-1"}>
             <GalleryTile item={g} layoutId={`gallery-${i}`} onClick={() => setOpenIndex(i)} />

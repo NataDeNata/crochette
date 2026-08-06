@@ -36,7 +36,7 @@ const WRONG_PASSWORD = "That password isn't right.";
  */
 async function reauthenticate(adminId: string, password: unknown): Promise<string | null> {
   if (await isRateLimited("auth-ip", await getClientIp())) {
-    return "Too many attempts — please wait a few minutes and try again.";
+    return "Too many attempts. Please wait a few minutes and try again.";
   }
   if (typeof password !== "string" || !password) return WRONG_PASSWORD;
   if (!(await verifyAdminPassword(adminId, password))) return WRONG_PASSWORD;
@@ -125,7 +125,7 @@ export async function confirmTotp(
   const admin = await requireAdmin();
 
   if (await isRateLimited("admin-totp", await getClientIp())) {
-    return { status: "error", message: "Too many attempts — please wait a few minutes and try again." };
+    return { status: "error", message: "Too many attempts. Please wait a few minutes and try again." };
   }
 
   const parsed = secondFactorCodeSchema.safeParse(formData.get("code"));
@@ -142,7 +142,7 @@ export async function confirmTotp(
   revalidatePath("/admin/settings");
   return {
     status: "success",
-    message: "Two-factor authentication is on. Save these backup codes now — they aren't shown again.",
+    message: "Two-factor authentication is on. Save these backup codes now. They aren't shown again.",
     backupCodes: result.backupCodes,
   };
 }

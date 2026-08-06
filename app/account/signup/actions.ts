@@ -39,7 +39,7 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
   ) {
     return {
       status: "error",
-      message: "Too many attempts — please wait a few minutes and try again.",
+      message: "Too many attempts. Please wait a few minutes and try again.",
       name: parsed.data.name,
       email: parsed.data.email,
     };
@@ -55,7 +55,7 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
     return {
       status: "error",
       message: "Please check the fields below.",
-      fieldErrors: { email: ["An account with that email already exists — try signing in instead."] },
+      fieldErrors: { email: ["An account with that email already exists. Try signing in instead."] },
       name: parsed.data.name,
       email: parsed.data.email,
     };
@@ -77,7 +77,7 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
     if (error instanceof AuthError) {
       // Account was created but auto-sign-in failed for some reason — send
       // them to log in manually rather than surfacing a confusing error.
-      return { status: "error", message: "Your account was created — please sign in.", email: parsed.data.email };
+      return { status: "error", message: "Your account was created. Please sign in.", email: parsed.data.email };
     }
     // signIn() throws Next's internal redirect signal on success — rethrow
     // anything that isn't an auth failure so the navigation actually happens.

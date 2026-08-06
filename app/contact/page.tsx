@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { Sheet } from "@/components/layout/Sheet";
 import { ContactForm } from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact",
   description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
   openGraph: {
-    title: "Contact — Crochette",
+    title: "Contact | Crochette",
     description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
   },
 };
@@ -19,36 +20,34 @@ const DETAILS = [
 
 export default function ContactPage() {
   return (
-    <section className="pt-12 md:pt-20 page-gutter pb-[90px] grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
-      <FadeIn>
-        <div>
-          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-3.5">
-            Contact
-          </div>
-          <h1 className="font-serif font-medium text-[clamp(34px,4.4vw,50px)] mb-[22px] leading-[1.12]">
-            Let&apos;s get in touch
-          </h1>
-          <p className="text-base leading-[1.75] text-[oklch(0.4_0.02_60)] mb-8 max-w-[420px]">
-            Questions about an order, shipping, or just want to say hello? We&apos;d love to hear from you.
-          </p>
-          <div className="flex flex-col gap-5">
-            {DETAILS.map((d) => (
-              <div key={d.label}>
-                <div className="text-xs tracking-[1px] uppercase text-[oklch(0.5_0.04_20)] mb-1">
-                  {d.label}
+    <Sheet innerClassName="py-10 sm:py-14 lg:py-16">
+      <div className="max-w-[1320px] mx-auto">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
+          <FadeIn>
+            <h1 className="type-sheet-display text-[clamp(34px,5vw,58px)] text-keyline text-balance max-w-[14ch]">
+              Let&apos;s get in touch
+            </h1>
+            <p className="text-[17px] leading-[1.7] text-muted-foreground mt-5 max-w-[48ch]">
+              Questions about an order, shipping, or just want to say hello?
+              We&apos;d love to hear from you.
+            </p>
+            <dl className="mt-10 flex flex-col gap-5">
+              {DETAILS.map((d) => (
+                <div key={d.label}>
+                  <dt className="type-sheet-spec text-keyline/55 mb-1">{d.label}</dt>
+                  <dd className="text-[16px] text-keyline">{d.value}</dd>
                 </div>
-                <div className="text-base">{d.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </FadeIn>
+              ))}
+            </dl>
+          </FadeIn>
 
-      <FadeIn delay={0.1}>
-        <div className="p-6 sm:p-10 rounded-[24px] sm:rounded-[32px] bg-accent">
-          <ContactForm />
+          <FadeIn delay={0.1}>
+            <div className="border-2 border-keyline p-6 sm:p-8">
+              <ContactForm />
+            </div>
+          </FadeIn>
         </div>
-      </FadeIn>
-    </section>
+      </div>
+    </Sheet>
   );
 }

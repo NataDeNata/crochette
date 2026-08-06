@@ -38,7 +38,7 @@ export async function updateCustomOrder(
       .where(eq(customOrderRequests.id, id));
   } catch (err) {
     logError("admin.custom_order.update_failed", err, { customOrderId: id });
-    return { status: "error", message: "Couldn't save changes — please try again." };
+    return { status: "error", message: "Couldn't save changes. Please try again." };
   }
 
   revalidatePath(`/admin/custom-orders/${id}`);

@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { AccountIcon } from "@/components/account/AccountIcon";
-import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -21,7 +20,44 @@ const LINKS = [
  * the render site. `py-3` on the rows rather than pure `gap`, so each tap
  * target clears 44px on a phone. */
 const DRAWER_CLASS =
-  "absolute top-full left-0 right-0 bg-[oklch(0.975_0.012_85/0.98)] backdrop-blur border-b border-[oklch(0.9_0.015_60)] flex flex-col px-5 py-2";
+  "nav-drawer absolute top-full left-0 right-0 bg-sheet border-b-2 border-keyline flex flex-col px-5 py-2";
+
+/* The studio's mark, in this world's own grammar: a press-out. A solid keyline
+ * square with a dashed die line inside it and a fold tab on top — the same
+ * three-part construction every figure on the sheet is built from, reduced to
+ * 26px. Authored SVG rather than a glyph, because a font character here would
+ * be the one mark on the page that did not come off the sheet. */
+function PressOutMark() {
+  return (
+    <svg
+      aria-hidden
+      width="26"
+      height="26"
+      viewBox="0 0 26 26"
+      fill="none"
+      className="shrink-0 text-keyline"
+    >
+      <path d="M9.5 5.5V3.2h7v2.3" stroke="currentColor" strokeWidth="1.8" />
+      <rect
+        x="1.4"
+        y="5.5"
+        width="23.2"
+        height="19.1"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <rect
+        x="5.4"
+        y="9.2"
+        width="15.2"
+        height="11.6"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeDasharray="2.6 2.4"
+      />
+    </svg>
+  );
+}
 
 export function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
@@ -63,9 +99,28 @@ export function Nav({ session }: { session: Session | null }) {
   );
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between py-[22px] page-gutter bg-[oklch(0.975_0.012_85/0.85)] backdrop-blur border-b border-[oklch(0.9_0.015_60)]">
-      <Link href="/" className="font-serif text-[26px] italic font-semibold tracking-[0.5px] text-inherit">
-        Crochette
+    /* The nav is the sheet's masthead. It still sits on the ground rather than
+       on the sheet, but with both of them cream that is now a difference of
+       about one percent of luminance rather than of viridian against white — so
+       the 2px key rule that used to be the trimmed edge between them has come
+       down to a hairline in --nav-border. It exists to keep the bar legible once
+       content scrolls underneath it, which is the only job left for it.
+
+       The bar stays opaque rather than translucent: the figures that scroll
+       under it carry dashed cut lines and 2px keylines, and a blurred bar over
+       printed rules reads as a smudge on the press. */
+    <nav className="sticky top-0 z-50 flex items-center justify-between gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
+      {/* The wordmark, with the press-out mark beside it, both printed on a
+          sand plate so the masthead reads as a printed label lying on the
+          ground rather than as text floating on a colour. */}
+      <Link
+        href="/"
+        className="group flex items-center gap-2.5 bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
+      >
+        <PressOutMark />
+        <span className="type-sheet-display text-[17px] uppercase text-keyline">
+          Crochette
+        </span>
       </Link>
 
       <div className="nav-desktop-links gap-9 text-sm font-medium tracking-[0.3px]">
@@ -80,10 +135,15 @@ export function Nav({ session }: { session: Session | null }) {
             >
               {link.label}
               {isActive && !reduceMotion && (
+                // The die line under the page you are on: a press-red rule at
+                // the same 2px weight every keyline on the sheet is printed at,
+                // so "you are here" is drawn in the world's own stroke rather
+                // than in a hairline borrowed from somewhere else. It was butter
+                // when the bar was viridian; on cream, butter *is* the bar.
                 <motion.div
                   layoutId="nav-active-underline"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 rounded-[2px] bg-[oklch(0.55_0.09_20)]"
+                  className="absolute left-0 right-0 -bottom-1.5 h-0.5 bg-press-red"
                 />
               )}
             </Link>
@@ -92,13 +152,23 @@ export function Nav({ session }: { session: Session | null }) {
       </div>
 
       {!isShopPage && (
-        <Button href="/shop" size="sm" className="nav-cta">
+        // A tab, not the stock pill. Every actionable thing in this world is
+        // taken by its tab, and the one control in the masthead is where that
+        // would be most conspicuous to get wrong.
+        <Link
+          href="/shop"
+          data-slot="button"
+          // The focus outline is press red, not butter. Butter measures 1.2:1
+          // against the cream ground it would be drawn on — a focus indicator
+          // owes 3:1, and this one is the control a keyboard user reaches first.
+          className="nav-cta inline-flex items-center border-2 border-keyline bg-sheet px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-keyline transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+        >
           Shop now
-        </Button>
+        </Link>
       )}
 
       <div className="flex items-center gap-1">
-        <AccountIcon href={accountHref} className="account-icon-link" />
+        <AccountIcon href={accountHref} className="nav-account-icon account-icon-link" />
         <CartIcon className="cart-icon-link" />
 
         <button
@@ -110,15 +180,15 @@ export function Nav({ session }: { session: Session | null }) {
         >
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? 45 : 0, y: open ? 6 : 0 }}
-            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
+            className="block w-[22px] h-0.5 bg-keyline"
           />
           <motion.span
             animate={reduceMotion ? undefined : { opacity: open ? 0 : 1 }}
-            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
+            className="block w-[22px] h-0.5 bg-keyline"
           />
           <motion.span
             animate={reduceMotion ? undefined : { rotate: open ? -45 : 0, y: open ? -6 : 0 }}
-            className="block w-[22px] h-0.5 rounded-[2px] bg-primary"
+            className="block w-[22px] h-0.5 bg-keyline"
           />
         </button>
       </div>
@@ -146,6 +216,7 @@ export function Nav({ session }: { session: Session | null }) {
           )}
         </AnimatePresence>
       )}
+
     </nav>
   );
 }

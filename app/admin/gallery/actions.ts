@@ -30,7 +30,7 @@ export async function addToGallery(
       .where(eq(productImages.id, imageId));
   } catch (err) {
     logError("admin.gallery.add_failed", err, { imageId });
-    return { status: "error", message: "Couldn't add that photo to the gallery — please try again." };
+    return { status: "error", message: "Couldn't add that photo to the gallery. Please try again." };
   }
 
   revalidateGallery();
@@ -49,7 +49,7 @@ export async function removeFromGallery(
       .where(eq(productImages.id, imageId));
   } catch (err) {
     logError("admin.gallery.remove_failed", err, { imageId });
-    return { status: "error", message: "Couldn't remove that photo — please try again." };
+    return { status: "error", message: "Couldn't remove that photo. Please try again." };
   }
 
   revalidateGallery();
@@ -90,7 +90,7 @@ export async function reorderGalleryImage(
     });
   } catch (err) {
     logError("admin.gallery.reorder_failed", err, { imageId, direction });
-    return { status: "error", message: "Couldn't reorder — please try again." };
+    return { status: "error", message: "Couldn't reorder. Please try again." };
   }
 
   revalidateGallery();

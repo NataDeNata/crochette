@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import type { AddressRow } from "@/lib/db/schema";
 
 const fieldClassName =
-  "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[14px] py-3 text-sm";
+  "h-auto rounded-xl border-[1.5px] border-input bg-[oklch(0.98_0.01_85)] px-[14px] py-3 text-sm";
 
 export function AddressForm({ address, onSaved }: { address?: AddressRow; onSaved?: () => void }) {
   const [state, formAction, isPending] = useActionState(saveAddress, IDLE_STATE);
@@ -23,7 +23,7 @@ export function AddressForm({ address, onSaved }: { address?: AddressRow; onSave
     <form action={formAction} className="flex flex-col gap-3">
       {address && <input type="hidden" name="addressId" value={address.id} />}
 
-      <Input name="label" placeholder="Label (e.g. Home) — optional" defaultValue={address?.label ?? ""} className={fieldClassName} />
+      <Input name="label" placeholder="Label (e.g. Home), optional" defaultValue={address?.label ?? ""} className={fieldClassName} />
 
       <div className="flex flex-col gap-1.5">
         <Input name="line1" placeholder="Street address" defaultValue={address?.line1} className={fieldClassName} />

@@ -14,7 +14,7 @@ import { logInfo } from "@/lib/observability/log";
 import type { AdminLoginState } from "@/lib/actions/admin-login-types";
 
 const GENERIC_FAILURE = "Incorrect email or password.";
-const TOO_MANY = "Too many attempts — please wait a few minutes and try again.";
+const TOO_MANY = "Too many attempts. Please wait a few minutes and try again.";
 
 /** Scoped to the login route so the browser never sends it anywhere else, and
  * httpOnly so no script can read it. `secure` is dropped on localhost, where
@@ -122,7 +122,7 @@ export async function adminLoginTotp(_prevState: AdminLoginState, formData: Form
   if (!challenge) {
     // Expired or never issued — there is nothing to attach a code to, so the
     // password step has to happen again.
-    return { status: "error", message: "That took too long — please sign in again." };
+    return { status: "error", message: "That took too long. Please sign in again." };
   }
 
   if (typeof code !== "string" || !code.trim()) {
@@ -131,7 +131,7 @@ export async function adminLoginTotp(_prevState: AdminLoginState, formData: Form
 
   return finishSignIn(challenge, code.trim(), undefined, {
     status: "totp",
-    message: "That code isn't right — check your app and try again.",
+    message: "That code isn't right. Check your app and try again.",
   });
 }
 

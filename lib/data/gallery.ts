@@ -34,7 +34,7 @@ async function fetchFeaturedGalleryImages(limit: number): Promise<GalleryItem[]>
   return rows.map((row, i) => ({
     image: row.url,
     alt: row.alt || row.caption || row.productName,
-    placeholder: `gallery — ${row.productName.toLowerCase()}`,
+    placeholder: `gallery: ${row.productName.toLowerCase()}`,
     bgClassName: BG_CYCLE_CLASSES[i % BG_CYCLE_CLASSES.length],
     span: SPAN_RHYTHM[i % SPAN_RHYTHM.length],
   }));

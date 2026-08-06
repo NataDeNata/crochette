@@ -25,5 +25,5 @@ export const orderBulkUpdateSchema = z.object({
   orderIds: z
     .array(z.uuid())
     .min(1, "Select at least one order.")
-    .max(100, "Too many orders selected at once — please do it in smaller batches."),
+    .max(100, "Too many orders selected at once. Please do it in smaller batches."),
 });

@@ -5,7 +5,10 @@ import { motion, useReducedMotion } from "framer-motion";
 export function FormSuccessMessage({ message }: { message?: string }) {
   const reduceMotion = useReducedMotion();
 
-  const className = "p-6 rounded-[16px] bg-[oklch(0.95_0.03_150)] text-[oklch(0.3_0.05_150)] text-[15px] leading-[1.6]";
+  /* A stamped receipt rather than a soft green panel: keyline box, butter
+     ground, key-colour text. Two cream-palette oklch literals came out. */
+  const className =
+    "p-6 border-2 border-keyline bg-butter text-keyline text-[15px] leading-[1.6]";
 
   if (reduceMotion) {
     return <div className={className}>{message}</div>;

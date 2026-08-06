@@ -31,7 +31,7 @@ export async function submitCheckout(
   if (await isRateLimited("checkout", ip)) {
     return {
       status: "error",
-      message: "Too many attempts — please wait a few minutes and try again.",
+      message: "Too many attempts. Please wait a few minutes and try again.",
     };
   }
 
@@ -67,7 +67,7 @@ export async function submitCheckout(
     logWarn("checkout.empty_cart", { hasCart: Boolean(cartId) });
     return {
       status: "error",
-      message: "Your cart is empty — please add something before checking out.",
+      message: "Your cart is empty. Please add something before checking out.",
     };
   }
 
@@ -90,8 +90,8 @@ export async function submitCheckout(
         status: "error",
         message:
           product.stockQty > 0
-            ? `Only ${product.stockQty} of "${product.name}" left in stock — please update the quantity in your cart.`
-            : `"${product.name}" just sold out — please remove it from your cart.`,
+            ? `Only ${product.stockQty} of "${product.name}" left in stock. Please update the quantity in your cart.`
+            : `"${product.name}" just sold out. Please remove it from your cart.`,
       };
     }
     lineItems.push({
@@ -181,7 +181,7 @@ export async function submitCheckout(
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, order.id));
     return {
       status: "error",
-      message: "We couldn't start checkout right now — please try again in a moment.",
+      message: "We couldn't start checkout right now. Please try again in a moment.",
     };
   }
 

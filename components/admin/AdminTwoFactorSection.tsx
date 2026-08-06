@@ -201,11 +201,11 @@ function ActiveState({
             <>
               {backupCodesRemaining} unused
               {/* Worth flagging before it becomes a lockout rather than after. */}
-              {backupCodesRemaining <= 2 ? " — running low, reissue them" : ""}
+              {backupCodesRemaining <= 2 ? ", running low, reissue them" : ""}
             </>
           ) : (
             <span className="text-destructive">
-              none left — reissue now, or losing your phone means losing access
+              none left. Reissue now, or losing your phone means losing access
             </span>
           )}
         </div>
@@ -233,7 +233,7 @@ function ActiveState({
       {showDisable ? (
         <form action={disableAction} className="flex flex-col gap-3 rounded-lg border border-destructive/40 p-3">
           <p className="m-0 text-[13px] text-muted-foreground">
-            Turning this off needs both your password and a current code — the same two things an attacker
+            Turning this off needs both your password and a current code, the same two things an attacker
             would have to hold to turn it off for you.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -303,7 +303,7 @@ function BackupCodes({
         ))}
       </ul>
       <p className="m-0 text-[12px] text-muted-foreground">
-        Each one works once, in place of a code from your app. Print them or put them in a password manager —
+        Each one works once, in place of a code from your app. Print them or put them in a password manager.
         this page will not show them again.
       </p>
       {onDismiss ? (

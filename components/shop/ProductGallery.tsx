@@ -8,6 +8,18 @@ import type { GalleryItem } from "@/lib/data/gallery";
 import type { ProductImage } from "@/lib/data/products";
 import { cn } from "@/lib/utils";
 
+/* The plate: this piece at the size you judge it by.
+ *
+ * The main image takes the same die-cut arch every figure on the sheet does,
+ * with the cut line and trim margin around it, so the thing you clicked and
+ * the thing you are now looking at are recognisably the same object. The
+ * thumbnails are square keyline chips instead — they are a control strip, not
+ * more figures, and die-cutting them would say the wrong thing.
+ *
+ * Two hardcoded cream-palette oklch literals and a monospace placeholder came
+ * out of this file. The mono was standing in for "technical", which is the one
+ * job this world gives the spec face, not a typewriter.
+ */
 export function ProductGallery({
   images,
   productName,
@@ -25,23 +37,29 @@ export function ProductGallery({
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const tagBadge = tag && (
-    <div className="absolute top-[18px] left-[18px] z-[1] bg-[oklch(0.98_0.01_85/0.9)] py-1.5 px-3.5 rounded-[16px] text-xs tracking-[0.5px] uppercase font-semibold text-[oklch(0.5_0.09_20)]">
+    <div className="type-sheet-spec absolute top-4 left-1/2 z-[2] -translate-x-1/2 border-2 border-keyline bg-butter px-3 py-1.5 text-keyline">
       {tag}
     </div>
   );
 
   if (images.length === 0) {
     return (
-      <div
-        className={cn(
-          "relative aspect-square rounded-[28px] overflow-hidden flex items-center justify-center",
-          bgClassName
-        )}
-      >
-        {tagBadge}
-        <span className="[font-family:ui-monospace,monospace] text-[13px] text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.6)] py-[7px] px-3.5 rounded-[8px] text-center">
-          {placeholder}
-        </span>
+      <div className="relative">
+        <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
+          <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
+            <div
+              className={cn(
+                "diecut-arch relative flex aspect-4/5 items-end justify-center overflow-hidden",
+                bgClassName,
+              )}
+            >
+              {tagBadge}
+              <span className="type-sheet-spec mb-8 max-w-[80%] text-center text-keyline">
+                {placeholder}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -55,27 +73,35 @@ export function ProductGallery({
   }));
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="relative aspect-square rounded-[28px] overflow-hidden">
-        {tagBadge}
-        <GalleryTile
-          item={items[activeIndex]}
-          layoutId={`product-gallery-${activeIndex}`}
-          onClick={() => setOpenIndex(activeIndex)}
-        />
+    <div className="flex flex-col gap-5">
+      <div className="relative">
+        <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
+          <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
+            <div className="diecut-arch relative aspect-4/5 overflow-hidden">
+              {tagBadge}
+              <GalleryTile
+                item={items[activeIndex]}
+                layoutId={`product-gallery-${activeIndex}`}
+                onClick={() => setOpenIndex(activeIndex)}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {images.length > 1 && (
-        <div className="flex gap-2.5 flex-wrap">
+        <div className="flex flex-wrap gap-2.5">
           {images.map((img, i) => (
             <button
               key={img.id}
               type="button"
               onClick={() => setActiveIndex(i)}
               aria-label={`Show photo ${i + 1}`}
+              aria-current={i === activeIndex ? "true" : undefined}
               className={cn(
-                "relative w-16 h-16 rounded-[10px] overflow-hidden border-[1.5px] shrink-0 cursor-pointer",
-                i === activeIndex ? "border-primary" : "border-transparent"
+                "relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden border-2",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+                i === activeIndex ? "border-press-red" : "border-keyline",
               )}
             >
               <GalleryTile item={items[i]} />

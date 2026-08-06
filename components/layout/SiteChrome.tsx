@@ -30,7 +30,18 @@ export function SiteChrome({ children, session }: { children: ReactNode; session
   // <main> also gives the storefront the landmark it never had; /admin has had
   // one since its redesign.
   return (
-    <div className="flex min-h-dvh flex-col">
+    // `data-surface` is what scopes the colorwork-chart palette. Every token in
+    // that world is declared on this attribute rather than on :root, because
+    // /admin shares this stylesheet and keeps the cream palette it was
+    // deliberately designed around. This component was already the place that
+    // knows which of the two surfaces is rendering, so it is the place that
+    // says so.
+    // `data-world` is stamped alongside `data-surface` and is what selects the
+    // cut-out sheet's token block over the Akari one it is replacing. Both
+    // blocks are complete, so removing this one attribute is a working
+    // rollback for the whole visual world — which is the only reason the old
+    // block is still in the stylesheet while the overhaul is in flight.
+    <div data-surface="storefront" data-world="cutout" className="flex min-h-dvh flex-col">
       <Nav session={session} />
       <main className="flex-1">
         <PageTransition>{children}</PageTransition>

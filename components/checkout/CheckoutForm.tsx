@@ -13,7 +13,8 @@ import { FieldError } from "@/components/forms/FieldError";
 import { Input } from "@/components/ui/input";
 import { CheckoutFormSkeleton } from "@/components/checkout/CheckoutFormSkeleton";
 
-const fieldClassName = "h-auto rounded-xl border-[1.5px] border-[oklch(0.75_0.03_20)] bg-[oklch(0.98_0.01_85)] px-[18px] py-3.5 text-sm";
+const fieldClassName =
+  "h-auto rounded-none border-2 border-keyline bg-sheet px-4 py-3.5 text-sm text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 export type SavedAddress = {
   id: string;
@@ -77,7 +78,7 @@ export function CheckoutForm({
             `items` is still used above for the order summary and the
             empty-cart redirect. */}
 
-        <h2 className="font-serif font-medium text-[22px] mb-1">Contact</h2>
+        <h2 className="type-sheet-display text-[22px] text-keyline mb-1">Contact</h2>
         <div className="flex flex-col gap-1.5">
           <Input name="name" placeholder="Full name" defaultValue={defaultName} className={fieldClassName} />
           <FieldError error={fieldErrors.name?.[0]} />
@@ -91,7 +92,7 @@ export function CheckoutForm({
           <FieldError error={fieldErrors.phone?.[0]} />
         </div>
 
-        <h2 className="font-serif font-medium text-[22px] mt-[18px] mb-1">Shipping address</h2>
+        <h2 className="type-sheet-display text-[22px] text-keyline mt-[18px] mb-1">Shipping address</h2>
 
         {addresses.length > 0 && (
           <select
@@ -140,7 +141,7 @@ export function CheckoutForm({
           </div>
         </div>
 
-        <h2 className="font-serif font-medium text-[22px] mt-[18px] mb-1">Discount code</h2>
+        <h2 className="type-sheet-display text-[22px] text-keyline mt-[18px] mb-1">Discount code</h2>
         <div className="flex flex-col gap-1.5">
           <Input name="discountCode" placeholder="Optional code" className={`${fieldClassName} uppercase`} />
           <FieldError error={fieldErrors.discountCode?.[0]} />
@@ -152,18 +153,18 @@ export function CheckoutForm({
       </motion.form>
 
       <div>
-        <h2 className="font-serif font-medium text-[22px] mb-4">Order summary</h2>
+        <h2 className="type-sheet-display text-[22px] text-keyline mb-4">Order summary</h2>
         <div className="flex flex-col gap-2.5">
           {items.map((item) => (
             <div key={item.productId} className="flex justify-between text-sm">
               <span>
-                {item.name} <span className="text-[oklch(0.55_0.02_60)]">× {item.quantity}</span>
+                {item.name} <span className="text-muted-foreground">× {item.quantity}</span>
               </span>
               <span>{formatPrice(item.priceCents * item.quantity)}</span>
             </div>
           ))}
         </div>
-        <div className="mt-[18px] pt-3.5 border-t border-[oklch(0.92_0.015_60)] flex flex-col gap-2 text-sm">
+        <div className="mt-[18px] pt-3.5 border-t-2 border-keyline flex flex-col gap-2 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span>
             <span>{formatPrice(subtotalCents)}</span>

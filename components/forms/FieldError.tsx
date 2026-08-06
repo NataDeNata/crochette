@@ -2,7 +2,10 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-const errorClassName = "text-[12.5px] text-[oklch(0.5_0.18_25)]";
+/* Was a hardcoded oklch literal from the cream palette. `--destructive` is the
+ * press red on the storefront and the admin's own red inside /admin, so one
+ * token now covers both surfaces correctly. */
+const errorClassName = "text-[12.5px] text-destructive";
 
 export function FieldError({ error }: { error?: string }) {
   const reduceMotion = useReducedMotion();

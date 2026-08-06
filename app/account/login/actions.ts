@@ -21,7 +21,7 @@ export async function accountLogin(_prevState: AccountLoginState, formData: Form
   if ((await isRateLimited("auth-ip", ip)) || (await isRateLimited("login", `${ip}:${emailKey}`))) {
     return {
       status: "error",
-      message: "Too many attempts — please wait a few minutes and try again.",
+      message: "Too many attempts. Please wait a few minutes and try again.",
       email: typeof email === "string" ? email : undefined,
     };
   }

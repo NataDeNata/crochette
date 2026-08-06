@@ -51,7 +51,7 @@ export default async function AdminCustomersPage({
           scope than trusts a figure that quietly omits guest revenue. */}
       <p className="m-0 text-[13px] text-muted-foreground">
         Totals count orders placed while signed in. Guest checkouts aren&rsquo;t linked to an account, so
-        they don&rsquo;t appear here — see <Link href="/admin/orders" className="underline">Orders</Link> for
+        they don&rsquo;t appear here. See <Link href="/admin/orders" className="underline">Orders</Link> for
         every order.
       </p>
 

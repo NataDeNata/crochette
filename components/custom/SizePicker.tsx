@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const SIZE_PRESETS = [
@@ -12,10 +11,10 @@ const SIZE_PRESETS = [
 ];
 
 const inputClassName =
-  "py-3 px-4 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
+  "py-3 px-4 border-2 border-keyline bg-sheet text-sm [font-family:inherit] text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 function pillLabel(preset: (typeof SIZE_PRESETS)[number]) {
-  return `${preset.label} — ${preset.detail}`;
+  return `${preset.label}, ${preset.detail}`;
 }
 
 /** Single-select size picker: S/M/L/XL presets carry a default stitch size
@@ -32,7 +31,6 @@ export function SizePicker({
 }) {
   const [selected, setSelected] = useState<string>("");
   const [customText, setCustomText] = useState("");
-  const reduceMotion = useReducedMotion();
 
   function selectPreset(preset: (typeof SIZE_PRESETS)[number]) {
     setSelected(preset.value);
@@ -58,7 +56,11 @@ export function SizePicker({
   return (
     <div className="flex flex-col gap-2">
       <input type="hidden" name={name} value={postedValue} />
-      <div className="flex gap-2.5 flex-wrap">
+      {/* Same vocabulary as the colour picker and the sheet filters: keyline
+          box at rest, butter when chosen. The sliding indicator is gone with
+          the world that had one — this sheet marks a chosen thing by filling
+          it, not by animating a token between positions. */}
+      <div className="flex gap-2 flex-wrap">
         {SIZE_PRESETS.map((preset) => {
           const isActive = selected === preset.value;
           return (
@@ -68,29 +70,14 @@ export function SizePicker({
               aria-pressed={isActive}
               onClick={() => selectPreset(preset)}
               className={cn(
-                "relative w-11 py-[9px] rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-card [font-family:inherit]",
-                isActive && reduceMotion
-                  ? "border-[oklch(0.28_0.02_60)]"
-                  : isActive
-                    ? "border-transparent"
-                    : "border-[oklch(0.75_0.03_20)]",
+                "type-sheet-spec h-11 w-12 cursor-pointer border-2 border-keyline transition-colors duration-200",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+                isActive
+                  ? "bg-butter text-keyline"
+                  : "bg-sheet text-keyline/70 hover:bg-secondary hover:text-keyline",
               )}
             >
-              {isActive && !reduceMotion && (
-                <motion.span
-                  layoutId="custom-size-active"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 rounded-[20px] bg-primary z-0"
-                />
-              )}
-              <span
-                className={cn(
-                  "relative z-[1]",
-                  isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-[oklch(0.42_0.02_60)]",
-                )}
-              >
-                {preset.label}
-              </span>
+              {preset.label}
             </button>
           );
         })}
@@ -99,14 +86,17 @@ export function SizePicker({
           aria-pressed={selected === "custom"}
           onClick={selectCustom}
           className={cn(
-            "py-[9px] px-4 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer [font-family:inherit]",
-            selected === "custom" ? "border-primary bg-primary text-card" : "border-[oklch(0.75_0.03_20)] bg-card text-[oklch(0.42_0.02_60)]",
+            "type-sheet-spec h-11 cursor-pointer border-2 border-keyline px-4 transition-colors duration-200",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+            selected === "custom"
+              ? "bg-butter text-keyline"
+              : "bg-sheet text-keyline/70 hover:bg-secondary hover:text-keyline",
           )}
         >
-          Custom…
+          Custom
         </button>
       </div>
-      {activeDetail && <div className="text-[12.5px] text-[oklch(0.45_0.02_60)]">{activeDetail}</div>}
+      {activeDetail && <div className="text-[13px] text-muted-foreground">{activeDetail}</div>}
       {selected === "custom" && (
         <input
           placeholder="Describe your size…"

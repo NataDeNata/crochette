@@ -34,7 +34,7 @@ export function OrderUpdateForm({
         </label>
         {(status === "pending" || status === "failed") && (
           <div className="mb-2 text-[13px] text-muted-foreground">
-            Current status is <strong>{status}</strong> — set automatically by the payment flow, not editable here.
+            Current status is <strong>{status}</strong>, set automatically by the payment flow, not editable here.
           </div>
         )}
         <Select name="status" defaultValue={defaultValue}>

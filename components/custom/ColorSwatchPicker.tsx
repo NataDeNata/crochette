@@ -12,8 +12,12 @@ const SWATCHES = [
   { label: "Terracotta", swatchClass: "bg-[oklch(0.62_0.1_40)]" },
 ];
 
+/* The swatch labels and their colours are left exactly as they were. They name
+ * the yarn the studio actually stocks, which makes them product truth rather
+ * than palette — renaming Rose to Madder to match the site's dyes would change
+ * what the owner reads on an order for the sake of a visual rhyme. */
 const inputClassName =
-  "py-3 px-4 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
+  "py-3 px-4 border-2 border-keyline bg-sheet text-sm [font-family:inherit] text-keyline placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red";
 
 function joinValue(selected: Set<string>, custom: string) {
   return [...selected, custom.trim()].filter(Boolean).join(", ").slice(0, 200);
@@ -50,7 +54,9 @@ export function ColorSwatchPicker({
   return (
     <div className="flex flex-col gap-2.5">
       <input type="hidden" name={name} value={joinValue(selected, customText)} />
-      <div className="flex gap-3 items-center flex-wrap">
+      {/* A chosen swatch lifts and takes an ink rule, rather than scaling —
+          a swatch that grows stops lining up with the row it sits in. */}
+      <div className="flex gap-2 items-stretch flex-wrap">
         {SWATCHES.map((s) => {
           const isActive = selected.has(s.label);
           return (
@@ -61,16 +67,23 @@ export function ColorSwatchPicker({
               aria-label={s.label}
               title={s.label}
               onClick={() => toggle(s.label)}
-              animate={{ scale: isActive ? 1.12 : 1 }}
+              animate={{ y: isActive ? -3 : 0 }}
               transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
               className={cn(
-                "w-[30px] h-[30px] rounded-full cursor-pointer p-0",
+                "size-11 cursor-pointer p-0 border-2 border-keyline relative overflow-hidden",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
                 s.swatchClass,
-                isActive
-                  ? "border-[2.5px] border-[oklch(0.28_0.02_60)] shadow-[0_0_0_2px_oklch(0.98_0.01_85)]"
-                  : "border-[1.5px] border-card shadow-none",
               )}
-            />
+            >
+              {isActive && (
+                // The chosen ink gets a press-red ring inside its keyline —
+                // the same colour the sheet uses for "this is the live one".
+                <span
+                  aria-hidden
+                  className="absolute inset-0 border-[3px] border-press-red"
+                />
+              )}
+            </motion.button>
           );
         })}
         <button
@@ -78,11 +91,12 @@ export function ColorSwatchPicker({
           aria-pressed={customOpen}
           onClick={() => setCustomOpen((v) => !v)}
           className={cn(
-            "py-1.5 px-3.5 rounded-[20px] border-[1.5px] text-[12.5px] font-medium cursor-pointer [font-family:inherit]",
-            customOpen ? "border-primary bg-primary text-card" : "border-[oklch(0.75_0.03_20)] bg-card text-[oklch(0.42_0.02_60)]",
+            "type-sheet-spec cursor-pointer border-2 border-keyline px-4 transition-colors duration-200",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+            customOpen ? "bg-butter text-keyline" : "bg-sheet text-keyline/70",
           )}
         >
-          Custom…
+          Custom
         </button>
       </div>
       {customOpen && (

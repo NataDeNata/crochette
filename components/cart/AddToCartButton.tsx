@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart/CartContext";
 import { cn } from "@/lib/utils";
 
+/* Quantity and the commit, side by side.
+ *
+ * Rebuilt off three cream-palette oklch literals, a 30px pill and a Unicode
+ * check mark standing in for an icon. The stepper is a keyline box with drawn
+ * marks in the sheet's own 2px stroke; the commit is the Button primitive,
+ * which the world restates as a square tab in globals.css.
+ */
 export function AddToCartButton({
   product,
 }: {
@@ -20,11 +27,11 @@ export function AddToCartButton({
   const maxQuantity = Math.min(20, product.stockQty);
 
   return (
-    <div className="flex items-center gap-3.5 flex-wrap">
+    <div className="flex flex-wrap items-center gap-4">
       <div
         className={cn(
-          "flex items-center border-[1.5px] border-[oklch(0.85_0.02_60)] rounded-[30px] overflow-hidden",
-          outOfStock ? "opacity-50" : "opacity-100",
+          "flex items-stretch border-2 border-keyline",
+          outOfStock && "opacity-50",
         )}
       >
         <button
@@ -32,19 +39,34 @@ export function AddToCartButton({
           disabled={outOfStock}
           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
           aria-label="Decrease quantity"
-          className={cn("py-3 px-4 bg-transparent border-0 text-[15px]", outOfStock ? "cursor-not-allowed" : "cursor-pointer")}
+          className={cn(
+            "flex h-11 w-11 items-center justify-center border-0 bg-transparent text-keyline",
+            "transition-colors duration-200 enabled:hover:bg-butter",
+            "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-press-red",
+            outOfStock ? "cursor-not-allowed" : "cursor-pointer",
+          )}
         >
-          −
+          <MinusMark />
         </button>
-        <span className="text-sm min-w-4.5 text-center">{quantity}</span>
+        <span
+          aria-live="polite"
+          className="type-sheet-spec flex min-w-9 items-center justify-center border-x-2 border-keyline px-1 tabular-nums text-keyline"
+        >
+          {quantity}
+        </span>
         <button
           type="button"
           disabled={outOfStock}
           onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
           aria-label="Increase quantity"
-          className={cn("py-3 px-4 bg-transparent border-0 text-[15px]", outOfStock ? "cursor-not-allowed" : "cursor-pointer")}
+          className={cn(
+            "flex h-11 w-11 items-center justify-center border-0 bg-transparent text-keyline",
+            "transition-colors duration-200 enabled:hover:bg-butter",
+            "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-press-red",
+            outOfStock ? "cursor-not-allowed" : "cursor-pointer",
+          )}
         >
-          +
+          <PlusMark />
         </button>
       </div>
 
@@ -58,7 +80,7 @@ export function AddToCartButton({
           setAdded(true);
           setTimeout(() => setAdded(false), 1600);
         }}
-        className="min-w-[148px] disabled:bg-[oklch(0.85_0.01_60)] disabled:text-[oklch(0.4_0.02_60)] disabled:opacity-100"
+        className="min-w-[168px] disabled:bg-secondary disabled:text-muted-foreground disabled:opacity-100"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
@@ -67,12 +89,49 @@ export function AddToCartButton({
             animate={{ opacity: 1, y: 0 }}
             exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            className="inline-block"
+            className="inline-flex items-center gap-2"
           >
-            {outOfStock ? "Out of stock" : added ? "Added to cart ✓" : "Add to cart"}
+            {outOfStock ? (
+              "Sold out"
+            ) : added ? (
+              <>
+                Added <CheckMark />
+              </>
+            ) : (
+              "Add to cart"
+            )}
           </motion.span>
         </AnimatePresence>
       </Button>
     </div>
+  );
+}
+
+function MinusMark() {
+  return (
+    <svg aria-hidden width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+    </svg>
+  );
+}
+
+function PlusMark() {
+  return (
+    <svg aria-hidden width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+    </svg>
+  );
+}
+
+function CheckMark() {
+  return (
+    <svg aria-hidden width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path
+        d="M1.5 7.5 5.4 11.5 12.5 2.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="square"
+      />
+    </svg>
   );
 }

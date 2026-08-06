@@ -1,31 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type PillOption = { value: string; label: string };
 
-/** Single-select pill picker. Posts its value as a plain string via a hidden
- * input, so it drops into any FormData-based form unchanged. Sliding active
- * background mirrors the ShopGrid category-filter pills. */
+/** Single-select picker. Posts its value as a plain string via a hidden input,
+ * so it drops into any FormData-based form unchanged.
+ *
+ * Nothing here is a pill any more — the name is kept because every call site
+ * and its `layoutId` argument use it, and renaming a working component across
+ * the form surfaces is churn this rebuild does not need. It is a row of
+ * keyline plates that fill with butter when chosen, matching the size and
+ * colour pickers beside it and the sheet filters on /shop.
+ *
+ * The sliding indicator is gone. It animated a token between positions, which
+ * is a second authored moment competing with the press-out, and it forced the
+ * three sibling pickers to each carry a `reduceMotion` branch for a decoration.
+ * `layoutId` is now unused but kept in the signature for the same reason the
+ * name is — see above.
+ */
 export function PillGroup({
   name,
   options,
   defaultValue = "",
   onValueChange,
-  layoutId,
   ariaLabel,
 }: {
   name: string;
   options: PillOption[];
   defaultValue?: string;
   onValueChange?: (value: string) => void;
-  layoutId: string;
+  /** Unused since the sliding indicator was removed; retained so existing call
+   * sites keep type-checking. */
+  layoutId?: string;
   ariaLabel: string;
 }) {
   const [selected, setSelected] = useState(defaultValue);
-  const reduceMotion = useReducedMotion();
 
   function select(value: string) {
     setSelected(value);
@@ -33,7 +44,7 @@ export function PillGroup({
   }
 
   return (
-    <div aria-label={ariaLabel} className="flex gap-2.5 flex-wrap">
+    <div aria-label={ariaLabel} className="flex flex-wrap gap-2">
       <input type="hidden" name={name} value={selected} />
       {options.map((opt) => {
         const isActive = opt.value === selected;
@@ -44,29 +55,14 @@ export function PillGroup({
             aria-pressed={isActive}
             onClick={() => select(opt.value)}
             className={cn(
-              "relative py-[9px] px-4 rounded-[20px] border-[1.5px] text-[13px] font-medium cursor-pointer bg-card [font-family:inherit]",
-              isActive && reduceMotion
-                ? "border-[oklch(0.28_0.02_60)]"
-                : isActive
-                  ? "border-transparent"
-                  : "border-[oklch(0.75_0.03_20)]",
+              "type-sheet-spec cursor-pointer border-2 border-keyline px-3.5 py-2.5 [font-family:inherit] transition-colors duration-200",
+              "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red",
+              isActive
+                ? "bg-butter text-keyline"
+                : "bg-sheet text-keyline/70 hover:bg-secondary hover:text-keyline",
             )}
           >
-            {isActive && !reduceMotion && (
-              <motion.span
-                layoutId={layoutId}
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                className="absolute inset-0 rounded-[20px] bg-primary z-0"
-              />
-            )}
-            <span
-              className={cn(
-                "relative z-[1]",
-                isActive ? (reduceMotion ? "text-primary" : "text-card") : "text-[oklch(0.42_0.02_60)]",
-              )}
-            >
-              {opt.label}
-            </span>
+            {opt.label}
           </button>
         );
       })}

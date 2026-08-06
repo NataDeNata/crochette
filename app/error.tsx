@@ -38,8 +38,8 @@ export default function RouteError({
         </div>
         <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-4">A stitch came loose</h1>
         <p className="text-[15.5px] text-[oklch(0.42_0.02_60)] max-w-[440px] mx-auto mb-8 leading-[1.6]">
-          We hit an unexpected problem loading this page. It&apos;s been logged on our side — try again, or
-          head back to the collection.
+          We hit an unexpected problem loading this page. It&apos;s been logged on our side. Try again,
+          or head back to the collection.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button onClick={() => reset()}>Try again</Button>

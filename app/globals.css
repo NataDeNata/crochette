@@ -7,8 +7,18 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-serif: var(--font-cormorant), Georgia, serif;
-  --font-sans: var(--font-work), ui-sans-serif, system-ui, sans-serif;
+  /* Jost, a geometric humanist sans with a double-storey `a`, matching the
+   * quality-bar board's specimen: light for display, regular for body. The
+   * world is paper and bamboo, so the face has to hold at 300 weight without
+   * falling apart — a heavier display face turns the paper into signage.
+   *
+   * `--font-serif` is a transition alias, not a serif. It still resolves for
+   * the routes this overhaul has not reached yet (/about, /contact, /cart,
+   * /checkout, /account) so they keep rendering while the front-of-funnel is
+   * rebuilt. It goes when they do. */
+  --font-display: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* The sitewide horizontal page gutter, as one utility instead of the flat
@@ -47,9 +57,23 @@
     @apply font-sans;
   }
 
+  /* `overflow-x: hidden` is gone from here, and its removal is the point.
+   *
+   * It existed for one consumer: the draggable product marquee, which was
+   * deliberately wider than the viewport. The cut-out sheet states the
+   * collection as a grid of figures instead, so nothing on the storefront is
+   * intentionally overflowing any more.
+   *
+   * The rule was not free. A clipping container stops clipped overflow from
+   * contributing to `documentElement.scrollWidth`, so the standard overflow
+   * check read clean precisely when it should have fired — a 2026-07-21 sweep
+   * of 10 routes at 3 widths reported zero overflow while a minmax(320px,1fr)
+   * track was overflowing every phone width, and that went unnoticed for ten
+   * days. With the rule gone, `scrollWidth` is a trustworthy check here again.
+   * If a future component needs to overflow, clip it on that component, not on
+   * the document. */
   body {
     margin: 0;
-    overflow-x: hidden;
     background: oklch(0.975 0.012 85);
     color: oklch(0.28 0.02 60);
     font-family: var(--font-sans);
@@ -91,17 +115,62 @@
   }
 }
 
+/* Touch targets.
+ *
+ * The docs have claimed "44px touch targets" sitewide since the responsive
+ * pass, and it was not true. The most-used button size is `sm` (51 call sites)
+ * at roughly 34px tall, `Input` is h-8 (32px), and the dialog close button is
+ * 28px. None of those violate WCAG 2.5.8, whose AA minimum is only 24x24 --
+ * they miss the project's own, stricter standard, which is the one worth
+ * keeping because it comes from how phones are actually used.
+ *
+ * Applied under `pointer: coarse` rather than globally, because the two cases
+ * genuinely differ. A mouse is precise and the /admin redesign deliberately
+ * chose compact controls for dense list and filter surfaces; growing all 51
+ * buttons everywhere would restyle that on a desktop it does not help. A
+ * finger has the same contact area regardless of which page it lands on.
+ *
+ * min-height only ever grows a control, so nothing here can crop content, and
+ * the `lg` default (~48px) and Lightbox's size-11 close are already above the
+ * floor and unaffected. `link` buttons are excluded: they are inline text, and
+ * a 44px box around a word in a sentence would be wrong rather than kind. */
+@media (pointer: coarse) {
+  button:not([data-variant="link"]),
+  [data-slot="button"]:not([data-variant="link"]),
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"] {
+    min-height: 44px;
+  }
+
+  /* Square controls need the width too, or a 44px-tall 28px-wide icon button
+   * is still a miss on the axis that matters for a thumb.
+   *
+   * Checkboxes are deliberately not in here. A min-width alone would stretch
+   * the visible box into a 44x16 rectangle, and sizing the box itself to 44px
+   * is not what a checkbox should look like -- the fix there is hit area on
+   * the label, not geometry on the control, and the admin's are already inside
+   * clickable rows. They also clear 2.5.8's 24px floor as they are. */
+  [data-slot="button"][data-size^="icon"] {
+    min-width: 44px;
+  }
+}
+
 /*
  * As of the 2026-07 inline-style removal, base styling sitewide is Tailwind
  * classes (see Cro_Documentation.md). Inline `style={{}}` now survives in
- * exactly two places, and neither sets a presentational property that a class
- * rule might later try to override:
+ * exactly ONE place, and it does not set a presentational property that a
+ * class rule might later try to override:
  *
- *   - ShopMarquee.tsx's `style={{ x }}` — not CSS at all. `x` is a Framer
- *     MotionValue that Framer writes to the transform imperatively, outside
- *     React's render cycle. There is no className equivalent.
  *   - RevenueChart.tsx's --bar-h — one bar height per data point, a continuous
  *     runtime value with no fixed enumeration to turn into classes.
+ *
+ * ShopMarquee.tsx's `style={{ x }}` used to be the second, and was documented
+ * here and in PRODUCT.md as permanent because a Framer MotionValue genuinely
+ * has no className form. That was true of the technique and false of the
+ * requirement: the cut-out sheet has no drag strip, so the component and its
+ * exception are both deleted. Worth remembering the shape — an exception can
+ * be correctly argued and still outlive the thing it was protecting.
  *
  * The 2026-08 pass removed the rest. FadeIn.tsx and Float.tsx carried a
  * pass-through `style` prop that no call site ever used, and GallerySection.tsx
@@ -150,7 +219,7 @@
 }
 
 .footer-link {
-  color: oklch(0.72 0.03 60);
+  color: var(--footer-muted);
   transition: color 0.2s ease;
 }
 
@@ -159,8 +228,10 @@
   color: oklch(0.94 0.02 60);
 }
 
+/* 0.55 measured exactly 3.00:1 on the footer's dark ink — the admin link was
+ * the lowest-contrast text anywhere on the site. 0.65 reads 4.51:1. */
 .footer-admin-link {
-  color: oklch(0.55 0.02 60);
+  color: var(--footer-subtle);
   transition: color 0.2s ease;
 }
 
@@ -195,8 +266,14 @@
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: oklch(0.28 0.02 60 / 0.75);
-  background: oklch(0.98 0.01 85 / 0.85);
+  /* Both of these were translucent, and the two alphas compounded: 75% ink over
+   * an 85% pill measured 3.28:1. The ink is the same colour that reads 13.8:1
+   * elsewhere — the transparency was the whole problem, so it is simply gone.
+   * The pill is opaque too, because it sits on the placeholder tiles' rotating
+   * background colours and a translucent pill made the result depend on which
+   * colour happened to be underneath. */
+  color: oklch(0.28 0.02 60);
+  background: oklch(0.98 0.01 85);
   padding: 6px 12px;
   border-radius: 999px;
 }
@@ -221,7 +298,23 @@
 
 @media (max-width: 860px) {
   .nav-desktop-links,
-  .nav-cta {
+  .nav-cta,
+  /* The account icon is a duplicate of the drawer's own "My account" / "Sign
+   * in" link, and only while the drawer exists — so it hides on exactly the
+   * query that reveals the hamburger, rather than at a width of its own.
+   *
+   * It is also what made the masthead overflow at 320px. Measured there: a
+   * 20px gutter, a 170px wordmark, a 16px gap and a 130px icon cluster need
+   * 356px of a 320px viewport, and the cluster ran 16px past the right edge.
+   * The 44px targets in that cluster are a standing commitment and are not the
+   * thing to shrink; a control that is on screen twice is. Dropping it returns
+   * 48px, which clears 320 with room rather than by a pixel.
+   *
+   * Sharing the 860px query rather than writing a second one is the point: the
+   * three rules here already move together, and a fourth breakpoint declared
+   * somewhere else is how a nav ends up with a width where the hamburger has
+   * appeared but the duplicate control has not yet gone. */
+  .nav-account-icon {
     display: none;
   }
   .nav-hamburger-btn {
@@ -279,8 +372,16 @@
  ---break---
  */
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  /* `--font-sans: var(--font-sans)` used to sit here and was a self-reference:
+   * it made the :root value cyclical and therefore invalid, so every rule
+   * reading the custom property raw — `body { font-family: var(--font-sans) }`
+   * in the base layer — silently fell back to the initial value and rendered
+   * in Times New Roman. It was masked for as long as it existed because
+   * `html` also carries the `font-sans` *utility*, which Tailwind resolves
+   * from the theme correctly, and the utility covers almost everything.
+   * Removed rather than repointed; `--font-heading` now names the real stack
+   * for the same reason. */
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -304,6 +405,33 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-soft: var(--destructive-soft);
   --color-destructive-soft-foreground: var(--destructive-soft-foreground);
+  /* The Akari material range, exposed so `bg-washi` / `border-bamboo` /
+   * `text-vermilion-ink` exist as utilities. The values themselves are
+   * declared only inside [data-surface="storefront"], so these resolve to
+   * nothing outside it — which is correct, since nothing outside the
+   * storefront should be reaching for them. */
+  --color-washi: var(--washi);
+  --color-paper: var(--paper);
+  --color-ash: var(--ash);
+  --color-bamboo: var(--bamboo);
+  --color-ink: var(--ink);
+  --color-vermilion: var(--vermilion);
+  --color-vermilion-ink: var(--vermilion-ink);
+
+  /* The cut-out sheet's material range, on the same terms: declared only
+   * inside [data-surface="storefront"][data-world="cutout"], exposed here so
+   * `bg-sheet` / `border-keyline` / `text-press-red` exist as utilities and
+   * resolve to nothing anywhere else. */
+  --color-ground: var(--ground);
+  --color-ground-deep: var(--ground-deep);
+  --color-sheet: var(--sheet);
+  --color-keyline: var(--keyline);
+  --color-press-red: var(--press-red);
+  --color-press-red-bright: var(--press-red-bright);
+  --color-butter: var(--butter);
+  --color-aqua: var(--aqua);
+  --color-rose: var(--rose);
+
   /* Status/accent roles — see the commentary beside their :root values. */
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
@@ -319,6 +447,14 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-info-soft-foreground: var(--info-soft-foreground);
+  /* Footer surface + the one nav hairline — see the :root values. */
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
+  --color-footer-heading: var(--footer-heading);
+  --color-footer-muted: var(--footer-muted);
+  --color-footer-subtle: var(--footer-subtle);
+  --color-footer-border: var(--footer-border);
+  --color-nav-border: var(--nav-border);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -365,8 +501,20 @@
   --destructive: oklch(0.55 0.18 25);
   --destructive-foreground: oklch(0.98 0.01 85);
   --border: oklch(0.85 0.02 60);
-  --input: oklch(0.85 0.02 60);
-  --ring: oklch(0.7 0.06 20);
+  /* --input is deliberately NOT the same value as --border any more, though it
+   * was for months. WCAG 1.4.11 wants 3:1 only for a boundary that is needed to
+   * identify a control, and these two roles sit on opposite sides of that line:
+   * --border draws decorative card edges and dividers (exempt), while --input is
+   * the *only* thing that identifies a text field, because Input/Textarea/Select
+   * are all `bg-transparent` on a cream page. At the shared 0.85 it measured
+   * 1.50:1 on --card, so the fields were very nearly invisible. 0.65 clears 3:1
+   * (3.01). Nothing decorative moves, because only those four controls and the
+   * checkbox consume --input. */
+  --input: oklch(0.65 0.02 60);
+  /* 0.7 gave the focus ring 2.55:1 against the page — under the same 3:1 floor,
+   * on the one indicator a keyboard user depends on to know where they are.
+   * 0.64 reads 3.31:1 and keeps the terracotta hue and chroma exactly. */
+  --ring: oklch(0.64 0.06 20);
   --chart-1: oklch(0.55 0.09 20);
   --chart-2: oklch(0.6 0.08 150);
   --chart-3: oklch(0.65 0.07 60);
@@ -382,6 +530,33 @@
    * py-[22px] + the 44px icon buttons + the 1px bottom border. Same at every
    * breakpoint: the icons don't shrink, so neither does the nav. */
   --nav-h: 89px;
+
+  /* Footer — a dark surface with its own colour roles, given a namespace for
+   * the same reason --sidebar has one: these are not the page's tokens at
+   * different opacities, they are six distinct values that only make sense
+   * against the footer's ink background, and every one of them was previously
+   * a hardcoded oklch literal in Footer.tsx. Values are carried over exactly,
+   * so this is a rename and not a restyle -- except --footer-subtle, which the
+   * WCAG pass had already lifted from 0.6/0.55 to 0.65 (it now backs both the
+   * copyright row and the admin link, which had drifted to different greys
+   * while meaning the same thing).
+   *
+   * --footer is the same ink as --foreground/--primary today. It is still
+   * written out rather than aliased: the footer being exactly the body-text
+   * colour is a coincidence of the current palette, not a rule, and aliasing
+   * would silently repaint the footer the day --foreground is retuned. */
+  --footer: oklch(0.28 0.02 60);
+  --footer-foreground: oklch(0.97 0.01 85);
+  --footer-heading: oklch(0.85 0.03 60);
+  --footer-muted: oklch(0.72 0.03 60);
+  --footer-subtle: oklch(0.65 0.025 60);
+  --footer-border: oklch(0.4 0.02 60);
+
+  /* The nav's bottom hairline. Deliberately lighter than --border: it is a
+   * seam under a translucent sticky bar, not a card edge, and at --border's
+   * 0.85 it reads as a hard rule across the top of every page. Decorative, so
+   * 1.4.11's 3:1 does not apply -- see the audit note in Footer.tsx. */
+  --nav-border: oklch(0.9 0.015 60);
 
   /* Sidebar — retuned 2026-07-30 for the /admin redesign. These were all
    * verbatim copies of the base tokens above, which made the shadcn sidebar
@@ -399,7 +574,7 @@
   --sidebar-accent: oklch(0.93 0.024 78);
   --sidebar-accent-foreground: oklch(0.28 0.02 60);
   --sidebar-border: oklch(0.85 0.02 60);
-  --sidebar-ring: oklch(0.7 0.06 20);
+  --sidebar-ring: oklch(0.64 0.06 20);
 
   /* Status/accent roles — added 2026-07-30 for the /admin redesign.
    *
@@ -419,7 +594,12 @@
   --brand-foreground: oklch(0.98 0.01 85);
   --brand-soft: oklch(0.94 0.03 20);
   --brand-soft-foreground: oklch(0.42 0.09 20);
-  --sage: oklch(0.6 0.06 140);
+  /* 0.6 measured 3.58:1 on the page and 3.64:1 under its own cream foreground —
+   * both under 4.5:1, and --sage is real text ("Saved.", the upload confirmation)
+   * as well as a solid fill behind --sage-foreground in the admin sidebar. 0.54
+   * clears both (4.51:1 and 4.50:1). The -soft pair was already fine at 7.61:1
+   * and is untouched. */
+  --sage: oklch(0.54 0.06 140);
   --sage-foreground: oklch(0.98 0.01 85);
   --sage-soft: oklch(0.94 0.03 140);
   --sage-soft-foreground: oklch(0.4 0.06 140);
@@ -435,36 +615,597 @@
 /*
  ---break---
  */
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* There is deliberately no dark theme.
+ *
+ * A `.dark` block used to sit here: 32 lines of shadcn's stock neutral greys,
+ * including a violet --sidebar-primary, with no relationship to the cream and
+ * terracotta palette above. It was also unreachable — next-themes is a
+ * dependency, but no ThemeProvider is mounted anywhere and nothing ever puts
+ * the class on an element, so not one of those values had ever rendered.
+ *
+ * Removed rather than wired up, because those are different jobs. Wiring it up
+ * would have shipped a dark mode in the wrong colours; designing a real one
+ * means choosing a dark counterpart for this palette, which is a design
+ * decision rather than an audit fix. Deleting it makes the absence honest,
+ * instead of leaving a block that reads to the next person as though a dark
+ * theme exists and merely needs switching on.
+ *
+ * To bring one back: restore the block from git, retone every value to the
+ * brand, and mount a ThemeProvider. The `dark:` variants still scattered
+ * through components/ui/* are vendored shadcn defaults — inert without the
+ * class, and `shadcn add` would reintroduce them anyway, so they are left
+ * alone. */
+
+/*
+ ---break---
+ */
+
+/* ==========================================================================
+ * AKARI WORKSHOP — storefront visual world
+ *
+ * Scoped to [data-surface="storefront"] rather than :root. /admin shares this
+ * stylesheet and was deliberately designed for dense one-operator work;
+ * repainting it as a side effect of a storefront overhaul would be a
+ * regression. SiteChrome already knows which surface it is rendering, so it
+ * stamps the attribute and every token below resolves inside it.
+ *
+ * Values are taken from the chosen world's quality-bar board, not invented:
+ * washi ivory #F7F2E6, paper beige #F0E8D5, soft ash #E6E1D6, bamboo tan
+ * #D8BF94, charcoal ink #1E1E1C, vermilion stamp #D6452D. Written in oklch to
+ * match the rest of the file, with the source hex noted on each.
+ *
+ * The world is a paper-and-bamboo workshop: one humble material, hand-bent
+ * structure, and a single stamp of colour. Vermilion is an accent in the
+ * strict sense — a stamp, an arrow, an active state — and never a field. The
+ * discipline this world lives or dies by is that restraint.
+ * ========================================================================== */
+
+[data-surface="storefront"] {
+  /* --- the material ----------------------------------------------------- */
+  /* These six are written as the reference's own hex rather than converted to
+   * oklch like the rest of this file. That is deliberate and it is not laziness:
+   * they were oklch approximations first, and a canvas read-back of the computed
+   * values showed every one of them had drifted — bamboo by 6/3/4 and vermilion
+   * by 6/5/9. Vermilion is the single accent this entire world spends, on a
+   * stamp and an arrow and nothing else, so being approximately right about it
+   * is being wrong about the one colour anyone will remember. Matching the
+   * chosen reference exactly beats matching the file's own notation. */
+  --washi: #f7f2e6;
+  --paper: #f0e8d5;
+  --ash: #e6e1d6;
+  --bamboo: #d8bf94;
+  --ink: #1e1e1c;
+  --vermilion: #d6452d;
+
+  /* Two vermilions, and the split is a contrast rule rather than a taste one.
+   * The board uses vermilion for "View Details" links at body size, and #D6452D
+   * on washi measures 3.96:1 — comfortably fine for the stamp and the arrows,
+   * which are graphics and owe 3:1, and under the 4.5:1 floor for text.
+   * --vermilion stays exact for marks; --vermilion-ink is the darkened cut that
+   * carries words, at 5.83:1. Both figures are canvas read-backs of the
+   * computed values, not estimates. */
+  --vermilion-ink: oklch(0.5 0.17 33);
+
+  /* --- roles the shadcn primitives consume ------------------------------ */
+  --background: var(--washi);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--washi);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--washi);
+  --secondary: var(--ash);
+  --secondary-foreground: var(--ink);
+  --muted: var(--ash);
+  /* Warmed from the paper's own hue rather than desaturated to grey. Measured
+   * 6.94:1 on --background and 6.35:1 on --card. */
+  --muted-foreground: oklch(0.44 0.02 80);
+  --accent: var(--paper);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: var(--washi);
+  --border: var(--bamboo);
+  /* --border is the decorative bamboo hairline and is exempt from 1.4.11.
+   * --input is the only thing identifying a text field, so it owes 3:1 against
+   * --card, and bamboo measures 1.4:1 there. This deeper cut reads 4.52:1. */
+  --input: oklch(0.52 0.035 80);
+  /* 3.96:1 against --background, clearing the 3:1 floor for a focus indicator. */
+  --ring: var(--vermilion);
+
+  /* Paper has a soft edge, not a sharp one, and not a pill. The board's cards
+   * and buttons sit around 6px. */
+  --radius: 0.375rem;
+
+  /* The footer is the workshop at night: the same paper, lit from behind by
+   * nothing, so it goes to ink. */
+  --footer: var(--ink);
+  --footer-foreground: var(--washi);
+  --footer-heading: var(--bamboo);
+  --footer-muted: oklch(0.78 0.015 85);
+  --footer-subtle: oklch(0.68 0.015 85);
+  --footer-border: oklch(0.34 0.008 85);
+  --nav-border: var(--bamboo);
+
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+body:has([data-surface="storefront"]) {
+  background-color: oklch(0.962 0.014 85);
+}
+
+/* Display type is set light and large. The board's specimen is explicit about
+ * it: "DISPLAY · LIGHT". A heavy weight here would turn paper into signage. */
+@utility type-akari-display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+/* Small caps labels — section eyebrows on the board's own components, set
+ * wide and quiet. Used for field labels and metadata, never above a heading. */
+@utility type-akari-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Base-layer overrides for the rules that hardcoded cream/terracotta values.
+ * These live inside `@layer base` deliberately: `[data-surface="storefront"] a`
+ * is an attribute selector plus an element, which outranks any single utility
+ * class, so declared outside a layer it would beat `text-primary-foreground`
+ * on every Button rendered as a link and paint the label the wrong colour.
+ * Layer order settles it independently of specificity — base always loses to
+ * utilities, which is the correct relationship for a default element colour. */
+@layer base {
+  [data-surface="storefront"] a {
+    color: var(--vermilion-ink);
+  }
+
+  [data-surface="storefront"] a:hover {
+    color: var(--ink);
+  }
+
+  [data-surface="storefront"] ::selection {
+    background: var(--bamboo);
+    color: var(--ink);
+  }
+
+  [data-surface="storefront"] input:focus,
+  [data-surface="storefront"] textarea:focus,
+  [data-surface="storefront"] select:focus {
+    outline: 2px solid var(--vermilion);
+    outline-offset: 1px;
+  }
+}
+
+[data-surface="storefront"] .nav-link {
+  color: var(--ink);
+}
+
+[data-surface="storefront"] .nav-link:hover,
+[data-surface="storefront"] .nav-link:focus-visible,
+[data-surface="storefront"] .nav-link[data-active="true"] {
+  color: var(--vermilion-ink);
+}
+
+[data-surface="storefront"] .footer-link {
+  color: var(--footer-muted);
+}
+
+[data-surface="storefront"] .footer-link:hover,
+[data-surface="storefront"] .footer-link:focus-visible {
+  color: var(--bamboo);
+}
+
+[data-surface="storefront"] .footer-admin-link {
+  color: var(--footer-subtle);
+}
+
+[data-surface="storefront"] .footer-admin-link:hover,
+[data-surface="storefront"] .footer-admin-link:focus-visible {
+  color: var(--washi);
+}
+
+[data-surface="storefront"] .cart-icon-link {
+  background: var(--paper);
+}
+
+[data-surface="storefront"] .cart-icon-link:hover,
+[data-surface="storefront"] .cart-icon-link:focus-visible {
+  background: var(--bamboo);
+}
+
+[data-surface="storefront"] .account-icon-link:hover,
+[data-surface="storefront"] .account-icon-link:focus-visible {
+  background: var(--paper);
+}
+
+/* Sits on the rotating placeholder tones, so both sides are opaque and taken
+ * from the two ends of the material range: 14.95:1 either way. */
+[data-surface="storefront"] .product-card-placeholder-caption {
+  color: var(--ink);
+  background: var(--washi);
+  border-radius: var(--radius);
+}
+
+/* ==========================================================================
+ * CUT-OUT SHEET — storefront visual world
+ *
+ * Layered on top of the Akari block above rather than replacing it in place,
+ * and scoped one attribute deeper: [data-surface="storefront"][data-world].
+ * SiteChrome stamps both. Two reasons for the extra attribute rather than
+ * editing the Akari values directly — the storefront routes this overhaul has
+ * not reached yet keep rendering against a complete token set instead of a
+ * half-migrated one, and removing a single attribute is a working rollback
+ * that a rewritten colour block would not be.
+ *
+ * The world is a printed press-out sheet: a bright white sheet lying on a
+ * deep viridian ground, ruled with near-black keylines, dashed cut lines and
+ * fold tabs. Every product is a die-cut figure on that sheet.
+ *
+ * Photography is evidence, never atmosphere. There is no decorative
+ * background image anywhere in this world — a photograph appears only inside
+ * a die-cut window, in full colour, because a buyer judging a handmade piece
+ * has to see the actual thing. That rule is what the sheet exists to frame.
+ * ========================================================================== */
+
+[data-surface="storefront"][data-world="cutout"] {
+  /* --- the material ----------------------------------------------------- */
+  /* Ground and sheet first, because every other decision here is "on which of
+   * the two does this sit". The ground is the table the sheet lies on.
+   *
+   * Both are cream. They were a deep viridian ground under a pure-white sheet,
+   * and the pairing was the loudest thing on the site: two near-opposite
+   * luminances meeting at a hard 2px rule around every section, which framed
+   * each page instead of letting it read as one surface. The world is the same
+   * printed press-out sheet — the die cuts, the dashed cut lines, the fold tabs
+   * and the trim rules are untouched — but it is now printed on cream stock
+   * lying on a slightly deeper cream, which is what the brand has always been
+   * (see PRODUCT.md's palette commitment) and what /admin still runs on.
+   *
+   * The two are only 1.1:1 apart, so the ground can no longer do the work of
+   * separating a section from the page by brightness alone. It does not have to:
+   * with the sheet frames removed, the ground shows in exactly two places — the
+   * sticky masthead and the hole a pressed-out figure leaves — and both of those
+   * are identified by their own rules and labels rather than by a colour step. */
+  --ground: #efe6d4;
+  /* Deliberately not "the ground, darker". Its one consumer is the hole a
+   * sold-out figure leaves behind, and that hole has to read as a hole: at the
+   * ground's own cream it would have been invisible inside a white window. This
+   * is a mid taupe measuring 3.07:1 against the sheet — a real absence — while
+   * still carrying the keyline "Gone" label at 4.61:1. */
+  --ground-deep: #9e8c74;
+  --sheet: #fbf8f1;
+  /* Warm dark brown rather than the old cool near-black. On cream stock a blue-
+   * black keyline reads as a foreign ink; this one is the same 14:1 on the sheet
+   * and belongs to the paper. */
+  --keyline: #2b2620;
+
+  /* Four flat press colours, retoned into the brand's terracotta family. The
+   * split between the two reds is unchanged and is still a contrast rule rather
+   * than a taste one: `--press-red` carries words (5.61:1 on the sheet, 4.80:1
+   * on the ground) and `--press-red-bright` is for fills, which owe 3:1 and read
+   * 4.15:1. `--butter` was a poster yellow and is now warm sand — it is a plate
+   * colour, always with keyline printed on it (10.25:1), never a text colour. */
+  --press-red: #a8442c;
+  --press-red-bright: #c4573a;
+  --butter: #e9d3a9;
+  --aqua: #8fa79c;
+  --rose: #dda99e;
+
+  /* --- roles the shadcn primitives consume ------------------------------ */
+  --background: var(--sheet);
+  --foreground: var(--keyline);
+  --card: var(--sheet);
+  --card-foreground: var(--keyline);
+  --popover: var(--sheet);
+  --popover-foreground: var(--keyline);
+  --primary: var(--keyline);
+  --primary-foreground: var(--sheet);
+  --secondary: #f2ece0;
+  --secondary-foreground: var(--keyline);
+  --muted: #f2ece0;
+  /* Warm rather than the neutral-cool grey this used to be. That value was
+   * chosen when the stock was pure white; on cream a cool grey turns visibly
+   * green next to the paper. 6.70:1 on the sheet, 5.73:1 on the ground. */
+  --muted-foreground: #5f574c;
+  --accent: var(--butter);
+  --accent-foreground: var(--keyline);
+  --destructive: var(--press-red);
+  --destructive-foreground: var(--sheet);
+  /* The keyline is a real printed rule, not a hairline suggestion, so the
+   * border token is the key colour itself and components set the weight. */
+  --border: var(--keyline);
+  --input: var(--keyline);
+  --ring: var(--press-red-bright);
+
+  /* A die-cut edge is either a crisp trimmed corner or a full silhouette
+   * curve; there is no soft-6px middle in this world. */
+  --radius: 0.125rem;
+
+  /* The footer is the underside of the sheet, and it is the one place in this
+   * world that goes dark. It used to be `var(--ground-deep)` — a second, deeper
+   * viridian — and that alias is gone rather than repointed: --ground-deep is
+   * now tuned for the hole in a pressed-out figure, which is a completely
+   * different job, and pointing the footer at it would have painted the footer
+   * mid-taupe with white text at 2.6:1. Its own value, in the same warm family
+   * as the keyline. */
+  --footer: #332c24;
+  --footer-foreground: var(--sheet);
+  --footer-heading: var(--butter);
+  --footer-muted: #cabfae;
+  --footer-subtle: #a99e8d;
+  --footer-border: #4d443a;
+  /* The masthead's seam. The keyline itself was right when the nav was a
+   * viridian band above white stock and the rule was the trimmed edge between
+   * them; with the ground and the sheet both cream there is no edge there to
+   * draw, and a 2px near-black rule across the top of every page would be the
+   * heaviest mark on the site. This is a hairline that says "the bar ends here"
+   * once the page scrolls under it, and nothing more.
+   *
+   * A bamboo-tinted cream rather than a grey, at 1.77:1 on the ground and
+   * 2.07:1 on the sheet — the range where a 1px seam is perceptible without
+   * becoming a rule. Decorative under 1.4.11 (nothing identifies a control by
+   * it), the same exemption the cream palette's own --nav-border carries. The
+   * first value tried here was #ddd0b8 at 1.23:1 and it was simply invisible;
+   * a hairline nobody can see is not a restrained hairline, it is an absent
+   * one, and the sticky bar then had no bottom at all. */
+  --nav-border: #c2ac8e;
+
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* The ground shows behind the sheet — now only at the masthead and wherever a
+ * page is shorter than the viewport — so it belongs on the element that spans
+ * the whole document, not on the storefront wrapper. */
+body:has([data-surface="storefront"][data-world="cutout"]) {
+  background-color: var(--ground, #efe6d4);
+}
+
+/* Sheet titles, set in the didone. Tracking is left near zero and the line
+ * height just under one: a fat didone already sets tight, and pulling it
+ * negative collides the hairline serifs into each other at display size. */
+@utility type-sheet-display {
+  font-family: var(--font-gloock), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  line-height: 0.98;
+}
+
+/* The printed instruction voice: sheet numbers, "press out along the dotted
+ * line", fibre content, tab labels. Small, spaced, and set in the reading face
+ * because the display face's narrow cut is unreadable at this size. */
+@utility type-sheet-spec {
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+[data-surface="storefront"][data-world="cutout"] {
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* `.sheet-trim` used to live here: eight gradients on one pseudo-element,
+ * printing the four corner trim marks a press sheet carries into the viridian
+ * margin around every section.
+ *
+ * It is gone with the margin it printed into. Trim marks mark where the blade
+ * comes down on the *outside* of the trimmed edge, so they only exist if there
+ * is a visible edge and a visible ground beyond it — and the body no longer has
+ * either. Drawn on a full-bleed cream page they would have been eight cream
+ * dashes on cream, invisible, or eight dark ticks floating in the middle of a
+ * continuous surface, marking nothing.
+ *
+ * The world keeps its printer's furniture where the furniture still describes
+ * something real: the dashed cut lines and fold tabs on the figures, which mark
+ * an edge that genuinely exists.
+ */
+
+/* The die-cut silhouette: an arch, the shape a press-out figure actually takes
+ * when the die follows a head and shoulders. One declaration, shared by the
+ * photograph and by the dashed cut line that rings it, so the two are the same
+ * curve by construction rather than by two numbers kept in step by hand. */
+.diecut-arch {
+  border-radius: 50% 50% 4px 4px / 42% 42% 4px 4px;
+}
+
+/* The press-out — this world's one authored moment. A figure stands off the
+ * sheet on hover or keyboard focus and casts a real shadow onto it.
+ *
+ * The shadow carries an offset and a blur. This world prints hard keylines,
+ * but a keyline is ink lying flat on the sheet and a shadow is a piece of card
+ * standing off it; drawing the second as a zero-blur block would collapse the
+ * only distinction the effect exists to make.
+ *
+ * `filter: drop-shadow` rather than `box-shadow`, because the figure is an
+ * arch and a box shadow would print a rectangle behind a curved die-cut. */
+.cutout-figure {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cutout-slot:hover .cutout-figure,
+.cutout-slot:focus-within .cutout-figure {
+  transform: translateY(-8px);
+  filter: drop-shadow(0 14px 22px rgb(76 62 42 / 0.28));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cutout-figure {
+    transition: none;
+  }
+  .cutout-slot:hover .cutout-figure,
+  .cutout-slot:focus-within .cutout-figure {
+    /* The lift is gone; the shadow stays, so the state is still legible
+     * without anything moving. */
+    transform: none;
+  }
+}
+
+@layer base {
+  /* Links on the sheet are printed in the press red, and the darkened cut is
+   * the one that carries words. Inside @layer base for the same reason the
+   * Akari rule above is: an attribute-plus-element selector outranks a utility
+   * class, and outside a layer it would repaint every Button rendered as a
+   * link. */
+  [data-surface="storefront"][data-world="cutout"] a {
+    color: var(--press-red);
+  }
+
+  [data-surface="storefront"][data-world="cutout"] a:hover {
+    color: var(--keyline);
+  }
+
+  [data-surface="storefront"][data-world="cutout"] ::selection {
+    background: var(--butter);
+    color: var(--keyline);
+  }
+}
+
+/* The masthead sits on the ground, and the ground is now cream, so its links are
+ * printed in the key colour and highlight in the press red — the same two inks
+ * the sheet itself uses. They used to be white knocked out of viridian, which is
+ * the one rule in this file that could not survive the ground going pale.
+ *
+ * Measured on --ground: keyline 12.09:1, press red 4.80:1.
+ *
+ * The drawer opens onto the same cream, so it no longer needs its own pair of
+ * overrides — the `.nav-drawer` block that used to sit here flipped the links
+ * back to the key colour for exactly the surface change that no longer happens,
+ * and two identical rules at different specificities is how one of them later
+ * gets edited alone. */
+[data-surface="storefront"][data-world="cutout"] .nav-link {
+  color: var(--keyline);
+}
+
+[data-surface="storefront"][data-world="cutout"] .nav-link:hover,
+[data-surface="storefront"][data-world="cutout"] .nav-link:focus-visible,
+[data-surface="storefront"][data-world="cutout"] .nav-link[data-active="true"] {
+  color: var(--press-red);
+}
+
+[data-surface="storefront"][data-world="cutout"] .footer-link {
+  color: var(--footer-muted);
+}
+
+[data-surface="storefront"][data-world="cutout"] .footer-link:hover,
+[data-surface="storefront"][data-world="cutout"] .footer-link:focus-visible {
+  color: var(--sheet);
+}
+
+[data-surface="storefront"][data-world="cutout"] .footer-admin-link {
+  color: var(--footer-subtle);
+}
+
+/* Buttons, restated as tabs.
+ *
+ * `components/ui/button.tsx` is shared with /admin, which was deliberately
+ * built dense around the cream palette and must not move. So the world is
+ * applied here, behind [data-world="cutout"], rather than by editing the cva —
+ * the same technique the nav and footer links above already use.
+ *
+ * These rules are deliberately NOT inside `@layer components`. They have to
+ * beat the utility classes the cva itself emits (`rounded-lg`, `border`), and
+ * a layered rule always loses to a utility. That is the documented footgun in
+ * this file, taken on purpose and bounded: it covers geometry and the two
+ * variant fills only, and nothing else on the storefront sets those properties
+ * on a [data-slot="button"] at a call site. Anything that wants a different
+ * construction — the hero's actions, the figure tabs — is built as a plain
+ * Link with its own classes rather than fighting this rule.
+ */
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"] {
+  border-radius: 0;
+  border-width: 2px;
+  border-color: var(--keyline);
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"][data-variant="default"] {
+  background: var(--press-red);
+  color: var(--sheet);
+}
+
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"][data-variant="default"]:hover {
+  background: var(--keyline);
+}
+
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"][data-variant="outline"] {
+  background: var(--sheet);
+  color: var(--keyline);
+}
+
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"][data-variant="outline"]:hover {
+  background: var(--butter);
+}
+
+/* Fields, on the same terms as the buttons above: shared with /admin, so the
+ * world is applied here rather than in the primitives.
+ *
+ * A field in this world is a ruled box on the sheet — 2px key, square trim,
+ * no ring. The focus indicator is a press-red outline offset clear of the
+ * rule, because a `ring` blurred into a 2px keyline is invisible, and the
+ * focus indicator is the one piece of chrome that has to survive being looked
+ * at quickly. */
+[data-surface="storefront"][data-world="cutout"] [data-slot="input"],
+[data-surface="storefront"][data-world="cutout"] [data-slot="textarea"],
+[data-surface="storefront"][data-world="cutout"] [data-slot="select-trigger"] {
+  border-radius: 0;
+  border-width: 2px;
+  border-color: var(--keyline);
+  background: var(--sheet);
+  color: var(--keyline);
+}
+
+[data-surface="storefront"][data-world="cutout"] [data-slot="input"]:focus-visible,
+[data-surface="storefront"][data-world="cutout"] [data-slot="textarea"]:focus-visible,
+[data-surface="storefront"][data-world="cutout"] [data-slot="select-trigger"]:focus-visible {
+  border-color: var(--keyline);
+  outline: 2px solid var(--press-red);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+[data-surface="storefront"][data-world="cutout"] [data-slot="input"][aria-invalid="true"],
+[data-surface="storefront"][data-world="cutout"] [data-slot="textarea"][aria-invalid="true"] {
+  border-color: var(--press-red);
+  box-shadow: none;
+}
+
+/* `link` is inline text in a sentence and must not become a plate. */
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"][data-variant="link"] {
+  border-width: 0;
+  background: none;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--press-red);
+}
+
+/* Also on the ground: keyed in the key colour now that the ground is cream,
+ * filling to butter when they take focus. */
+[data-surface="storefront"][data-world="cutout"] .cart-icon-link,
+[data-surface="storefront"][data-world="cutout"] .account-icon-link {
+  background: transparent;
+  color: var(--keyline);
+  border: 1.5px solid var(--keyline);
+}
+
+[data-surface="storefront"][data-world="cutout"] .cart-icon-link:hover,
+[data-surface="storefront"][data-world="cutout"] .cart-icon-link:focus-visible,
+[data-surface="storefront"][data-world="cutout"] .account-icon-link:hover,
+[data-surface="storefront"][data-world="cutout"] .account-icon-link:focus-visible {
+  background: var(--butter);
+  color: var(--keyline);
+  border-color: var(--keyline);
 }

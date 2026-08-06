@@ -164,7 +164,7 @@ export function ProductForm({
         </div>
 
         <Field data-invalid={!!form.formState.errors.tag}>
-          <FieldLabel htmlFor="tag">Tag (optional — e.g. &quot;New&quot;, &quot;Bestseller&quot;)</FieldLabel>
+          <FieldLabel htmlFor="tag">Tag (optional, e.g. &quot;New&quot;, &quot;Bestseller&quot;)</FieldLabel>
           <Input id="tag" {...form.register("tag")} />
           <FieldError errors={[form.formState.errors.tag]} />
         </Field>

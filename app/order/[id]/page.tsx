@@ -28,7 +28,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               Thank you, {order.customerName.split(" ")[0]}!
             </h1>
             <p className="text-[14.5px] text-muted-foreground mb-2">
-              Your order is confirmed — we&apos;ll start preparing it soon.
+              Your order is confirmed. We&apos;ll start preparing it soon.
             </p>
           </>
         ) : order.status === "failed" ? (
@@ -37,7 +37,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               We couldn&apos;t complete this order
             </h1>
             <p className="text-[14.5px] text-muted-foreground">
-              Something went wrong starting checkout — please return to your cart and try again.
+              Something went wrong starting checkout. Please return to your cart and try again.
             </p>
           </>
         ) : (
@@ -46,8 +46,8 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               Confirming your payment…
             </h1>
             <p className="text-[14.5px] text-muted-foreground">
-              This usually only takes a few seconds. Refresh this page in a moment, or check your email —
-              we&apos;ll send a confirmation there as soon as your payment goes through.
+              This usually only takes a few seconds. Refresh this page in a moment, or check your
+              email. We&apos;ll send a confirmation there as soon as your payment goes through.
             </p>
           </>
         )}

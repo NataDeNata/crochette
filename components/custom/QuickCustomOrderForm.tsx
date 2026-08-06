@@ -9,7 +9,7 @@ import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
 
 const inputClassName =
-  "py-3.5 px-4.5 rounded-lg border-[1.5px] border-[oklch(0.75_0.03_20)] bg-card text-sm [font-family:inherit]";
+  "py-3.5 px-4.5 rounded-lg border-[1.5px] border-input bg-card text-sm [font-family:inherit]";
 
 /** Compact 3-field teaser version of CustomOrderForm, embedded on the home page. */
 export function QuickCustomOrderForm() {

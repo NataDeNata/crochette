@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Gallery",
   description: "Works in progress, finished pieces, and the little moments in between.",
   openGraph: {
-    title: "Gallery — Crochette",
+    title: "Gallery | Crochette",
     description: "Works in progress, finished pieces, and the little moments in between.",
   },
 };
@@ -18,37 +18,61 @@ export default async function GalleryPage() {
 
   return (
     <>
-      <section className="pt-12 sm:pt-[72px] page-gutter pb-12 text-center">
-        <FadeIn>
-          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
-            Gallery
+      {/* The centrefold: the one spread in this world that is never die-cut.
+          Every other surface frames a photograph inside an arch because the
+          arch means "this comes off the page and you can own it". The gallery
+          exists to show work rather than to sell a specific piece, so cutting
+          it would make a promise the page cannot keep. Plates run to the
+          gutter instead. */}
+      <section className="bg-sheet">
+        <div className="py-8 sm:py-10 lg:py-12">
+          <div className="page-gutter">
+            <div className="max-w-[1320px] mx-auto">
+              <FadeIn>
+                <h1 className="type-sheet-display text-[clamp(34px,5.4vw,66px)] text-keyline text-balance max-w-[16ch]">
+                  A peek into the studio
+                </h1>
+                <p className="text-[17px] text-muted-foreground max-w-[52ch] leading-[1.7] mt-5">
+                  Works in progress, finished pieces, and the little moments in between.
+                </p>
+              </FadeIn>
+            </div>
           </div>
-          <h1 className="font-serif font-medium text-[clamp(32px,5vw,58px)] mb-4">
-            A peek into the studio
-          </h1>
-          <p className="text-base text-[oklch(0.42_0.02_60)] max-w-[460px] mx-auto leading-[1.6]">
-            Works in progress, finished pieces, and the little moments in between.
-          </p>
-        </FadeIn>
-      </section>
 
-      <section className="pt-5 page-gutter pb-[100px]">
-        {gallery.length === 0 ? (
-          <p className="text-center text-sm text-[oklch(0.55_0.02_60)]">Photos coming soon.</p>
-        ) : (
-          <GallerySection items={gallery} rowHeight={180} />
-        )}
+          <div className="page-gutter mt-12">
+            <div className="max-w-[1320px] mx-auto">
+              {gallery.length === 0 ? (
+                // A blank plate rather than an apology in grey text — the
+                // spread is still there, visibly waiting for work.
+                <div className="flex min-h-[280px] items-center justify-center border-2 border-dashed border-keyline/40 p-8">
+                  <p className="type-sheet-spec text-center text-keyline/50">
+                    Photos coming soon
+                  </p>
+                </div>
+              ) : (
+                <GallerySection items={gallery} rowHeight={180} />
+              )}
+            </div>
+          </div>
+        </div>
       </section>
 
       <FadeIn>
-        <section className="mx-4 sm:mx-8 mb-[100px] py-10 sm:py-14 px-6 sm:px-12 rounded-[28px] sm:rounded-[36px] bg-[oklch(0.91_0.04_150)] text-center">
-          <h2 className="font-serif font-medium text-3xl mb-3.5">
-            Follow along on Instagram
-          </h2>
-          <p className="text-[15px] text-[oklch(0.3_0.03_150)] mb-6">
-            New pieces, works in progress, and behind-the-scenes.
-          </p>
-          <Button href="https://instagram.com">@crochette.studio</Button>
+        <section className="bg-sheet">
+          <div className="page-gutter pb-14 pt-4 sm:pb-16 sm:pt-6">
+            <div className="max-w-[1320px] mx-auto mb-14 border-t border-keyline/15" />
+            <div className="max-w-[1320px] mx-auto grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <h2 className="type-sheet-display text-[clamp(26px,3.6vw,44px)] text-keyline text-balance max-w-[16ch]">
+                  Follow along on Instagram
+                </h2>
+                <p className="text-[16px] leading-[1.7] text-muted-foreground mt-4 max-w-[52ch]">
+                  New pieces, works in progress and behind-the-scenes.
+                </p>
+              </div>
+              <Button href="https://instagram.com">@crochette.studio</Button>
+            </div>
+          </div>
         </section>
       </FadeIn>
     </>
