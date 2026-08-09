@@ -68,6 +68,20 @@ export const products = pgTable("products", {
    * is the customer-facing storefront urgency badge. Keep this default in sync
    * with DEFAULT_LOW_STOCK_THRESHOLD in lib/validation/product.ts. */
   lowStockThreshold: integer("low_stock_threshold").notNull().default(3),
+  /* The three facts a shopper needs to buy a handmade piece sight-unseen, and
+   * that a one-sentence description cannot carry: how big it is, what it is
+   * made of, and how to look after it. Free text rather than structured
+   * fields (no `width_cm`/`height_cm`) because the studio owner types these by
+   * hand per piece and "about 18cm tall, sitting" is more useful to a shopper
+   * than two numbers that imply a precision hand-crochet does not have.
+   *
+   * All three nullable, all three rendered only when set, so a product with
+   * none of them looks exactly as it did before rather than showing empty
+   * rows — the catalogue is filled in over time, not in one sitting.
+   * Migration 0015. */
+  dimensions: text("dimensions"),
+  materials: text("materials"),
+  careInstructions: text("care_instructions"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

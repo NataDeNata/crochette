@@ -56,7 +56,7 @@ export function ColorSwatchPicker({
       <input type="hidden" name={name} value={joinValue(selected, customText)} />
       {/* A chosen swatch lifts and takes an ink rule, rather than scaling —
           a swatch that grows stops lining up with the row it sits in. */}
-      <div className="flex gap-2 items-stretch flex-wrap">
+      <div role="group" aria-label="Preferred colours" className="flex gap-2 items-stretch flex-wrap">
         {SWATCHES.map((s) => {
           const isActive = selected.has(s.label);
           return (
@@ -89,6 +89,8 @@ export function ColorSwatchPicker({
         <button
           type="button"
           aria-pressed={customOpen}
+          aria-expanded={customOpen}
+          aria-controls="custom-colour-text"
           onClick={() => setCustomOpen((v) => !v)}
           className={cn(
             "type-sheet-spec cursor-pointer border-2 border-keyline px-4 transition-colors duration-200",
@@ -100,12 +102,16 @@ export function ColorSwatchPicker({
         </button>
       </div>
       {customOpen && (
-        <input
-          placeholder="Add specific colors…"
-          value={customText}
-          onChange={(e) => handleCustomChange(e.target.value)}
-          className={inputClassName}
-        />
+        <label className="flex flex-col gap-1.5">
+          <span className="sr-only">Other colours</span>
+          <input
+            id="custom-colour-text"
+            placeholder="Add specific colors…"
+            value={customText}
+            onChange={(e) => handleCustomChange(e.target.value)}
+            className={inputClassName}
+          />
+        </label>
       )}
     </div>
   );

@@ -17,6 +17,11 @@ export interface Product {
   priceCents: number;
   category: ProductCategory;
   tag?: string;
+  /** Studio-entered specs. Each is absent until the owner fills it in, and the
+   * product page renders only the ones that are present. */
+  dimensions?: string;
+  materials?: string;
+  careInstructions?: string;
   bgClassName: string;
   placeholder: string;
   stockQty: number;
@@ -42,6 +47,20 @@ export const CATEGORIES: { name: string; value: ProductCategory | "all" }[] = [
   { name: "Home decor", value: "home-decor" },
   { name: "Baskets", value: "baskets" },
 ];
+
+/**
+ * How many pieces a shopper could actually buy right now.
+ *
+ * NOT `products.length`. `getProducts()` selects on `status = 'active'`, which
+ * includes a piece whose stock has reached zero — the storefront still renders
+ * it, marked sold out, because a sold-out piece is evidence the studio makes
+ * things people want. So the catalogue length and the buyable count are two
+ * different numbers, and the homepage hero claimed the first while saying the
+ * second: "10 pieces available today" over a grid where one read "Sold out".
+ */
+export function availableCount(products: Product[]): number {
+  return products.reduce((n, p) => (p.stockQty > 0 ? n + 1 : n), 0);
+}
 
 export function formatPrice(priceCents: number): string {
   return new Intl.NumberFormat("en-PH", {

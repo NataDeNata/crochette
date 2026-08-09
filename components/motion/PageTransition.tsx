@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -11,6 +10,19 @@ import type { ReactNode } from "react";
  * AnimatePresence holding both pages in memory, which fights the sticky
  * nav and each page's own on-mount FadeIn sections. This gets most of the
  * perceived-smoothness win with none of that complexity.
+ *
+ * A CSS animation rather than a Framer one, and that is the load-bearing part.
+ * This wraps the body of *every* page, so a Framer `initial={{ opacity: 0 }}`
+ * here means the entire site is invisible until an animation completes — and
+ * an animation that does not run (a backgrounded tab, a throttled one, a
+ * dropped frame) is indistinguishable from a page that failed to load. The
+ * `.page-reveal` keyframe has no fill-mode, so the resting state before and
+ * after it is the ordinary, visible one. See globals.css.
+ *
+ * It also no longer needs a `useReducedMotion` branch: the keyframe lives
+ * inside `prefers-reduced-motion: no-preference`, so the preference is
+ * honoured by the stylesheet rather than by a second render path that could
+ * drift from the first.
  *
  * THE HORIZONTAL SLIDE IS GONE, and it was not a taste call. This used to
  * enter from `x: 16`, which put every page 16px past the right edge for the
@@ -26,20 +38,11 @@ import type { ReactNode } from "react";
  */
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
 
-  if (reduceMotion) {
-    return <>{children}</>;
-  }
-
+  // `key` remounts on navigation, which is what replays the animation.
   return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <div key={pathname} className="page-reveal">
       {children}
-    </motion.div>
+    </div>
   );
 }

@@ -3,12 +3,25 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { CutoutHero } from "@/components/sections/CutoutHero";
 import { Cutout } from "@/components/ui/Cutout";
 import { GallerySection } from "@/components/gallery/GallerySection";
+import { availableCount } from "@/lib/data/products";
 import { getProducts } from "@/lib/data/products.server";
 import { getHomeGallery } from "@/lib/data/gallery";
 
 export default async function Home() {
   const products = await getProducts();
   const gallery = await getHomeGallery();
+
+  /* The hero used to claim `products.length` pieces "available today", which
+   * counts sold-out pieces — see `availableCount`. */
+  const available = availableCount(products);
+
+  /* The hero rail and the grid below both used to start from the top of the
+   * catalogue, so the same four pieces appeared twice on one page and a
+   * ten-piece catalogue looked like six. The grid now picks up where the hero
+   * left off. */
+  const heroPieces = products.slice(0, 4);
+  const overflows = products.length > heroPieces.length;
+  const gridPieces = overflows ? products.slice(4, 12) : products;
 
   return (
     <>
@@ -18,7 +31,7 @@ export default async function Home() {
           inside a die-cut window, at the size a buyer needs to judge the piece
           by. The pieces on the sheet are read live from the catalogue, so the
           first viewport is real inventory rather than a chosen still. */}
-      <CutoutHero pieces={products.slice(0, 4)} pieceCount={products.length} />
+      <CutoutHero pieces={heroPieces} pieceCount={available} />
 
       {/* Below the first viewport the page continues on the same sheet. It used
        * to break into separately framed sheets, each with a viridian margin and
@@ -38,12 +51,17 @@ export default async function Home() {
           <div className="max-w-[1320px] mx-auto">
             <FadeIn>
               <h2 className="type-sheet-display text-[clamp(30px,4.4vw,52px)] text-balance max-w-[620px] mb-10">
-                Everything currently available
+                {overflows ? "The rest of the sheet" : "Everything currently available"}
               </h2>
             </FadeIn>
 
             <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10">
-              {products.slice(0, 8).map((product) => (
+              {/* Deliberately not `priority`. This grid is a full viewport
+                  below the fold, and preloading it would compete with the
+                  hero's lead figure, which is the LCP element and already
+                  carries it. The shop page is the opposite case — there the
+                  grid is the first thing on the page. */}
+              {gridPieces.map((product) => (
                 <Cutout key={product.id} product={product} />
               ))}
             </div>

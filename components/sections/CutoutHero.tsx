@@ -73,8 +73,14 @@ export function CutoutHero({
                   lowercase — the ball terminals, the hairline joins, the
                   thin-to-thick swing — and an all-caps setting throws every one
                   of those away and leaves a wall of rectangles. */}
+              {/* The space before the second sentence is load-bearing, not
+                  formatting. A <br> contributes no word break to the
+                  accessibility tree, so "Made by hand.<br>Made to keep."
+                  flattens to "Made by hand.Made to keep." and is announced as
+                  "handMade" — the site's headline, mispronounced, on every
+                  visit by a screen reader. */}
               <h1 className="type-sheet-display text-[clamp(44px,8vw,104px)] text-keyline text-balance">
-                Made by hand.
+                Made by hand.{" "}
                 <br />
                 <span className="text-press-red">Made to keep.</span>
               </h1>

@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products, orders, orderItems } from "@/lib/db/schema";
-import { checkoutSchema } from "@/lib/validation/checkout";
+import { CHECKOUT_FIELDS, checkoutSchema } from "@/lib/validation/checkout";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { resolveCartId } from "@/lib/cart/resolve";
 import { clearCart, getRawCartItems } from "@/lib/db/cart";
@@ -27,11 +27,24 @@ export async function submitCheckout(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  /* Everything the shopper typed, carried on every error return.
+   *
+   * React 19 resets an uncontrolled form once its action returns, so without
+   * this a rejected checkout empties nine fields — including the address —
+   * and asks the shopper to retype all of it to correct one. See
+   * `FormActionState.values`. Read straight off the FormData rather than from
+   * the parsed data, because the whole point is to survive a parse that
+   * failed. */
+  const echo = Object.fromEntries(
+    CHECKOUT_FIELDS.map((f) => [f, String(formData.get(f) ?? "")]),
+  );
+
   const ip = await getClientIp();
   if (await isRateLimited("checkout", ip)) {
     return {
       status: "error",
       message: "Too many attempts. Please wait a few minutes and try again.",
+      values: echo,
     };
   }
 
@@ -52,6 +65,7 @@ export async function submitCheckout(
       status: "error",
       message: "Please check the fields below.",
       fieldErrors: parsed.error.flatten().fieldErrors,
+      values: echo,
     };
   }
 
@@ -68,6 +82,7 @@ export async function submitCheckout(
     return {
       status: "error",
       message: "Your cart is empty. Please add something before checking out.",
+      values: echo,
     };
   }
 
@@ -83,6 +98,7 @@ export async function submitCheckout(
       return {
         status: "error",
         message: "One or more items in your cart are no longer available. Please review your cart and try again.",
+        values: echo,
       };
     }
     if (item.quantity > product.stockQty) {
@@ -92,6 +108,7 @@ export async function submitCheckout(
           product.stockQty > 0
             ? `Only ${product.stockQty} of "${product.name}" left in stock. Please update the quantity in your cart.`
             : `"${product.name}" just sold out. Please remove it from your cart.`,
+        values: echo,
       };
     }
     lineItems.push({
@@ -110,6 +127,7 @@ export async function submitCheckout(
       status: "error",
       message: "Please check the fields below.",
       fieldErrors: { discountCode: [discountError] },
+      values: echo,
     };
   }
 
@@ -182,6 +200,7 @@ export async function submitCheckout(
     return {
       status: "error",
       message: "We couldn't start checkout right now. Please try again in a moment.",
+      values: echo,
     };
   }
 

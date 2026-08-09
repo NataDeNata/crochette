@@ -40,6 +40,23 @@ async function fetchFeaturedGalleryImages(limit: number): Promise<GalleryItem[]>
   }));
 }
 
+/** Whether anything has been curated onto /gallery at all.
+ *
+ * The nav and footer both link to /gallery, and an empty /gallery says
+ * "PHOTOS COMING SOON" — a top-level dead end on a site whose whole subject is
+ * how the pieces look. Rather than deleting the link and forgetting to put it
+ * back, both surfaces ask this, so curating the first photo in /admin/gallery
+ * is what publishes the link. Cheapest possible shape: existence, not a count,
+ * because the callers only branch on empty. */
+export async function hasFeaturedGallery(): Promise<boolean> {
+  const rows = await db
+    .select({ id: productImages.id })
+    .from(productImages)
+    .where(eq(productImages.galleryFeatured, true))
+    .limit(1);
+  return rows.length > 0;
+}
+
 /** 8-item teaser grid — Home page. Admin-curated via /admin/gallery. */
 export async function getHomeGallery(): Promise<GalleryItem[]> {
   return fetchFeaturedGalleryImages(8);

@@ -179,7 +179,7 @@
  * static theme variables moved to `.toaster` below.
  *
  * The handful of small hand-written classes below (.nav-link, .footer-link,
- * .footer-admin-link, .cart-icon-link, .account-icon-link) are a *different*,
+ * .cart-icon-link, .account-icon-link) are a *different*,
  * still-live exception: kept deliberately instead of being folded into
  * Tailwind, because a plain CSS class is the simplest way to share one
  * base+hover(+active) color rule across multiple consumers.
@@ -226,18 +226,6 @@
 .footer-link:hover,
 .footer-link:focus-visible {
   color: oklch(0.94 0.02 60);
-}
-
-/* 0.55 measured exactly 3.00:1 on the footer's dark ink — the admin link was
- * the lowest-contrast text anywhere on the site. 0.65 reads 4.51:1. */
-.footer-admin-link {
-  color: var(--footer-subtle);
-  transition: color 0.2s ease;
-}
-
-.footer-admin-link:hover,
-.footer-admin-link:focus-visible {
-  color: oklch(0.85 0.02 60);
 }
 
 .cart-icon-link {
@@ -322,8 +310,17 @@
   }
 }
 
+/* Four columns since the policy links landed: the studio blurb, Explore,
+ * The small print, Get in touch. */
 .footer-grid {
-  grid-template-columns: 1.4fr 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -802,15 +799,6 @@ body:has([data-surface="storefront"]) {
   color: var(--bamboo);
 }
 
-[data-surface="storefront"] .footer-admin-link {
-  color: var(--footer-subtle);
-}
-
-[data-surface="storefront"] .footer-admin-link:hover,
-[data-surface="storefront"] .footer-admin-link:focus-visible {
-  color: var(--washi);
-}
-
 [data-surface="storefront"] .cart-icon-link {
   background: var(--paper);
 }
@@ -1051,6 +1039,61 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
   }
 }
 
+/* ENTRANCES WHOSE RESTING STATE IS VISIBLE.
+ *
+ * The shop grid, the checkout form and every page body used to enter through
+ * Framer, which mounts them at `opacity: 0` and animates to 1 — so the
+ * *visibility* of the content depended on an animation completing. Anything
+ * that stops that animation leaves the visitor looking at nothing: a card
+ * mounted below the fold by a filter change never gets a fresh intersection
+ * event, and a throttled or backgrounded tab does not run the frames. Measured
+ * in an automated tab on this project: one frame in 3.6 seconds, which is
+ * indistinguishable from a page that is simply broken.
+ *
+ * So: no fill-mode, deliberately. Before the animation starts and after it
+ * ends, the element is in its ordinary state, which is visible. The reveal is
+ * added on top of a page that is already correct rather than being the
+ * mechanism that makes it correct — if it never runs at all, the failure is
+ * "it did not fade in", not "the shop is empty" or "the checkout form is
+ * missing".
+ *
+ * Wrapped in `no-preference` so this is one more thing reduced motion turns
+ * off, matching what FadeIn does for visitors who ask for it.
+ *
+ * FadeIn is still the right tool for a below-the-fold section a visitor
+ * scrolls down to, where nothing is hidden that they were already looking
+ * for. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sheet-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
+  @keyframes page-reveal {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .sheet-reveal {
+    animation: sheet-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .page-reveal {
+    animation: page-reveal 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Shorter and plainer than the others: a validation message appearing next
+   * to the field you are typing in should register, not perform. Opacity only
+   * — this is a `<span>`, and a transform on an inline box does nothing unless
+   * something else happens to have blockified it. */
+  .field-error {
+    animation: page-reveal 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
 @layer base {
   /* Links on the sheet are printed in the press red, and the darkened cut is
    * the one that carries words. Inside @layer base for the same reason the
@@ -1100,10 +1143,6 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
 [data-surface="storefront"][data-world="cutout"] .footer-link:hover,
 [data-surface="storefront"][data-world="cutout"] .footer-link:focus-visible {
   color: var(--sheet);
-}
-
-[data-surface="storefront"][data-world="cutout"] .footer-admin-link {
-  color: var(--footer-subtle);
 }
 
 /* Buttons, restated as tabs.

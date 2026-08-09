@@ -3,13 +3,16 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { GallerySection } from "@/components/gallery/GallerySection";
 import { getFullGallery } from "@/lib/data/gallery";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Gallery",
   description: "Works in progress, finished pieces, and the little moments in between.",
+  alternates: { canonical: "/gallery" },
   openGraph: {
     title: "Gallery | Crochette",
     description: "Works in progress, finished pieces, and the little moments in between.",
+    images: [OG_IMAGE],
   },
 };
 

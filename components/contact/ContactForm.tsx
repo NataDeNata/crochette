@@ -7,7 +7,7 @@ import { IDLE_STATE } from "@/lib/actions/types";
 import { FormSuccessMessage } from "@/components/forms/FormSuccessMessage";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
-import { Input } from "@/components/ui/input";
+import { TextField } from "@/components/forms/TextField";
 import { Textarea } from "@/components/ui/textarea";
 
 const fieldClassName =
@@ -31,21 +31,52 @@ export function ContactForm() {
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col gap-3.5"
         >
-          <motion.div layout className="flex flex-col gap-1.5">
-            <Input name="name" placeholder="Your name" className={fieldClassName} />
-            <FieldError error={fieldErrors.name?.[0]} />
+          <motion.div layout>
+            <TextField
+              id="contact-name"
+              name="name"
+              label="Your name"
+              autoComplete="name"
+              required
+              className={fieldClassName}
+              error={fieldErrors.name?.[0]}
+            />
           </motion.div>
 
-          <motion.div layout className="flex flex-col gap-1.5">
-            <Input name="email" placeholder="Email address" type="email" className={fieldClassName} />
-            <FieldError error={fieldErrors.email?.[0]} />
+          <motion.div layout>
+            <TextField
+              id="contact-email"
+              name="email"
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              required
+              className={fieldClassName}
+              error={fieldErrors.email?.[0]}
+            />
           </motion.div>
 
-          <Input name="subject" placeholder="Subject" className={fieldClassName} />
+          <TextField
+            id="contact-subject"
+            name="subject"
+            label="Subject (optional)"
+            className={fieldClassName}
+          />
 
           <motion.div layout className="flex flex-col gap-1.5">
-            <Textarea name="message" placeholder="Your message..." rows={5} className={`${fieldClassName} resize-y`} />
-            <FieldError error={fieldErrors.message?.[0]} />
+            <label htmlFor="contact-message" className="type-sheet-spec text-keyline/60">
+              Your message
+            </label>
+            <Textarea
+              id="contact-message"
+              name="message"
+              rows={5}
+              required
+              aria-invalid={fieldErrors.message?.[0] ? true : undefined}
+              aria-describedby={fieldErrors.message?.[0] ? "contact-message-error" : undefined}
+              className={`${fieldClassName} resize-y`}
+            />
+            <FieldError id="contact-message-error" error={fieldErrors.message?.[0]} />
           </motion.div>
 
           <FieldError error={state.status === "error" ? state.message : undefined} />

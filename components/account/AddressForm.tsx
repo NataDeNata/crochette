@@ -1,19 +1,26 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useId, type ComponentProps } from "react";
 import { saveAddress } from "@/app/account/addresses/actions";
 import { IDLE_STATE } from "@/lib/actions/types";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
-import { Input } from "@/components/ui/input";
+import { TextField } from "@/components/forms/TextField";
 import type { AddressRow } from "@/lib/db/schema";
 
 const fieldClassName =
   "h-auto rounded-xl border-[1.5px] border-input bg-[oklch(0.98_0.01_85)] px-[14px] py-3 text-sm";
 
+function Field(props: ComponentProps<typeof TextField>) {
+  return <TextField {...props} className={fieldClassName} />;
+}
+
 export function AddressForm({ address, onSaved }: { address?: AddressRow; onSaved?: () => void }) {
   const [state, formAction, isPending] = useActionState(saveAddress, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
+  // The addresses page renders one of these per saved address plus one to add
+  // a new one, so the ids the labels point at have to be per-instance.
+  const formId = useId();
 
   useEffect(() => {
     if (state.status === "success") onSaved?.();
@@ -23,28 +30,64 @@ export function AddressForm({ address, onSaved }: { address?: AddressRow; onSave
     <form action={formAction} className="flex flex-col gap-3">
       {address && <input type="hidden" name="addressId" value={address.id} />}
 
-      <Input name="label" placeholder="Label (e.g. Home), optional" defaultValue={address?.label ?? ""} className={fieldClassName} />
+      <Field
+        id={`${formId}-label`}
+        name="label"
+        label="Label (e.g. Home), optional"
+        defaultValue={address?.label ?? ""}
+      />
 
-      <div className="flex flex-col gap-1.5">
-        <Input name="line1" placeholder="Street address" defaultValue={address?.line1} className={fieldClassName} />
-        <FieldError error={fieldErrors.line1?.[0]} />
-      </div>
+      <Field
+        id={`${formId}-line1`}
+        name="line1"
+        label="Street address"
+        autoComplete="address-line1"
+        required
+        defaultValue={address?.line1}
+        error={fieldErrors.line1?.[0]}
+      />
 
-      <Input name="line2" placeholder="Apartment, suite, etc. (optional)" defaultValue={address?.line2 ?? ""} className={fieldClassName} />
+      <Field
+        id={`${formId}-line2`}
+        name="line2"
+        label="Apartment, suite, etc. (optional)"
+        autoComplete="address-line2"
+        defaultValue={address?.line2 ?? ""}
+      />
 
-      <div className="flex flex-col gap-1.5">
-        <Input name="city" placeholder="City" defaultValue={address?.city} className={fieldClassName} />
-        <FieldError error={fieldErrors.city?.[0]} />
-      </div>
+      <Field
+        id={`${formId}-city`}
+        name="city"
+        label="City"
+        autoComplete="address-level2"
+        required
+        defaultValue={address?.city}
+        error={fieldErrors.city?.[0]}
+      />
 
       <div className="flex gap-2">
-        <div className="flex flex-1 flex-col gap-1.5">
-          <Input name="province" placeholder="Province" defaultValue={address?.province} className={fieldClassName} />
-          <FieldError error={fieldErrors.province?.[0]} />
+        <div className="flex-1">
+          <Field
+            id={`${formId}-province`}
+            name="province"
+            label="Province"
+            autoComplete="address-level1"
+            required
+            defaultValue={address?.province}
+            error={fieldErrors.province?.[0]}
+          />
         </div>
-        <div className="flex flex-1 flex-col gap-1.5">
-          <Input name="postalCode" placeholder="Postal code" defaultValue={address?.postalCode} className={fieldClassName} />
-          <FieldError error={fieldErrors.postalCode?.[0]} />
+        <div className="flex-1">
+          <Field
+            id={`${formId}-postal`}
+            name="postalCode"
+            label="Postal code"
+            autoComplete="postal-code"
+            inputMode="numeric"
+            required
+            defaultValue={address?.postalCode}
+            error={fieldErrors.postalCode?.[0]}
+          />
         </div>
       </div>
 

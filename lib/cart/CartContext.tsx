@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useCartStore } from "./store";
 import type { CartView } from "@/lib/db/cart";
 
@@ -87,6 +89,7 @@ export function CartProvider({
 }
 
 export function useCart(): CartContextValue {
+  const router = useRouter();
   const lines = useCartStore((s) => s.lines);
   const subtotalCents = useCartStore((s) => s.subtotalCents);
   const count = useCartStore((s) => s.count);
@@ -113,11 +116,25 @@ export function useCart(): CartContextValue {
           },
           quantity,
         );
+        /* The only confirmation used to be the nav badge incrementing — a
+         * two-character change in the far corner of the screen, away from
+         * where the click happened, and invisible to anyone not watching for
+         * it. Raised here rather than in each button so the product page's
+         * "Add to cart" and the card's quick-add can't drift apart, and so a
+         * third entry point gets it for free.
+         *
+         * Deliberately fired on intent, not on the server's reply: the store
+         * is optimistic-then-authoritative by design, a failed sync leaves the
+         * optimistic line in place, and checkout re-reads and re-prices the
+         * cart server-side regardless. */
+        toast.success(`${product.name} added to your cart`, {
+          action: { label: "View cart", onClick: () => router.push("/cart") },
+        });
       },
       removeItem: (productId) => void removeInStore(productId),
       setQuantity: (productId, quantity) => void setQuantityInStore(productId, quantity),
       clear: () => void clearInStore(),
     }),
-    [lines, subtotalCents, count, loaded, add, setQuantityInStore, removeInStore, clearInStore],
+    [lines, subtotalCents, count, loaded, add, setQuantityInStore, removeInStore, clearInStore, router],
   );
 }

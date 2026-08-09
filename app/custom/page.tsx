@@ -3,13 +3,16 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { CustomOrderPanel } from "@/components/custom/CustomOrderPanel";
 import { StepThread } from "@/components/custom/StepThread";
 import { CUSTOM_STEPS } from "@/lib/data/custom";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Custom Orders",
   description: "Tell us the size, colors, and character, and we'll turn it into a one-of-a-kind piece.",
+  alternates: { canonical: "/custom" },
   openGraph: {
     title: "Custom Orders | Crochette",
     description: "Tell us the size, colors, and character, and we'll turn it into a one-of-a-kind piece.",
+    images: [OG_IMAGE],
   },
 };
 

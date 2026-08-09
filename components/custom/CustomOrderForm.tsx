@@ -25,10 +25,23 @@ const PIECE_TYPES = [
   { value: "Something else", label: "Something else" },
 ];
 
+/* Pesos, and bands that mean something against this catalogue (₱380–₱1,200).
+ *
+ * These were "Under $50 / $50–120 / $120+" — US dollars, on a store that
+ * prices every piece in pesos. At current rates $50 is roughly ₱2,800, so a
+ * customer choosing "under $50" and a studio owner reading it as ₱50 were
+ * describing budgets two orders of magnitude apart, in the one field the
+ * quoting conversation starts from.
+ *
+ * `budgetRange` is free text end to end — `z.string().max(60)`, a nullable
+ * `text` column, and a plain echo in the admin views and both emails — so
+ * this is the only place the bands are named. Requests already submitted keep
+ * their dollar strings, which is correct: they record what that customer
+ * actually chose. */
 const BUDGET_RANGES = [
-  { value: "Under $50", label: "Under $50" },
-  { value: "$50–120", label: "$50–120" },
-  { value: "$120+", label: "$120+" },
+  { value: "Under ₱800", label: "Under ₱800" },
+  { value: "₱800–2,000", label: "₱800–2,000" },
+  { value: "₱2,000+", label: "₱2,000+" },
   { value: "Not sure", label: "Not sure" },
 ];
 
@@ -103,6 +116,12 @@ export function CustomOrderForm({
           </motion.div>
 
           <motion.div layout className="flex flex-col gap-2">
+            {/* Every sibling control here announces what it is asking for and
+                this one didn't — the swatches carry their own names, but a
+                row of five coloured squares with no heading leaves both a
+                screen reader user and a sighted one guessing which decision
+                they belong to. */}
+            <div className="type-sheet-spec text-keyline/60">Colours (optional)</div>
             <ColorSwatchPicker name="preferredColors" onValueChange={(v) => updatePreview({ preferredColors: v })} />
           </motion.div>
 

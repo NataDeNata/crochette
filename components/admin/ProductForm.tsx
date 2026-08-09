@@ -26,6 +26,9 @@ export type ProductFormDefaults = {
   status: string;
   stockQty: string;
   lowStockThreshold: string;
+  dimensions: string;
+  materials: string;
+  careInstructions: string;
 };
 
 export function ProductForm({
@@ -52,6 +55,9 @@ export function ProductForm({
       status: (defaults?.status as ProductFormInput["status"]) ?? "active",
       stockQty: defaults ? Number(defaults.stockQty) : 0,
       lowStockThreshold: defaults ? Number(defaults.lowStockThreshold) : DEFAULT_LOW_STOCK_THRESHOLD,
+      dimensions: defaults?.dimensions ?? "",
+      materials: defaults?.materials ?? "",
+      careInstructions: defaults?.careInstructions ?? "",
     },
   });
 
@@ -66,6 +72,9 @@ export function ProductForm({
     fd.set("status", values.status);
     fd.set("stockQty", String(values.stockQty));
     fd.set("lowStockThreshold", String(values.lowStockThreshold));
+    fd.set("dimensions", values.dimensions ?? "");
+    fd.set("materials", values.materials ?? "");
+    fd.set("careInstructions", values.careInstructions ?? "");
     startTransition(() => dispatch(fd));
   }
 
@@ -167,6 +176,44 @@ export function ProductForm({
           <FieldLabel htmlFor="tag">Tag (optional, e.g. &quot;New&quot;, &quot;Bestseller&quot;)</FieldLabel>
           <Input id="tag" {...form.register("tag")} />
           <FieldError errors={[form.formState.errors.tag]} />
+        </Field>
+
+        {/* The specs block on the product page. Each of these appears there
+            only when it has a value, so filling them in one product at a time
+            is a supported state rather than a half-finished one. */}
+        <Field data-invalid={!!form.formState.errors.dimensions}>
+          <FieldLabel htmlFor="dimensions">Size (optional)</FieldLabel>
+          <Input
+            id="dimensions"
+            placeholder="e.g. About 18cm tall, sitting"
+            {...form.register("dimensions")}
+          />
+          <FieldDescription>
+            Written the way you would say it out loud. A shopper buying something they
+            cannot pick up needs this more than any other line on the page.
+          </FieldDescription>
+          <FieldError errors={[form.formState.errors.dimensions]} />
+        </Field>
+
+        <Field data-invalid={!!form.formState.errors.materials}>
+          <FieldLabel htmlFor="materials">Materials (optional)</FieldLabel>
+          <Input
+            id="materials"
+            placeholder="e.g. Cotton yarn, polyester fill, safety eyes"
+            {...form.register("materials")}
+          />
+          <FieldError errors={[form.formState.errors.materials]} />
+        </Field>
+
+        <Field data-invalid={!!form.formState.errors.careInstructions}>
+          <FieldLabel htmlFor="careInstructions">Care (optional)</FieldLabel>
+          <Textarea
+            id="careInstructions"
+            rows={2}
+            placeholder="e.g. Spot clean with cool water. Do not machine wash or tumble dry."
+            {...form.register("careInstructions")}
+          />
+          <FieldError errors={[form.formState.errors.careInstructions]} />
         </Field>
       </FieldGroup>
 

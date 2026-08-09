@@ -1,13 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { AnimatePresence } from "framer-motion";
-import { FadeIn } from "@/components/motion/FadeIn";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Cutout } from "@/components/ui/Cutout";
 import { CATEGORIES, type Product, type ProductCategory } from "@/lib/data/products";
+import {
+  buildQuery,
+  PAGE_SIZE,
+  readCategory,
+  readPage,
+  readSort,
+  selectProducts,
+  SORTS,
+  type Sort,
+} from "@/lib/shop/query";
 import { cn } from "@/lib/utils";
 
-const PAGE_SIZE = 9;
+/* The query string is the state.
+ *
+ * Category, sort and page are read straight off the URL and changed by
+ * navigating, so the back button, a bookmark and a pasted link all work with
+ * no extra machinery — and a filtered view is something a shopper can send
+ * someone. Only the search box keeps a local copy, because an input that waits
+ * for a navigation between keystrokes feels broken; it mirrors itself into the
+ * URL with `replace` so typing eight letters doesn't leave eight history
+ * entries to back out of.
+ *
+ * The reading, writing and filtering all live in lib/shop/query.ts so they can
+ * be tested without mounting React. */
 
 /* The catalogue.
  *
@@ -19,29 +39,59 @@ const PAGE_SIZE = 9;
  * pagination control at the foot of the page answered the real one in digits.
  * Both are gone; the count below the heading is what survived.
  *
- * Filter, search and page state stay exactly as they were — client state over
- * the full catalogue, PAGE_SIZE 9. The rebuild is the surface, not the
- * behaviour.
+ * Filtering, search and paging still run over the full catalogue client-side
+ * at PAGE_SIZE 9 — but the state they read now lives in the query string
+ * rather than in `useState`. See `buildQuery` above for why.
  */
 export function ShopGrid({ products }: { products: Product[] }) {
-  const [active, setActive] = useState<ProductCategory | "all">("all");
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
 
-  const filtered = useMemo(() => {
-    const byCategory =
-      active === "all" ? products : products.filter((p) => p.category === active);
-    const q = query.trim().toLowerCase();
-    return q ? byCategory.filter((p) => p.name.toLowerCase().includes(q)) : byCategory;
-  }, [products, active, query]);
+  const active = readCategory(searchParams.get("category"));
+  const sort = readSort(searchParams.get("sort"));
+  const page = readPage(searchParams.get("page"));
+  const urlQuery = searchParams.get("q") ?? "";
+
+  const [query, setQuery] = useState(urlQuery);
+
+  /* The last query string this component wrote. Anything else arriving in the
+   * URL came from the browser — a back button, a pasted link — and the search
+   * box has to follow it. */
+  const written = useRef<string | null>(null);
+  const pushNext = useRef(false);
+
+  function go(next: Partial<{ active: ProductCategory | "all"; query: string; sort: Sort; page: number }>) {
+    const q = buildQuery({ active, query, sort, page, ...next });
+    written.current = q;
+    const href = q ? `${pathname}?${q}` : pathname;
+    // `scroll: false` — the results replace themselves in place, and yanking
+    // the viewport to the top of the document on every filter click loses the
+    // controls the shopper is using.
+    if (pushNext.current) router.push(href, { scroll: false });
+    else router.replace(href, { scroll: false });
+    pushNext.current = false;
+  }
+
+  useEffect(() => {
+    if (written.current === search) return;
+    written.current = search;
+    setQuery(new URLSearchParams(search).get("q") ?? "");
+  }, [search]);
+
+  // No useMemo: the React Compiler is on for this project and memoizes this
+  // itself. A manual one here reads as caution and is actually the opposite —
+  // it made the compiler skip optimizing the whole component.
+  const filtered = selectProducts(products, { active, query, sort });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function selectCategory(value: ProductCategory | "all") {
-    setActive(value);
-    setPage(1);
+    pushNext.current = true;
+    go({ active: value, page: 1 });
   }
 
   return (
@@ -82,14 +132,32 @@ export function ShopGrid({ products }: { products: Product[] }) {
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
-                    setPage(1);
+                    go({ query: e.target.value, page: 1 });
                   }}
                   placeholder="Find a piece"
                   className="w-full border-2 border-keyline bg-sheet py-2.5 pl-10 pr-3 text-[15px] text-keyline [font-family:inherit] placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
                 />
               </label>
 
-              <div className="flex flex-wrap gap-2">
+              <label className="flex items-center gap-3 lg:order-3">
+                <span className="type-sheet-spec text-keyline/60">Sort</span>
+                <select
+                  value={sort}
+                  onChange={(e) => {
+                    pushNext.current = true;
+                    go({ sort: e.target.value as Sort, page: 1 });
+                  }}
+                  className="type-sheet-spec h-11 cursor-pointer border-2 border-keyline bg-sheet px-3 text-keyline [font-family:inherit] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+                >
+                  {SORTS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex flex-wrap gap-2 lg:order-2">
                 {CATEGORIES.map((c) => {
                   const isActive = c.value === active;
                   return (
@@ -116,21 +184,21 @@ export function ShopGrid({ products }: { products: Product[] }) {
             {visible.length === 0 ? (
               <EmptySheet query={query} />
             ) : (
-              <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 sm:gap-x-8 lg:gap-x-12">
-                <AnimatePresence mode="popLayout">
-                  {visible.map((p, i) => (
-                    <FadeIn
-                      key={p.id}
-                      delay={(i % 6) * 0.05}
-                      layout
-                      // Opacity only on exit. Scaling a figure on its way out
-                      // drags the reflow with it and the grid visibly stutters.
-                      exit={{ opacity: 0 }}
-                    >
-                      <Cutout product={p} />
-                    </FadeIn>
-                  ))}
-                </AnimatePresence>
+              // `key` on the container, so changing filter, sort or page
+              // remounts the grid and replays the entrance — which is what the
+              // old AnimatePresence was for. The cards themselves are plain:
+              // see `.sheet-reveal` in globals.css for why their visibility
+              // must not depend on an animation running.
+              <div
+                key={`${active}-${sort}-${currentPage}-${query.trim()}`}
+                className="sheet-reveal mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 sm:gap-x-8 lg:gap-x-12"
+              >
+                {visible.map((p, i) => (
+                  // The top row is above the fold at every width this grid has
+                  // (2 columns from 320px, 3 from 640px), so lazy-loading it
+                  // delays the LCP image by design.
+                  <Cutout key={p.id} product={p} priority={i < 3} />
+                ))}
               </div>
             )}
 
@@ -146,7 +214,10 @@ export function ShopGrid({ products }: { products: Product[] }) {
                   <button
                     key={n}
                     type="button"
-                    onClick={() => setPage(n)}
+                    onClick={() => {
+                      pushNext.current = true;
+                      go({ page: n });
+                    }}
                     aria-current={n === currentPage ? "page" : undefined}
                     // The accessible name said "Sheet No. 02" while the button
                     // read "02" and the landmark was labelled "Sheets" — three
