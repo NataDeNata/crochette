@@ -121,6 +121,20 @@ describe("restoreStockForOrder", () => {
     expect(await readProduct(product.id)).toMatchObject({ stockQty: 2, status: "active" });
   });
 
+  it("does not republish a product an admin parked at sold_out while it still had stock", async () => {
+    // The withdrawn-on-purpose case: pulled from the storefront with stock on
+    // the shelf, and carrying order history from before it was pulled. The
+    // stock still goes back; the storefront listing must not.
+    const product = await makeProduct({ stockQty: 48, status: "sold_out" });
+    const order = await makeOrder({
+      items: [{ productId: product.id, unitPriceCents: 120000, quantity: 2 }],
+    });
+
+    await inTx((tx) => restoreStockForOrder(tx, order.id));
+
+    expect(await readProduct(product.id)).toMatchObject({ stockQty: 50, status: "sold_out" });
+  });
+
   it("does not resurrect a draft", async () => {
     const product = await makeProduct({ stockQty: 0, status: "draft" });
     const order = await makeOrder({

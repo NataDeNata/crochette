@@ -74,7 +74,17 @@ export async function getOrderProductSlugs(orderId: string): Promise<string[]> {
 
 /** Reverses decrementStockForOrder — used when a paid order is cancelled
  * (e.g. a refund), so the stock it had reserved goes back on the shelf.
- * Auto-flips "sold_out" back to "active" once stock is restored. */
+ * Auto-flips "sold_out" back to "active", but only for the products this
+ * function's counterpart parked — i.e. the ones that were sitting at 0.
+ *
+ * "sold_out" carries two different meanings. Stock ran out (set above, at
+ * exactly 0), or an admin deliberately pulled a product off the storefront
+ * while it still had stock — the same "not selling this right now" hold that
+ * lowStockCondition already respects below. Reactivating on `stockQty > 0`
+ * alone couldn't tell them apart, so cancelling any historical order for a
+ * parked product silently republished it. That's a one-click, invisible way
+ * to put something back on sale that was withdrawn on purpose, which is why
+ * the pre-restore stock is what decides. */
 export async function restoreStockForOrder(tx: Tx, orderId: string) {
   // Same deterministic lock order as decrementStockForOrder — a restock and a
   // payment touching the same two products would otherwise deadlock.
@@ -85,15 +95,21 @@ export async function restoreStockForOrder(tx: Tx, orderId: string) {
     .orderBy(orderItems.productId);
 
   for (const item of items) {
+    // One statement, not two: every expression in a single UPDATE's SET list
+    // reads the *old* row, so `stockQty = 0` here means "was at 0 before this
+    // restock" — which is precisely the state decrementStockForOrder parks a
+    // product in. A second, separate UPDATE could only see the topped-up value
+    // and would have no way back to that distinction.
     await tx
       .update(products)
-      .set({ stockQty: sql`${products.stockQty} + ${item.quantity}` })
+      .set({
+        stockQty: sql`${products.stockQty} + ${item.quantity}`,
+        status: sql`case
+          when ${products.stockQty} = 0 and ${products.status} = 'sold_out' then 'active'::product_status
+          else ${products.status}
+        end`,
+      })
       .where(eq(products.id, item.productId));
-
-    await tx
-      .update(products)
-      .set({ status: "active" })
-      .where(sql`${products.id} = ${item.productId} and ${products.stockQty} > 0 and ${products.status} = 'sold_out'`);
   }
 }
 
