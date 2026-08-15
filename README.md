@@ -148,6 +148,15 @@ a real one.
   /fixtures       case tables shared between the two projects
 ```
 
+## How this was built
+
+This project was built with [Claude](https://claude.ai) (Anthropic), used through
+Claude Code as a pair-programming and code-review tool throughout: architecture and
+schema design, feature implementation, the security and QA review passes, and the
+test suite. Every change was reviewed, run and verified by the project owner before
+merging, and the design decisions and their trade-offs are recorded in
+`Cro_Documentation.md` and `update.md` rather than left implicit.
+
 ## Status
 
 **Phase 1 (MVP) is complete** and deployed on Vercel. The storefront sells the

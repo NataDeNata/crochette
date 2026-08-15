@@ -44,6 +44,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           status: product.status,
           stockQty: String(product.stockQty),
           lowStockThreshold: String(product.lowStockThreshold),
+          dimensions: product.dimensions ?? "",
+          materials: product.materials ?? "",
+          careInstructions: product.careInstructions ?? "",
         }}
       />
     </div>

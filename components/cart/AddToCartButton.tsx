@@ -25,6 +25,7 @@ export function AddToCartButton({
 
   const outOfStock = product.stockQty <= 0;
   const maxQuantity = Math.min(20, product.stockQty);
+  const atLimit = quantity >= maxQuantity;
 
   return (
     <div className="flex flex-wrap items-center gap-4">
@@ -56,19 +57,32 @@ export function AddToCartButton({
         </span>
         <button
           type="button"
-          disabled={outOfStock}
+          disabled={outOfStock || atLimit}
           onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
           aria-label="Increase quantity"
           className={cn(
             "flex h-11 w-11 items-center justify-center border-0 bg-transparent text-keyline",
             "transition-colors duration-200 enabled:hover:bg-butter",
             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-press-red",
-            outOfStock ? "cursor-not-allowed" : "cursor-pointer",
+            outOfStock || atLimit ? "cursor-not-allowed" : "cursor-pointer",
           )}
         >
           <PlusMark />
         </button>
       </div>
+
+      {/* The stepper used to just stop. Clamping silently at the stock limit
+          reads as a broken control — a shopper pressing + on a piece with five
+          left has no way to tell "there are only five" from "this button
+          doesn't work". `aria-live` because the message appears in response to
+          a press that produced no other change. */}
+      {atLimit && !outOfStock && (
+        <p aria-live="polite" className="type-sheet-spec basis-full text-keyline/60">
+          {maxQuantity === product.stockQty
+            ? `That's all we have — ${product.stockQty} left`
+            : `${maxQuantity} per order`}
+        </p>
+      )}
 
       <Button
         type="button"

@@ -9,6 +9,12 @@ const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[numb
   { path: "/gallery", changeFrequency: "weekly", priority: 0.5 },
   { path: "/custom", changeFrequency: "monthly", priority: 0.7 },
   { path: "/contact", changeFrequency: "yearly", priority: 0.3 },
+  // Low priority, but listed: a shopper searching "crochette returns" before
+  // deciding to buy is exactly who these pages are for.
+  { path: "/shipping", changeFrequency: "yearly", priority: 0.4 },
+  { path: "/returns", changeFrequency: "yearly", priority: 0.4 },
+  { path: "/privacy", changeFrequency: "yearly", priority: 0.2 },
+  { path: "/terms", changeFrequency: "yearly", priority: 0.2 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

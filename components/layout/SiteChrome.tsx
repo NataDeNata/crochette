@@ -9,7 +9,15 @@ import { PageTransition } from "@/components/motion/PageTransition";
 
 /** /admin is an internal dashboard, not part of the storefront — it skips
  * the public nav/footer/page-transition chrome and renders its own layout. */
-export function SiteChrome({ children, session }: { children: ReactNode; session: Session | null }) {
+export function SiteChrome({
+  children,
+  session,
+  hasGallery = false,
+}: {
+  children: ReactNode;
+  session: Session | null;
+  hasGallery?: boolean;
+}) {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return <>{children}</>;
 
@@ -42,11 +50,22 @@ export function SiteChrome({ children, session }: { children: ReactNode; session
     // rollback for the whole visual world — which is the only reason the old
     // block is still in the stylesheet while the overhaul is in flight.
     <div data-surface="storefront" data-world="cutout" className="flex min-h-dvh flex-col">
-      <Nav session={session} />
-      <main className="flex-1">
+      {/* Above the nav in the DOM so it is the first thing a keyboard reaches,
+          and `z-100` because the nav is `z-50` — a skip link that appears
+          behind the header it is skipping is not a skip link. `tabIndex={-1}`
+          on the target so focus actually lands there rather than the browser
+          scrolling and leaving focus on <body>. */}
+      <a
+        href="#main"
+        className="type-sheet-spec sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:border-2 focus:border-keyline focus:bg-butter focus:px-4 focus:py-2.5 focus:text-keyline"
+      >
+        Skip to content
+      </a>
+      <Nav session={session} hasGallery={hasGallery} />
+      <main id="main" tabIndex={-1} className="flex-1 focus-visible:outline-none">
         <PageTransition>{children}</PageTransition>
       </main>
-      <Footer />
+      <Footer hasGallery={hasGallery} />
     </div>
   );
 }

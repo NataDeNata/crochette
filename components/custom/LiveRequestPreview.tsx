@@ -49,7 +49,13 @@ function AnimatedSwap({
   );
 }
 
-/* THE FIGURE THAT ISN'T PRINTED YET.
+/* THE FIGURE THAT ISN'T STITCHED YET.
+ *
+ * The empty-window copy says "not stitched yet", not "not printed yet". The
+ * die-cut sheet is the drawing this site is made of, but the thing being sold
+ * is crochet, and the customer is describing a piece someone will make with
+ * yarn. Borrowing the metaphor's vocabulary for the promise put the shopper in
+ * the wrong craft at the one moment the page is asking them to imagine theirs.
  *
  * This is the mechanism the whole storefront is positioned on, so it gets the
  * world's strongest move rather than a summary card. A commission is, exactly,
@@ -147,7 +153,7 @@ export function LiveRequestPreview({
                   </p>
                 ) : (
                   <p className="type-sheet-spec max-w-[20ch] text-keyline/35">
-                    This one hasn&apos;t been printed yet
+                    Not stitched yet
                   </p>
                 )}
               </AnimatedSwap>

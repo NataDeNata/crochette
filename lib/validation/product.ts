@@ -26,6 +26,12 @@ export const productSchema = z.object({
    * hatch. No cross-field check against stockQty: a threshold above current
    * stock is exactly the state that should be firing the alert. */
   lowStockThreshold: z.coerce.number().int().min(0).max(100000),
+  /** The three specs a shopper needs to buy a handmade piece sight-unseen.
+   * All optional: the catalogue gets filled in over time, and a product page
+   * renders only the ones that are set. */
+  dimensions: z.string().trim().max(200).optional().or(z.literal("")),
+  materials: z.string().trim().max(200).optional().or(z.literal("")),
+  careInstructions: z.string().trim().max(400).optional().or(z.literal("")),
 });
 
 /** z.coerce fields give distinct input/output shapes — see DiscountForm.tsx's

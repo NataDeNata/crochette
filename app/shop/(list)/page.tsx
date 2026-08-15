@@ -3,13 +3,19 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ShopGrid } from "@/components/shop/ShopGrid";
 import { getProducts } from "@/lib/data/products.server";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Shop",
   description: "Amigurumi, flowers, and cozy decor. Every piece made by hand, in small batches.",
+  // The filter, search and sort now live in the query string, which means the
+  // same catalogue is reachable at a dozen URLs. This names the one that
+  // should be indexed.
+  alternates: { canonical: "/shop" },
   openGraph: {
     title: "Shop | Crochette",
     description: "Amigurumi, flowers, and cozy decor. Every piece made by hand, in small batches.",
+    images: [OG_IMAGE],
   },
 };
 
@@ -18,11 +24,11 @@ export default async function ShopPage() {
 
   return (
     <>
-      {/* The heading, masthead and controls all live inside ShopGrid now. The
-          sheet number is derived from the current page, which is client state,
-          so the title block has to sit where that state does — splitting it
-          across two components is how the masthead ends up claiming No. 01 on
-          sheet three. */}
+      {/* The heading and controls both live inside ShopGrid. The count under
+          the heading is a live fact about the current filter, so the title
+          block has to sit where that filter is read — splitting it across two
+          components is how a heading ends up describing a different set of
+          results than the grid below it. */}
       <ShopGrid products={products} />
 
       {/* The commission hand-off: the figure that is not printed on any of the

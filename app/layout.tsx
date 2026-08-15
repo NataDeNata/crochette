@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth";
 import { getCart } from "@/app/cart/actions";
+import { hasFeaturedGallery } from "@/lib/data/gallery";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 // One variable family across the whole storefront. Jost ships a `wght` axis and
 // next/font loads that by default, which is all this world needs: display sits
@@ -56,6 +58,9 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  // Every page sets its own; this is the fallback for any that forgets.
+  // `metadataBase` above resolves the relative path.
+  alternates: { canonical: "/" },
   keywords: ["crochet", "amigurumi", "handmade crochet", "crochet decor", "custom crochet order", "Philippines"],
   robots: {
     index: true,
@@ -79,6 +84,37 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} | Handmade crochet decor`,
     description: SITE_DESCRIPTION,
   },
+};
+
+/* Who the site is, and what it is, for a crawler.
+ *
+ * The product pages have carried `Product`/`Offer` since the SEO pass; the two
+ * most-shared URLs on the site — home and /shop — carried nothing. These sit
+ * in the root layout so every page states them, which is what lets a search
+ * result show the studio's name and socials rather than just a page title.
+ * The email and Instagram handle here are the same two the footer prints. */
+const SITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      email: "hello@crochette.shop",
+      sameAs: ["https://instagram.com/crochette.studio"],
+      areaServed: "PH",
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: "en-PH",
+    },
+  ],
 };
 
 export const viewport: Viewport = {
@@ -132,16 +168,23 @@ export default async function RootLayout({
   // (Next forbids setting cookies during render).
   const initialCart = await getCart();
 
+  // Existence check, not a fetch: the nav and footer only need to know whether
+  // /gallery has anything on it before linking to it. See hasFeaturedGallery.
+  const hasGallery = await hasFeaturedGallery();
+
   return (
     <html
       lang="en"
       className={cn(jost.variable, gloock.variable, archivo.variable, "font-sans")}
     >
       <body>
+        <JsonLd data={SITE_JSON_LD} />
         <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
         <div className="relative">
           <CartProvider initialCart={initialCart}>
-            <SiteChrome session={session}>{children}</SiteChrome>
+            <SiteChrome session={session} hasGallery={hasGallery}>
+              {children}
+            </SiteChrome>
           </CartProvider>
         </div>
         <Toaster position="top-center" />

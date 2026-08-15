@@ -3,13 +3,16 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { Sheet } from "@/components/layout/Sheet";
 import { VALUES } from "@/lib/data/about";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
   description: "A small studio, made from yarn and patience.",
+  alternates: { canonical: "/about" },
   openGraph: {
     title: "About | Crochette",
     description: "A small studio, made from yarn and patience.",
+    images: [OG_IMAGE],
   },
 };
 

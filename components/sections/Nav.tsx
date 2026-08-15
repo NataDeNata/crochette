@@ -8,13 +8,20 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { AccountIcon } from "@/components/account/AccountIcon";
 
-const LINKS = [
-  { href: "/shop", label: "Shop" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/about", label: "About" },
-  { href: "/custom", label: "Custom Orders" },
-  { href: "/contact", label: "Contact" },
-];
+/* /gallery is conditional. It is a real route with a designed empty state, but
+ * an empty one is a top-level nav item that leads nowhere on a site whose
+ * subject is how the pieces look — and a dead end in the nav costs more than a
+ * missing entry. Curating the first photo in /admin/gallery publishes the
+ * link; see `hasFeaturedGallery`. */
+function links(hasGallery: boolean) {
+  return [
+    { href: "/shop", label: "Shop" },
+    ...(hasGallery ? [{ href: "/gallery", label: "Gallery" }] : []),
+    { href: "/about", label: "About" },
+    { href: "/custom", label: "Custom Orders" },
+    { href: "/contact", label: "Contact" },
+  ];
+}
 
 /** Shared by the animated and reduced-motion drawer shells — see the note at
  * the render site. `py-3` on the rows rather than pure `gap`, so each tap
@@ -59,10 +66,17 @@ function PressOutMark() {
   );
 }
 
-export function Nav({ session }: { session: Session | null }) {
+export function Nav({
+  session,
+  hasGallery = false,
+}: {
+  session: Session | null;
+  hasGallery?: boolean;
+}) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const LINKS = links(hasGallery);
   const isShopPage = pathname === "/shop";
   const accountHref = session?.user?.role === "customer" ? "/account" : "/account/login";
 

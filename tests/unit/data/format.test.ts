@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPrice, LOW_STOCK_THRESHOLD } from "@/lib/data/products";
+import { availableCount, formatPrice, LOW_STOCK_THRESHOLD, type Product } from "@/lib/data/products";
 import { isLowStock } from "@/lib/db/inventory";
 import { LOW_STOCK_CASES } from "../../fixtures/low-stock-cases";
 
@@ -50,5 +50,43 @@ describe("isLowStock", () => {
     // owner. This pins that they are separate knobs, not an accident to unify.
     expect(LOW_STOCK_THRESHOLD).toBe(5);
     expect(isLowStock({ status: "active", stockQty: 5, lowStockThreshold: 3 })).toBe(false);
+  });
+});
+
+describe("availableCount", () => {
+  function piece(stockQty: number): Product {
+    return {
+      id: `p${stockQty}`,
+      slug: "s",
+      name: "n",
+      priceCents: 1,
+      category: "amigurumi",
+      bgClassName: "",
+      placeholder: "",
+      stockQty,
+      images: [],
+    };
+  }
+
+  it("counts only pieces with stock left", () => {
+    // The homepage hero said "10 pieces available today" over a catalogue of
+    // 10 active products, one of which was sold out. getProducts() filters on
+    // status alone, so the catalogue length is not the buyable count.
+    expect(availableCount([piece(3), piece(0), piece(1)])).toBe(2);
+  });
+
+  it("counts nothing when everything is sold out", () => {
+    expect(availableCount([piece(0), piece(0)])).toBe(0);
+  });
+
+  it("counts nothing for an empty catalogue", () => {
+    expect(availableCount([])).toBe(0);
+  });
+
+  it("treats a negative stock quantity as unavailable", () => {
+    // The webhook clamps with GREATEST(...,0) so this should not occur, but a
+    // count that says "available" about a negative number is the wrong way to
+    // find that out.
+    expect(availableCount([piece(-2)])).toBe(0);
   });
 });

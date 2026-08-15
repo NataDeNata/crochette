@@ -2,20 +2,26 @@ import type { Metadata } from "next";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { Sheet } from "@/components/layout/Sheet";
 import { ContactForm } from "@/components/contact/ContactForm";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
   description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
+  alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact | Crochette",
     description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
+    images: [OG_IMAGE],
   },
 };
 
 const DETAILS = [
   { label: "Email", value: "hello@crochette.shop" },
   { label: "Instagram", value: "@crochette.studio" },
-  { label: "Studio hours", value: "Mon–Fri, 9am–5pm" },
+  // With the timezone. This studio ships internationally-adjacent enough that
+  // "9am" alone is a different eight hours depending on who is reading it, and
+  // it is the number a customer uses to decide whether a reply is late.
+  { label: "Studio hours", value: "Mon–Fri, 9am–5pm (PHT, UTC+8)" },
 ];
 
 export default function ContactPage() {

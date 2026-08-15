@@ -21,6 +21,9 @@ function parseProductForm(formData: FormData) {
     status: formData.get("status"),
     stockQty: formData.get("stockQty"),
     lowStockThreshold: formData.get("lowStockThreshold"),
+    dimensions: formData.get("dimensions") || undefined,
+    materials: formData.get("materials") || undefined,
+    careInstructions: formData.get("careInstructions") || undefined,
   });
 }
 
@@ -47,6 +50,9 @@ export async function createProduct(_prevState: FormActionState, formData: FormD
       status: parsed.data.status,
       stockQty: parsed.data.stockQty,
       lowStockThreshold: parsed.data.lowStockThreshold,
+      dimensions: parsed.data.dimensions || null,
+      materials: parsed.data.materials || null,
+      careInstructions: parsed.data.careInstructions || null,
     });
   } catch (err) {
     logError("admin.product.create_failed", err, { slug: parsed.data.slug });
@@ -81,6 +87,9 @@ export async function updateProduct(
         status: parsed.data.status,
         stockQty: parsed.data.stockQty,
         lowStockThreshold: parsed.data.lowStockThreshold,
+        dimensions: parsed.data.dimensions || null,
+        materials: parsed.data.materials || null,
+        careInstructions: parsed.data.careInstructions || null,
       })
       .where(eq(products.id, id));
   } catch (err) {
