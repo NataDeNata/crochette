@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { adminLogin, adminLoginTotp } from "@/app/admin/login/actions";
-import { IDLE_LOGIN_STATE } from "@/lib/actions/admin-login-types";
+import { IDLE_LOGIN_STATE } from "@/lib/actions/auth-form-types";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
 import { Input } from "@/components/ui/input";

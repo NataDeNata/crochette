@@ -91,3 +91,19 @@ export async function isRateLimited(scope: RateLimitScope, key: string): Promise
   const { success } = await getLimiter(scope).limit(key);
   return !success;
 }
+
+/**
+ * The two-bucket check every credentials entry point makes: `auth-ip` first,
+ * because it's the bucket an enumeration sweep can't escape by varying the
+ * email, then the per-endpoint one keyed `IP:email`.
+ *
+ * Both are spent on each attempt by design — see the `auth-endpoint` note above
+ * for why they are separate scopes.
+ */
+export async function isAuthRateLimited(
+  scope: RateLimitScope,
+  ip: string,
+  emailKey: string
+): Promise<boolean> {
+  return (await isRateLimited("auth-ip", ip)) || (await isRateLimited(scope, `${ip}:${emailKey}`));
+}

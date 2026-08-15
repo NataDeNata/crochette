@@ -17,7 +17,7 @@ import {
 import { adminPasswordChangeSchema, secondFactorCodeSchema } from "@/lib/validation/admin-account";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { logInfo } from "@/lib/observability/log";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, RATE_LIMITED_MESSAGE, type FormActionState } from "@/lib/actions/types";
 
 /** State for the 2FA forms. `backupCodes` is present on exactly one render —
  * the one right after enrolment or a regeneration — because only the hashes are
@@ -36,7 +36,7 @@ const WRONG_PASSWORD = "That password isn't right.";
  */
 async function reauthenticate(adminId: string, password: unknown): Promise<string | null> {
   if (await isRateLimited("auth-ip", await getClientIp())) {
-    return "Too many attempts. Please wait a few minutes and try again.";
+    return RATE_LIMITED_MESSAGE;
   }
   if (typeof password !== "string" || !password) return WRONG_PASSWORD;
   if (!(await verifyAdminPassword(adminId, password))) return WRONG_PASSWORD;
@@ -65,13 +65,7 @@ export async function changeAdminPassword(
     confirmPassword: formData.get("confirmPassword"),
   });
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   const failure = await reauthenticate(admin.id, parsed.data.currentPassword);
   if (failure) return { status: "error", message: failure, fieldErrors: { currentPassword: [failure] } };
@@ -125,7 +119,7 @@ export async function confirmTotp(
   const admin = await requireAdmin();
 
   if (await isRateLimited("admin-totp", await getClientIp())) {
-    return { status: "error", message: "Too many attempts. Please wait a few minutes and try again." };
+    return { status: "error", message: RATE_LIMITED_MESSAGE };
   }
 
   const parsed = secondFactorCodeSchema.safeParse(formData.get("code"));

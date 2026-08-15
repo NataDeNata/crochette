@@ -6,8 +6,9 @@ import { signIn } from "@/lib/auth";
 import { findCustomerByEmail, createCustomer } from "@/lib/db/accounts";
 import { signupSchema } from "@/lib/validation/account";
 import { notifyAccountCreated } from "@/lib/email/notifications";
-import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
-import type { AccountSignupState } from "@/lib/actions/account-signup-types";
+import { getClientIp, isAuthRateLimited } from "@/lib/security/rate-limit";
+import { INVALID_FIELDS_MESSAGE, RATE_LIMITED_MESSAGE } from "@/lib/actions/types";
+import type { AccountSignupState } from "@/lib/actions/auth-form-types";
 
 export async function signupAccount(_prevState: AccountSignupState, formData: FormData): Promise<AccountSignupState> {
   const name = formData.get("name");
@@ -23,26 +24,17 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
   if (!parsed.success) {
     return {
       status: "error",
-      message: "Please check the fields below.",
+      message: INVALID_FIELDS_MESSAGE,
       fieldErrors: parsed.error.flatten().fieldErrors,
       name: typeof name === "string" ? name : undefined,
       email: typeof email === "string" ? email : undefined,
     };
   }
 
-  const ip = await getClientIp();
-  // IP-only first — it's the bucket an enumeration sweep can't escape by
-  // varying the email. See lib/security/rate-limit.ts.
-  if (
-    (await isRateLimited("auth-ip", ip)) ||
-    (await isRateLimited("signup", `${ip}:${parsed.data.email.toLowerCase()}`))
-  ) {
-    return {
-      status: "error",
-      message: "Too many attempts. Please wait a few minutes and try again.",
-      name: parsed.data.name,
-      email: parsed.data.email,
-    };
+  const echo = { name: parsed.data.name, email: parsed.data.email };
+
+  if (await isAuthRateLimited("signup", await getClientIp(), parsed.data.email.toLowerCase())) {
+    return { status: "error", message: RATE_LIMITED_MESSAGE, ...echo };
   }
 
   // This says outright what the login timing oracle used to leak indirectly:
@@ -54,10 +46,9 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
   if (existing) {
     return {
       status: "error",
-      message: "Please check the fields below.",
+      message: INVALID_FIELDS_MESSAGE,
       fieldErrors: { email: ["An account with that email already exists. Try signing in instead."] },
-      name: parsed.data.name,
-      email: parsed.data.email,
+      ...echo,
     };
   }
 

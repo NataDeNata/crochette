@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { products, productImages } from "@/lib/db/schema";
 import { productImageMetaSchema, MAX_PRODUCT_IMAGES } from "@/lib/validation/product-images";
 import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, type FormActionState } from "@/lib/actions/types";
 import { logError } from "@/lib/observability/log";
 
 function sanitizeFilename(name: string) {
@@ -233,13 +233,7 @@ export async function updateProductImageMeta(
     alt: formData.get("alt") || undefined,
   });
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   const [row] = await db
     .select({ productId: productImages.productId })

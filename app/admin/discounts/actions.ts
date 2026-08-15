@@ -6,7 +6,9 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { discountCodes, orders } from "@/lib/db/schema";
 import { discountSchema } from "@/lib/validation/discount";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, type FormActionState } from "@/lib/actions/types";
+import { isUniqueViolation } from "@/lib/db/errors";
+import { blankToCents, blankToNull } from "@/lib/validation/coerce";
 import { logError } from "@/lib/observability/log";
 
 function parseDiscountForm(formData: FormData) {
@@ -29,26 +31,21 @@ function toRow(data: ReturnType<typeof discountSchema.parse>) {
     type: data.type,
     value: data.type === "fixed" ? Math.round(data.value * 100) : Math.round(data.value),
     active: data.active,
-    maxUses: data.maxUses === "" || data.maxUses === undefined ? null : data.maxUses,
-    minSubtotalCents:
-      data.minSubtotalDollars === "" || data.minSubtotalDollars === undefined
-        ? null
-        : Math.round(data.minSubtotalDollars * 100),
+    maxUses: blankToNull(data.maxUses),
+    minSubtotalCents: blankToCents(data.minSubtotalDollars),
     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
   };
 }
 
 export async function createDiscount(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const parsed = parseDiscountForm(formData);
-  if (!parsed.success) {
-    return { status: "error", message: "Please check the fields below.", fieldErrors: parsed.error.flatten().fieldErrors };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   try {
     await db.insert(discountCodes).values(toRow(parsed.data));
   } catch (err) {
     logError("admin.discount.create_failed", err);
-    const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't create the discount code. Please try again.";
+    const message = isUniqueViolation(err) ? "That code is already in use." : "Couldn't create the discount code. Please try again.";
     return { status: "error", message };
   }
 
@@ -62,15 +59,13 @@ export async function updateDiscount(
   formData: FormData
 ): Promise<FormActionState> {
   const parsed = parseDiscountForm(formData);
-  if (!parsed.success) {
-    return { status: "error", message: "Please check the fields below.", fieldErrors: parsed.error.flatten().fieldErrors };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   try {
     await db.update(discountCodes).set(toRow(parsed.data)).where(eq(discountCodes.id, id));
   } catch (err) {
     logError("admin.discount.update_failed", err, { discountCodeId: id });
-    const message = err instanceof Error && err.message.includes("unique") ? "That code is already in use." : "Couldn't save the discount code. Please try again.";
+    const message = isUniqueViolation(err) ? "That code is already in use." : "Couldn't save the discount code. Please try again.";
     return { status: "error", message };
   }
 

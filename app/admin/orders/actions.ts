@@ -10,7 +10,7 @@ import { applyOrderStatusChange, type OrderTransition } from "@/lib/db/orders";
 import { orderUpdateSchema, orderBulkUpdateSchema } from "@/lib/validation/order-admin";
 import { notifyOrderShipped, notifyOrderDelivered } from "@/lib/email/notifications";
 import { requireAdmin } from "@/lib/auth-guard";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, type FormActionState } from "@/lib/actions/types";
 import { logError, logInfo } from "@/lib/observability/log";
 
 /**
@@ -55,13 +55,7 @@ export async function updateOrder(
     carrier: formData.get("carrier") || undefined,
   });
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   let transition: OrderTransition;
   try {

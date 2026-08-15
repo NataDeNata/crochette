@@ -5,9 +5,9 @@ import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { customOrderSchema } from "@/lib/validation/custom-order";
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
-import type { FormActionState } from "@/lib/actions/types";
+import { fieldError, invalidFields, rateLimited, type FormActionState } from "@/lib/actions/types";
 import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
-import { auth } from "@/lib/auth";
+import { currentCustomerId } from "@/lib/auth-guard";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { logError } from "@/lib/observability/log";
 
@@ -43,12 +43,7 @@ export async function submitCustomOrder(
   formData: FormData
 ): Promise<FormActionState> {
   const ip = await getClientIp();
-  if (await isRateLimited("custom-order", ip)) {
-    return {
-      status: "error",
-      message: "Too many attempts. Please wait a few minutes and try again.",
-    };
-  }
+  if (await isRateLimited("custom-order", ip)) return rateLimited();
 
   const parsed = customOrderSchema.safeParse({
     name: formData.get("name"),
@@ -60,27 +55,14 @@ export async function submitCustomOrder(
     description: formData.get("description"),
   });
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   const photoFiles = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
 
   const uploadResult = await uploadPhotos(photoFiles);
-  if ("error" in uploadResult) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: { photos: [uploadResult.error] },
-    };
-  }
+  if ("error" in uploadResult) return fieldError("photos", uploadResult.error);
 
-  const session = await auth();
-  const customerId = session?.user?.role === "customer" ? session.user.id : null;
+  const customerId = await currentCustomerId();
 
   try {
     await db.insert(customOrderRequests).values({

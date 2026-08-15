@@ -11,10 +11,10 @@ import { resolveCartId } from "@/lib/cart/resolve";
 import { clearCart, getRawCartItems } from "@/lib/db/cart";
 import { createPaymentSession } from "@/lib/payments/xendit";
 import { resolveDiscountCode } from "@/lib/db/discounts";
-import { auth } from "@/lib/auth";
+import { currentCustomerId } from "@/lib/auth-guard";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { logError, logWarn } from "@/lib/observability/log";
-import type { FormActionState } from "@/lib/actions/types";
+import { fieldError, invalidFields, rateLimited, type FormActionState } from "@/lib/actions/types";
 
 async function getSiteOrigin(): Promise<string> {
   const h = await headers();
@@ -40,13 +40,7 @@ export async function submitCheckout(
   );
 
   const ip = await getClientIp();
-  if (await isRateLimited("checkout", ip)) {
-    return {
-      status: "error",
-      message: "Too many attempts. Please wait a few minutes and try again.",
-      values: echo,
-    };
-  }
+  if (await isRateLimited("checkout", ip)) return rateLimited({ values: echo });
 
   const parsed = checkoutSchema.safeParse({
     name: formData.get("name"),
@@ -60,14 +54,7 @@ export async function submitCheckout(
     discountCode: formData.get("discountCode") || undefined,
   });
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-      values: echo,
-    };
-  }
+  if (!parsed.success) return invalidFields(parsed.error, { values: echo });
 
   // The cart is read from the DATABASE, not from the submitted form. It used to
   // arrive as a JSON blob in formData, which meant the server took the client's
@@ -122,22 +109,14 @@ export async function submitCheckout(
   const subtotalCents = lineItems.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
 
   const { discount, error: discountError } = await resolveDiscountCode(parsed.data.discountCode ?? "", subtotalCents);
-  if (discountError) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: { discountCode: [discountError] },
-      values: echo,
-    };
-  }
+  if (discountError) return fieldError("discountCode", discountError, { values: echo });
 
   const discountCents = discount?.discountCents ?? 0;
   const totalCents = subtotalCents + SHIPPING_CENTS - discountCents;
 
   // Links the order to the account when logged in — guest checkout (no
   // session, or an admin session) leaves this null, unaffected either way.
-  const authSession = await auth();
-  const customerId = authSession?.user?.role === "customer" ? authSession.user.id : null;
+  const customerId = await currentCustomerId();
 
   const [order] = await db
     .insert(orders)
