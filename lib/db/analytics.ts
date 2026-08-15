@@ -18,7 +18,7 @@ import {
  * excluded for the obvious reason; note `cancelled` is also the status that
  * triggers a restock (see lib/db/inventory.ts), so treating it as revenue
  * would double-count a refund as both a sale and returned stock. */
-const REVENUE_STATUSES = ["paid", "shipped", "completed"] as const;
+export const REVENUE_STATUSES = ["paid", "shipped", "completed"] as const;
 
 /** `paid_at` reduced to a calendar date in the studio's timezone.
  *

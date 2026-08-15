@@ -39,6 +39,18 @@ export async function requireAdminPage(): Promise<{ id: string; email: string }>
   return admin;
 }
 
+/**
+ * The signed-in shopper's id, or null for a guest — or for an admin, who is
+ * signed in but owns no cart, no addresses and no orders.
+ *
+ * Null rather than a redirect: every caller has a sensible guest path, which is
+ * the opposite of the admin guards above.
+ */
+export async function currentCustomerId(): Promise<string | null> {
+  const session = await auth();
+  return session?.user?.role === "customer" ? session.user.id : null;
+}
+
 async function adminOrNull(): Promise<{ id: string; email: string } | null> {
   const session = await auth();
   if (session?.user?.role !== "admin" || !session.user.id) return null;

@@ -23,16 +23,19 @@ import { Cutout } from "@/components/ui/Cutout";
  * the cart button the figure already carries, and keyboard users get it from
  * the same rule.
  */
+/* `lead` and `topSellers` arrive as two props rather than as one `pieces` array
+ * the component slices apart. They are chosen by different rules now — the lead
+ * is the head of the catalogue, the rail is ranked by units sold — and a single
+ * array cannot carry that distinction, so the split had to live either here or
+ * at the call site. It lives at the call site, which is the only place that can
+ * see both the ranking and the catalogue it has to be intersected with. */
 export function CutoutHero({
-  pieces,
-  pieceCount,
+  lead,
+  topSellers,
 }: {
-  pieces: Product[];
-  pieceCount: number;
+  lead?: Product;
+  topSellers: Product[];
 }) {
-  const [lead, ...rest] = pieces;
-  const secondary = rest.slice(0, 3);
-
   return (
     /* The viridian margin and the 2px key rule that used to frame this are gone.
        They put a hard rectangle around the first thing anyone sees, which meant
@@ -100,14 +103,12 @@ export function CutoutHero({
                 </SheetTab>
               </div>
 
-              {/* Kept, because unlike the colophon this is a live fact about
-                  the catalogue rather than a description of the page. Reworded
-                  off "figures on the sheet" for the same reason the colophon
-                  went: a shopper counts pieces, not figures. */}
-              <p className="type-sheet-spec mt-9 text-keyline/60">
-                {pieceCount} {pieceCount === 1 ? "piece" : "pieces"} available
-                today · crocheted in small batches
-              </p>
+              {/* The "N pieces available today · crocheted in small batches"
+                  line stood here. It was a true fact about the catalogue, which
+                  is why it survived the colophon removal — but a seven-piece
+                  count reads as a shop that has nearly run out rather than as
+                  one that makes things by hand, and the second clause repeats
+                  what the studio section below says in full sentences. */}
             </div>
 
             {lead && (
@@ -117,10 +118,24 @@ export function CutoutHero({
             )}
           </div>
 
-          {secondary.length > 0 && (
+          {topSellers.length > 0 && (
             <div className="mt-12 border-t-2 border-keyline pt-8 lg:mt-16">
+              {/* An h2, not a styled paragraph: the h1 above it is the page's
+                  headline and this names a real section of the document, so a
+                  screen reader's heading list is the one place this rail is
+                  distinguishable from the grid further down.
+
+                  Set in the instruction voice rather than the display face. The
+                  section headings below are the didone at clamp(26px,…), which
+                  is the weight the page gives to a section that owns its own
+                  band of the sheet; this one labels a rail inside the hero and
+                  has to sit under the headline without competing with it. The
+                  2px keyline directly above already does the dividing. */}
+              <h2 className="type-sheet-spec mb-6 text-keyline/70">
+                Top Sellers
+              </h2>
               <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8">
-                {secondary.map((product) => (
+                {topSellers.map((product) => (
                   <Cutout key={product.id} product={product} />
                 ))}
               </div>

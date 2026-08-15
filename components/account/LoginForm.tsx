@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { accountLogin } from "@/app/account/login/actions";
-import { IDLE_ACCOUNT_LOGIN_STATE } from "@/lib/actions/account-login-types";
+import { IDLE_ACCOUNT_LOGIN_STATE } from "@/lib/actions/auth-form-types";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
 import { Input } from "@/components/ui/input";

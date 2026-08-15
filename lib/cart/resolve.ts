@@ -1,5 +1,5 @@
 import "server-only";
-import { auth } from "@/lib/auth";
+import { currentCustomerId } from "@/lib/auth-guard";
 import { createGuestCart, findCustomerCart, getOrCreateCustomerCart, isGuestCart } from "@/lib/db/cart";
 import { readCartCookie, setCartCookie } from "./cookie";
 
@@ -19,8 +19,7 @@ import { readCartCookie, setCartCookie } from "./cookie";
  * forbids setting cookies there.
  */
 export async function resolveCartId({ create }: { create: boolean }): Promise<string | null> {
-  const session = await auth();
-  const customerId = session?.user?.role === "customer" ? session.user.id : null;
+  const customerId = await currentCustomerId();
 
   if (customerId) {
     if (create) return getOrCreateCustomerCart(customerId);

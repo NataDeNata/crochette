@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { customOrderUpdateSchema } from "@/lib/validation/custom-order-admin";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, type FormActionState } from "@/lib/actions/types";
+import { blankToCents } from "@/lib/validation/coerce";
 import { logError } from "@/lib/observability/log";
 
 export async function updateCustomOrder(
@@ -20,19 +21,14 @@ export async function updateCustomOrder(
     adminNotes: formData.get("adminNotes") || undefined,
   });
 
-  if (!parsed.success) {
-    return { status: "error", message: "Please check the fields below.", fieldErrors: parsed.error.flatten().fieldErrors };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   try {
     await db
       .update(customOrderRequests)
       .set({
         status: parsed.data.status,
-        quotedPriceCents:
-          parsed.data.quotedPriceDollars === "" || parsed.data.quotedPriceDollars === undefined
-            ? null
-            : Math.round(parsed.data.quotedPriceDollars * 100),
+        quotedPriceCents: blankToCents(parsed.data.quotedPriceDollars),
         adminNotes: parsed.data.adminNotes || null,
       })
       .where(eq(customOrderRequests.id, id));

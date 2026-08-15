@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { contactMessages } from "@/lib/db/schema";
 import { contactSchema } from "@/lib/validation/contact";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, rateLimited, type FormActionState } from "@/lib/actions/types";
 import { notifyContactMessageSubmitted } from "@/lib/email/notifications";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { logError } from "@/lib/observability/log";
@@ -13,12 +13,7 @@ export async function submitContactMessage(
   formData: FormData
 ): Promise<FormActionState> {
   const ip = await getClientIp();
-  if (await isRateLimited("contact", ip)) {
-    return {
-      status: "error",
-      message: "Too many attempts. Please wait a few minutes and try again.",
-    };
-  }
+  if (await isRateLimited("contact", ip)) return rateLimited();
 
   const parsed = contactSchema.safeParse({
     name: formData.get("name"),
@@ -27,13 +22,7 @@ export async function submitContactMessage(
     message: formData.get("message"),
   });
 
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Please check the fields below.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   try {
     await db.insert(contactMessages).values({

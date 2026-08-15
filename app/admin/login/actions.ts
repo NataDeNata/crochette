@@ -8,13 +8,13 @@ import { db } from "@/lib/db";
 import { admins } from "@/lib/db/schema";
 import { signIn } from "@/lib/auth";
 import { DUMMY_PASSWORD_HASH } from "@/lib/auth-session";
-import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
+import { getClientIp, isAuthRateLimited, isRateLimited } from "@/lib/security/rate-limit";
+import { RATE_LIMITED_MESSAGE } from "@/lib/actions/types";
 import { ADMIN_CHALLENGE_COOKIE, mintAdminChallenge } from "@/lib/security/admin-challenge";
 import { logInfo } from "@/lib/observability/log";
-import type { AdminLoginState } from "@/lib/actions/admin-login-types";
+import type { AdminLoginState } from "@/lib/actions/auth-form-types";
 
 const GENERIC_FAILURE = "Incorrect email or password.";
-const TOO_MANY = "Too many attempts. Please wait a few minutes and try again.";
 
 /** Scoped to the login route so the browser never sends it anywhere else, and
  * httpOnly so no script can read it. `secure` is dropped on localhost, where
@@ -59,11 +59,8 @@ export async function adminLogin(_prevState: AdminLoginState, formData: FormData
   const emailKey = typeof email === "string" ? email.trim().toLowerCase() : "";
   const echo = typeof email === "string" ? email : undefined;
 
-  const ip = await getClientIp();
-  // IP-only first — it's the bucket an enumeration sweep can't escape by
-  // varying the email. See lib/security/rate-limit.ts.
-  if ((await isRateLimited("auth-ip", ip)) || (await isRateLimited("admin-login", `${ip}:${emailKey}`))) {
-    return { status: "error", message: TOO_MANY, email: echo };
+  if (await isAuthRateLimited("admin-login", await getClientIp(), emailKey)) {
+    return { status: "error", message: RATE_LIMITED_MESSAGE, email: echo };
   }
 
   if (!emailKey || typeof password !== "string" || !password) {
@@ -115,7 +112,7 @@ export async function adminLoginTotp(_prevState: AdminLoginState, formData: Form
 
   const ip = await getClientIp();
   if (await isRateLimited("admin-totp", ip)) {
-    return { status: "totp", message: TOO_MANY };
+    return { status: "totp", message: RATE_LIMITED_MESSAGE };
   }
 
   const challenge = (await cookies()).get(ADMIN_CHALLENGE_COOKIE)?.value;

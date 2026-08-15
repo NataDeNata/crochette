@@ -13,6 +13,15 @@
 export const PG_INVALID_TEXT_REPRESENTATION = "22P02";
 
 /**
+ * Postgres SQLSTATE 23505 — `unique_violation`. A slug or discount code that is
+ * already taken. Decided by the row, not the connection, so like 22P02 it earns
+ * a specific message rather than a generic "try again".
+ */
+export const PG_UNIQUE_VIOLATION = "23505";
+
+/**
+ * Does this error, or anything in its `cause` chain, carry `code`?
+ *
  * Drizzle 0.45 wraps driver errors in a `DrizzleQueryError` and does NOT copy
  * `code` onto the wrapper — the SQLSTATE lives on `cause`, a postgres-js
  * `PostgresError`. A direct `err.code === "22P02"` check therefore silently
@@ -25,13 +34,25 @@ export const PG_INVALID_TEXT_REPRESENTATION = "22P02";
  *
  * The depth cap guards against a self-referential `cause` chain.
  */
-export function isInvalidTextRepresentation(err: unknown): boolean {
+function hasSqlState(err: unknown, code: string): boolean {
   let current: unknown = err;
   for (let depth = 0; current != null && depth < 5; depth++) {
-    if ((current as { code?: unknown }).code === PG_INVALID_TEXT_REPRESENTATION) {
-      return true;
-    }
+    if ((current as { code?: unknown }).code === code) return true;
     current = (current as { cause?: unknown }).cause;
   }
   return false;
+}
+
+/** See {@link PG_INVALID_TEXT_REPRESENTATION}. */
+export function isInvalidTextRepresentation(err: unknown): boolean {
+  return hasSqlState(err, PG_INVALID_TEXT_REPRESENTATION);
+}
+
+/**
+ * See {@link PG_UNIQUE_VIOLATION}. Replaces four `err.message.includes("unique")`
+ * checks in the admin actions — the message is wording Postgres never promised,
+ * the SQLSTATE is.
+ */
+export function isUniqueViolation(err: unknown): boolean {
+  return hasSqlState(err, PG_UNIQUE_VIOLATION);
 }

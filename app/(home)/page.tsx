@@ -3,25 +3,53 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { CutoutHero } from "@/components/sections/CutoutHero";
 import { Cutout } from "@/components/ui/Cutout";
 import { GallerySection } from "@/components/gallery/GallerySection";
-import { availableCount } from "@/lib/data/products";
-import { getProducts } from "@/lib/data/products.server";
+import { getProducts, getTopSellingProductIds } from "@/lib/data/products.server";
 import { getHomeGallery } from "@/lib/data/gallery";
 
-export default async function Home() {
-  const products = await getProducts();
-  const gallery = await getHomeGallery();
+/** How many pieces the hero rail under the lead figure carries. */
+const TOP_SELLER_COUNT = 3;
 
-  /* The hero used to claim `products.length` pieces "available today", which
-   * counts sold-out pieces — see `availableCount`. */
-  const available = availableCount(products);
+export default async function Home() {
+  const [products, topSellerIds, gallery] = await Promise.all([
+    getProducts(),
+    getTopSellingProductIds(),
+    getHomeGallery(),
+  ]);
+
+  const [lead, ...rest] = products;
+
+  /* The rail under the lead figure used to be simply "the next three rows of
+   * the catalogue", which meant its contents were decided by `created_at` —
+   * the pieces a visitor saw first were the ones the studio happened to add
+   * first. They are the best-selling pieces now.
+   *
+   * The lead figure is excluded rather than allowed to rank, because a piece
+   * cannot be both the hero and one of the three figures beneath it: it would
+   * print twice in one viewport, and the rail would silently be two wide.
+   *
+   * Padding with the newest pieces rather than falling back wholesale is the
+   * part worth keeping. A catalogue with one seller should show that seller
+   * and fill the other two slots, not discard the one real signal it has
+   * because it could not fill all three — and a catalogue with none falls all
+   * the way through to newest-first, which is the intended empty state. */
+  const rank = new Map(topSellerIds.map((id, i) => [id, i]));
+  const bestSelling = rest
+    .filter((product) => rank.has(product.id))
+    .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+  /* `getProducts()` orders by `created_at` ascending, so newest is the tail. */
+  const newestFirst = [...rest].reverse();
+  const topSellers = [
+    ...bestSelling,
+    ...newestFirst.filter((product) => !rank.has(product.id)),
+  ].slice(0, TOP_SELLER_COUNT);
 
   /* The hero rail and the grid below both used to start from the top of the
    * catalogue, so the same four pieces appeared twice on one page and a
-   * ten-piece catalogue looked like six. The grid now picks up where the hero
-   * left off. */
-  const heroPieces = products.slice(0, 4);
-  const overflows = products.length > heroPieces.length;
-  const gridPieces = overflows ? products.slice(4, 12) : products;
+   * ten-piece catalogue looked like six. The grid takes whatever the hero did
+   * not — by id rather than by slice index, since the rail is no longer a
+   * contiguous run of the catalogue and an offset can no longer describe it. */
+  const shownInHero = new Set([lead?.id, ...topSellers.map((p) => p.id)]);
+  const gridPieces = products.filter((p) => !shownInHero.has(p.id)).slice(0, 8);
 
   return (
     <>
@@ -31,7 +59,7 @@ export default async function Home() {
           inside a die-cut window, at the size a buyer needs to judge the piece
           by. The pieces on the sheet are read live from the catalogue, so the
           first viewport is real inventory rather than a chosen still. */}
-      <CutoutHero pieces={heroPieces} pieceCount={available} />
+      <CutoutHero lead={lead} topSellers={topSellers} />
 
       {/* Below the first viewport the page continues on the same sheet. It used
        * to break into separately framed sheets, each with a viridian margin and
@@ -46,12 +74,24 @@ export default async function Home() {
        * reason `body { overflow-x: hidden }` had to stay, which in turn made
        * the standard overflow check read clean for ten days while every phone
        * width was overflowing. */}
+      {/* Hidden outright when the hero already carries the whole catalogue,
+          rather than rendered with an empty grid under a heading and a "See
+          the full collection" button that leads to the four pieces the visitor
+          just scrolled past. */}
+      {gridPieces.length > 0 && (
       <section className="bg-sheet">
         <div className="page-gutter pb-16 pt-10 sm:pb-20">
           <div className="max-w-[1320px] mx-auto">
             <FadeIn>
+              {/* Was "Everything currently available", which was a claim about
+                  the catalogue this grid cannot honour: it is capped at eight
+                  and the hero has already taken four pieces off the top, so on
+                  any catalogue past twelve the heading was simply false. The
+                  replacement claims nothing about completeness, which is also
+                  what lets the "See the full collection" button below it still
+                  mean something. */}
               <h2 className="type-sheet-display text-[clamp(30px,4.4vw,52px)] text-balance max-w-[620px] mb-10">
-                {overflows ? "The rest of the sheet" : "Everything currently available"}
+                More from the studio
               </h2>
             </FadeIn>
 
@@ -74,6 +114,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* The studio. The stock close-up of hands that sat beside this copy is
           deleted rather than restyled: it was atmosphere, and this world only

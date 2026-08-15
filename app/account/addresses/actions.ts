@@ -1,21 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+/* Defense-in-depth: proxy.ts already gates /account/:path* by role, but these
+ * are Server Actions, reachable directly rather than only via that route, so
+ * they re-check. `currentCustomerId` returns null instead of throwing, so each
+ * one fails soft with a normal FormActionState rather than a 500. */
+import { currentCustomerId } from "@/lib/auth-guard";
 import { createAddress, updateAddress, deleteAddress, setDefaultAddress } from "@/lib/db/accounts";
 import { addressSchema } from "@/lib/validation/account";
-import type { FormActionState } from "@/lib/actions/types";
-
-/** Defense-in-depth: proxy.ts already gates /account/:path* by role, but
- * these are Server Actions, reachable directly (not only via that route),
- * so they re-check rather than trusting the route matcher alone. Returns
- * null instead of throwing so callers can fail soft with a normal
- * FormActionState instead of an unhandled 500. */
-async function requireCustomerId(): Promise<string | null> {
-  const session = await auth();
-  if (session?.user?.role !== "customer") return null;
-  return session.user.id;
-}
+import { invalidFields, type FormActionState } from "@/lib/actions/types";
 
 const NOT_SIGNED_IN: FormActionState = { status: "error", message: "Please sign in again." };
 
@@ -35,12 +28,10 @@ function parseAddressForm(formData: FormData) {
  * when editing) distinguishes the two, mirroring the single-form-two-modes
  * pattern already used by ProductForm/DiscountForm in /admin. */
 export async function saveAddress(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
-  const customerId = await requireCustomerId();
+  const customerId = await currentCustomerId();
   if (!customerId) return NOT_SIGNED_IN;
   const parsed = parseAddressForm(formData);
-  if (!parsed.success) {
-    return { status: "error", message: "Please check the fields below.", fieldErrors: parsed.error.flatten().fieldErrors };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   const addressId = formData.get("addressId");
   const data = {
@@ -70,7 +61,7 @@ export async function deleteAddressAction(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
-  const customerId = await requireCustomerId();
+  const customerId = await currentCustomerId();
   if (!customerId) return NOT_SIGNED_IN;
   await deleteAddress(customerId, id);
   revalidatePath("/account/addresses");
@@ -83,7 +74,7 @@ export async function setDefaultAddressAction(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
-  const customerId = await requireCustomerId();
+  const customerId = await currentCustomerId();
   if (!customerId) return NOT_SIGNED_IN;
   await setDefaultAddress(customerId, id);
   revalidatePath("/account/addresses");

@@ -7,7 +7,8 @@ import { del } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { products, orderItems, productImages } from "@/lib/db/schema";
 import { productSchema } from "@/lib/validation/product";
-import type { FormActionState } from "@/lib/actions/types";
+import { invalidFields, type FormActionState } from "@/lib/actions/types";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { logError } from "@/lib/observability/log";
 
 function parseProductForm(formData: FormData) {
@@ -27,6 +28,25 @@ function parseProductForm(formData: FormData) {
   });
 }
 
+/** The form's shape mapped onto the column shape. Shared so create and update
+ * cannot drift apart when a field is added. */
+function toRow(data: ReturnType<typeof productSchema.parse>) {
+  return {
+    name: data.name,
+    slug: data.slug,
+    description: data.description || null,
+    priceCents: Math.round(data.priceDollars * 100),
+    category: data.category,
+    tag: data.tag || null,
+    status: data.status,
+    stockQty: data.stockQty,
+    lowStockThreshold: data.lowStockThreshold,
+    dimensions: data.dimensions || null,
+    materials: data.materials || null,
+    careInstructions: data.careInstructions || null,
+  };
+}
+
 function revalidateStorefront(slug: string) {
   revalidatePath("/");
   revalidatePath("/shop");
@@ -35,28 +55,13 @@ function revalidateStorefront(slug: string) {
 
 export async function createProduct(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const parsed = parseProductForm(formData);
-  if (!parsed.success) {
-    return { status: "error", message: "Please check the fields below.", fieldErrors: parsed.error.flatten().fieldErrors };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   try {
-    await db.insert(products).values({
-      name: parsed.data.name,
-      slug: parsed.data.slug,
-      description: parsed.data.description || null,
-      priceCents: Math.round(parsed.data.priceDollars * 100),
-      category: parsed.data.category,
-      tag: parsed.data.tag || null,
-      status: parsed.data.status,
-      stockQty: parsed.data.stockQty,
-      lowStockThreshold: parsed.data.lowStockThreshold,
-      dimensions: parsed.data.dimensions || null,
-      materials: parsed.data.materials || null,
-      careInstructions: parsed.data.careInstructions || null,
-    });
+    await db.insert(products).values(toRow(parsed.data));
   } catch (err) {
     logError("admin.product.create_failed", err, { slug: parsed.data.slug });
-    const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't create the product. Please try again.";
+    const message = isUniqueViolation(err) ? "That slug is already in use." : "Couldn't create the product. Please try again.";
     return { status: "error", message };
   }
 
@@ -70,31 +75,13 @@ export async function updateProduct(
   formData: FormData
 ): Promise<FormActionState> {
   const parsed = parseProductForm(formData);
-  if (!parsed.success) {
-    return { status: "error", message: "Please check the fields below.", fieldErrors: parsed.error.flatten().fieldErrors };
-  }
+  if (!parsed.success) return invalidFields(parsed.error);
 
   try {
-    await db
-      .update(products)
-      .set({
-        name: parsed.data.name,
-        slug: parsed.data.slug,
-        description: parsed.data.description || null,
-        priceCents: Math.round(parsed.data.priceDollars * 100),
-        category: parsed.data.category,
-        tag: parsed.data.tag || null,
-        status: parsed.data.status,
-        stockQty: parsed.data.stockQty,
-        lowStockThreshold: parsed.data.lowStockThreshold,
-        dimensions: parsed.data.dimensions || null,
-        materials: parsed.data.materials || null,
-        careInstructions: parsed.data.careInstructions || null,
-      })
-      .where(eq(products.id, id));
+    await db.update(products).set(toRow(parsed.data)).where(eq(products.id, id));
   } catch (err) {
     logError("admin.product.update_failed", err, { productId: id, slug: parsed.data.slug });
-    const message = err instanceof Error && err.message.includes("unique") ? "That slug is already in use." : "Couldn't save the product. Please try again.";
+    const message = isUniqueViolation(err) ? "That slug is already in use." : "Couldn't save the product. Please try again.";
     return { status: "error", message };
   }
 

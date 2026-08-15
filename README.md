@@ -156,24 +156,3 @@ schema design, feature implementation, the security and QA review passes, and th
 test suite. Every change was reviewed, run and verified by the project owner before
 merging, and the design decisions and their trade-offs are recorded in
 `Cro_Documentation.md` and `update.md` rather than left implicit.
-
-## Status
-
-**Phase 1 (MVP) is complete** and deployed on Vercel. The storefront sells the
-catalog end to end — browse, cart, checkout, payment, confirmation — with a
-custom-order intake pipeline, customer accounts, and an admin dashboard covering
-products, orders, custom orders, discount codes, product photos and gallery
-curation.
-
-**Phase 2 (hardening)** is largely done: server-owned cart, overselling
-prevention, low-stock alerts, order status/tracking emails, rate limiting,
-structured logging + Sentry, and automated tests in CI. Discount codes and
-multi-image product galleries were pulled forward from Phase 3.
-
-Still open: abandoned-cart email reminders, and browser-level E2E tests.
-
-**Deliberately on hold, not missing:** the site runs on the Vercel-assigned
-domain as a showcase and does not take real payments yet. Going live needs a
-custom domain, a verified Resend sending domain, and Xendit's live key with a
-webhook registered against the production domain — see `Cro_Documentation.md`
-§10, which also has the full architecture and phase plan.
