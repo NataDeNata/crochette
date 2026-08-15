@@ -123,13 +123,31 @@ export function Nav({
        The bar stays opaque rather than translucent: the figures that scroll
        under it carry dashed cut lines and 2px keylines, and a blurred bar over
        printed rules reads as a smudge on the press. */
-    <nav className="sticky top-0 z-50 flex items-center justify-between gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
+    /* A three-track grid rather than `flex justify-between`, so the links are
+       centred on the *page* instead of on whatever space the wordmark and the
+       icon cluster happened to leave over. `justify-between` centres nothing:
+       it distributes free space, so the link group drifted left or right by
+       half the difference between the two side clusters — and that difference
+       moved on its own, because the cluster gains a "Shop now" tab everywhere
+       except /shop and the account icon disappears at 860px. The links sat in
+       a different place on the shop page than on every other page.
+
+       `1fr auto 1fr` makes the side tracks equal by construction, so the centre
+       track is page-centre at every width and stays there when a side control
+       comes or goes. Both `1fr` tracks still floor at min-content, so a narrow
+       window pushes the links off-centre rather than overlapping the wordmark —
+       the failure mode is a nav that looks slightly wrong, not one that prints
+       two controls on top of each other. */
+    <nav className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
       {/* The wordmark, with the press-out mark beside it, both printed on a
           sand plate so the masthead reads as a printed label lying on the
           ground rather than as text floating on a colour. */}
       <Link
         href="/"
-        className="group flex items-center gap-2.5 bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
+        // `justify-self-start` because a grid item stretches to fill its track
+        // by default, and this one is a bordered plate — left to stretch, the
+        // butter rectangle would run the full width of the left `1fr`.
+        className="group flex items-center gap-2.5 justify-self-start bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
       >
         <PressOutMark />
         <span className="type-sheet-display text-[17px] uppercase text-keyline">
@@ -165,25 +183,40 @@ export function Nav({
         })}
       </div>
 
-      {!isShopPage && (
-        // A tab, not the stock pill. Every actionable thing in this world is
-        // taken by its tab, and the one control in the masthead is where that
-        // would be most conspicuous to get wrong.
-        <Link
-          href="/shop"
-          data-slot="button"
-          // The focus outline is press red, not butter. Butter measures 1.2:1
-          // against the cream ground it would be drawn on — a focus indicator
-          // owes 3:1, and this one is the control a keyboard user reaches first.
-          className="nav-cta inline-flex items-center border-2 border-keyline bg-sheet px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-keyline transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
-        >
-          Shop now
-        </Link>
-      )}
+      {/* The "Shop now" tab now sits inside this cluster rather than as a track
+          of its own between the links and the icons. It is an account-level
+          control, not a nav destination — the links already carry /shop — and
+          grouping it with the account and cart icons puts every control the
+          masthead offers in one place at the right edge, leaving the centre
+          track holding nothing but navigation.
 
-      <div className="flex items-center gap-1">
-        <AccountIcon href={accountHref} className="nav-account-icon account-icon-link" />
-        <CartIcon className="cart-icon-link" />
+          `gap-3` between the tab and the icons, `gap-1` inside the icon group:
+          the icons are adjacent 44px targets that read as one unit, and giving
+          the bordered tab that same 1-unit gap would fold it into them. The
+          hamburger stays inside the gap-1 group deliberately — it is the only
+          member of this cluster still visible at 320px, and hanging it off the
+          outer gap-3 would have added 8px to the one width the masthead has
+          already overflowed once. */}
+      <div className="flex items-center gap-3 justify-self-end">
+        {!isShopPage && (
+          // A tab, not the stock pill. Every actionable thing in this world is
+          // taken by its tab, and the one control in the masthead is where that
+          // would be most conspicuous to get wrong.
+          <Link
+            href="/shop"
+            data-slot="button"
+            // The focus outline is press red, not butter. Butter measures 1.2:1
+            // against the cream ground it would be drawn on — a focus indicator
+            // owes 3:1, and this one is the control a keyboard user reaches first.
+            className="nav-cta inline-flex items-center border-2 border-keyline bg-sheet px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-keyline transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+          >
+            Shop now
+          </Link>
+        )}
+
+        <div className="flex items-center gap-1">
+          <AccountIcon href={accountHref} className="nav-account-icon account-icon-link" />
+          <CartIcon className="cart-icon-link" />
 
         <button
           type="button"
@@ -205,6 +238,7 @@ export function Nav({
             className="block w-[22px] h-0.5 bg-keyline"
           />
         </button>
+        </div>
       </div>
 
       {/* One drawer body, shared by both branches below. These used to be two
