@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { AccountIcon } from "@/components/account/AccountIcon";
+import { accountDisplayName } from "@/lib/account/display-name";
 
 /* /gallery is conditional. It is a real route with a designed empty state, but
  * an empty one is a top-level nav item that leads nowhere on a site whose
@@ -78,7 +79,12 @@ export function Nav({
   const [open, setOpen] = useState(false);
   const LINKS = links(hasGallery);
   const isShopPage = pathname === "/shop";
-  const accountHref = session?.user?.role === "customer" ? "/account" : "/account/login";
+  const isCustomer = session?.user?.role === "customer";
+  const accountHref = isCustomer ? "/account" : "/account/login";
+  // Only customers get greeted in the storefront masthead. An admin signed in
+  // at /admin is a different surface with its own chrome, and the storefront
+  // has no reason to announce that session here.
+  const displayName = isCustomer ? accountDisplayName(session?.user) : null;
 
   // Close the mobile drawer on route change — derived during render (React's
   // recommended pattern for resetting state on a prop change) rather than in
@@ -91,6 +97,15 @@ export function Nav({
 
   const drawerBody = (
     <>
+      {/* The masthead label hides below 1100px, so this is where a phone gets
+          the same fact — at full width, where the name needs no truncation.
+          Above the links rather than beside the account row: it is a statement
+          about the session, not another place to tap. */}
+      {displayName && (
+        <span className="type-sheet-spec border-b border-keyline/15 py-3 text-keyline/70">
+          Signed in as <span className="text-keyline">{displayName}</span>
+        </span>
+      )}
       {LINKS.map((link) => (
         <Link
           key={link.href}
@@ -197,7 +212,18 @@ export function Nav({
           member of this cluster still visible at 320px, and hanging it off the
           outer gap-3 would have added 8px to the one width the masthead has
           already overflowed once. */}
-      <div className="flex items-center gap-3 justify-self-end">
+      {/* `min-w-0` is what keeps the links centred once a name of unknown
+          length joins this cluster.
+
+          A `1fr auto 1fr` grid only centres the middle track while both side
+          tracks actually resolve to `1fr`. A grid item's default `min-width` is
+          `auto`, i.e. min-content — so a long enough label would force this
+          track wider than its share, the two sides would stop being equal, and
+          the links would slide left by half the excess. `min-w-0` lets the
+          track hold its `1fr` and pushes the pressure onto the label, which
+          truncates. The result is that the name gets shorter and the nav stays
+          centred, rather than the name staying whole and the nav drifting. */}
+      <div className="flex items-center gap-3 justify-self-end min-w-0">
         {!isShopPage && (
           // A tab, not the stock pill. Every actionable thing in this world is
           // taken by its tab, and the one control in the masthead is where that
@@ -208,13 +234,30 @@ export function Nav({
             // The focus outline is press red, not butter. Butter measures 1.2:1
             // against the cream ground it would be drawn on — a focus indicator
             // owes 3:1, and this one is the control a keyboard user reaches first.
-            className="nav-cta inline-flex items-center border-2 border-keyline bg-sheet px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-keyline transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+            className="nav-cta inline-flex shrink-0 items-center border-2 border-keyline bg-sheet px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-keyline transition-colors duration-200 hover:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
           >
             Shop now
           </Link>
         )}
 
-        <div className="flex items-center gap-1">
+        {/* Sits immediately before the account icon it describes, and is the
+            only shrinkable thing in this cluster — see the `min-w-0` note
+            above. `truncate` needs the `min-w-0` on this element too, since it
+            is itself a flex child and would otherwise refuse to go below its
+            content width.
+
+            Not a link: the account icon beside it already goes to /account, and
+            a second control to the same place is the duplication that cost the
+            masthead 48px at 320px once already. It carries no `aria-hidden`
+            though — "signed in as x" is genuinely useful to a screen reader,
+            and it is the only place the storefront says whose session this is. */}
+        {displayName && (
+          <span className="nav-user-label min-w-0 max-w-[16ch] truncate text-[13px] text-muted-foreground">
+            Signed in as <span className="text-keyline font-medium">{displayName}</span>
+          </span>
+        )}
+
+        <div className="flex shrink-0 items-center gap-1">
           <AccountIcon href={accountHref} className="nav-account-icon account-icon-link" />
           <CartIcon className="cart-icon-link" />
 

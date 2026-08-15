@@ -310,6 +310,26 @@
   }
 }
 
+/* The "Signed in as <name>" label, and the one nav rule that deliberately does
+ * NOT share the 860px query above.
+ *
+ * Those three move together because they are all about the drawer existing.
+ * This one is about horizontal room, which runs out somewhere else entirely:
+ * the label only fits once the wordmark, the centred links, the Shop now tab
+ * and the two icons have all been placed, and below roughly 1100px the right
+ * cluster starts consuming more than its half of the grid. `min-w-0` and
+ * `truncate` keep the nav centred through that (see Nav.tsx), but a name
+ * clipped to three characters says nothing worth the space — so it leaves
+ * rather than shrinking to uselessness.
+ *
+ * The information is not lost on a phone: the drawer prints the same line at
+ * full width, where there is room for it. */
+@media (max-width: 1100px) {
+  .nav-user-label {
+    display: none;
+  }
+}
+
 /* Four columns since the policy links landed: the studio blurb, Explore,
  * The small print, Get in touch. */
 .footer-grid {
