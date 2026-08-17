@@ -42,6 +42,24 @@ async function afterOrderTransition(id: string, t: OrderTransition): Promise<voi
   }
 }
 
+/**
+ * Save the single-order form.
+ *
+ * Deliberately has no counterpart to `bulkUpdateOrders`' "already in the target
+ * status, skip it" pre-flight, and it should stay that way. Unlike the bulk
+ * path, this call also writes `trackingNumber`/`carrier`, and an admin correcting
+ * a mistyped tracking number without touching the dropdown is a normal edit.
+ * Skipping on an unchanged status would silently discard it — a real regression
+ * in exchange for saving a transaction.
+ *
+ * Nor is there a narrower "skip just the transition work" to carve out: with the
+ * status unchanged, `applyOrderStatusChange` already does nothing extra. Both
+ * email gates need the previous status to differ (paid → shipped,
+ * shipped → completed) and the restock needs paid → cancelled, so all three are
+ * already false. What is left is the one UPDATE that has to happen regardless,
+ * and the row lock that UPDATE needs anyway. The bulk path's skip is worth it
+ * because it multiplies by the batch size; here it would buy nothing.
+ */
 export async function updateOrder(
   id: string,
   _prevState: FormActionState,

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -51,13 +52,17 @@ export default async function CustomOrderDetailPage({ params }: { params: Promis
               {r.referenceImageUrls && r.referenceImageUrls.length > 0 ? (
                 <div className="flex flex-wrap gap-2.5">
                   {r.referenceImageUrls.map((url) => (
-                    <a key={url} href={url} target="_blank" rel="noopener noreferrer">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- external Vercel Blob URL */}
-                      <img
-                        src={url}
-                        alt="Reference"
-                        className="size-24 rounded-md border border-border object-cover"
-                      />
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative size-24 overflow-hidden rounded-md border border-border"
+                    >
+                      {/* The link still points at the untouched original — that is the
+                          point of opening it in a tab — but the thumbnail no longer
+                          downloads a 5 MB customer upload to fill 96 square pixels. */}
+                      <Image src={url} alt="Reference" fill sizes="96px" className="object-cover" />
                     </a>
                   ))}
                 </div>

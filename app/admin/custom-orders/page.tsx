@@ -1,9 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { desc, count, ilike, or, and, eq, type SQL } from "drizzle-orm";
 import { Calendar, Image as ImageIcon } from "lucide-react";
 import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { formatDate } from "@/lib/data/analytics";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPagination } from "@/components/admin/AdminPagination";
@@ -11,6 +13,7 @@ import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
 import { containsPattern } from "@/lib/db/search";
+import { readEnumParam, readPageParam, resolvePage } from "@/lib/db/pagination";
 
 const CUSTOM_ORDER_STATUSES = [
   "new",
@@ -30,30 +33,29 @@ export default async function AdminCustomOrdersPage({
 }) {
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
-  const status = CUSTOM_ORDER_STATUSES.includes(sp.status as (typeof CUSTOM_ORDER_STATUSES)[number])
-    ? sp.status!
-    : "";
-  const rawPage = Math.max(1, Number(sp.page) || 1);
+  const status = readEnumParam(CUSTOM_ORDER_STATUSES, sp.status);
+  const requestedPage = readPageParam(sp.page);
 
   const conditions: SQL[] = [];
   if (q) {
     const pattern = containsPattern(q);
     conditions.push(or(ilike(customOrderRequests.name, pattern), ilike(customOrderRequests.email, pattern))!);
   }
-  if (status) conditions.push(eq(customOrderRequests.status, status as (typeof CUSTOM_ORDER_STATUSES)[number]));
+  if (status) conditions.push(eq(customOrderRequests.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
 
   const [{ total }] = await db.select({ total: count() }).from(customOrderRequests).where(where);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Math.min(rawPage, totalPages);
+  const { page, totalPages, limit, offset } = resolvePage({ total, requestedPage, pageSize: PAGE_SIZE });
 
   const rows = await db
     .select()
     .from(customOrderRequests)
     .where(where)
-    .orderBy(desc(customOrderRequests.createdAt))
-    .limit(PAGE_SIZE)
-    .offset((page - 1) * PAGE_SIZE);
+    // Total ordering for LIMIT/OFFSET — see app/admin/orders/page.tsx for why
+    // `created_at` alone is not one.
+    .orderBy(desc(customOrderRequests.createdAt), desc(customOrderRequests.id))
+    .limit(limit)
+    .offset(offset);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
@@ -98,10 +100,17 @@ export default async function AdminCustomOrdersPage({
                   <CardContent className="flex h-full flex-col gap-2">
                     <div className="relative flex h-[110px] items-center justify-center overflow-hidden rounded-md bg-muted">
                       {photo ? (
-                        /* eslint-disable-next-line @next/next/no-img-element -- customer-uploaded
-                           Vercel Blob URLs, same as the detail page: these are arbitrary remote
-                           hosts that next/image would need configured remotePatterns for. */
-                        <img src={photo} alt="" className="size-full object-cover" />
+                        // `fill`, not width/height: the box is a fixed 110px tall but its width
+                        // is whatever the grid column gives it. These are customer uploads that
+                        // lib/validation/photos.ts admits at up to 5 MB each, and a raw <img>
+                        // shipped every one of those bytes into this thumbnail.
+                        <Image
+                          src={photo}
+                          alt=""
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover"
+                        />
                       ) : (
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <ImageIcon className="size-3.5" aria-hidden />
@@ -131,7 +140,7 @@ export default async function AdminCustomOrdersPage({
 
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <Calendar className="size-3" aria-hidden />
-                      {r.createdAt.toLocaleDateString()}
+                      {formatDate(r.createdAt)}
                       <span className="ml-auto font-semibold text-foreground">
                         {r.quotedPriceCents !== null
                           ? formatPrice(r.quotedPriceCents)

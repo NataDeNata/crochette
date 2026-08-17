@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listCustomersWithTotals } from "@/lib/db/analytics";
 import { formatPrice } from "@/lib/data/products";
+import { formatDate } from "@/lib/data/analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -82,7 +83,7 @@ export default async function AdminCustomersPage({
                   <TableCell>{c.paidOrderCount}</TableCell>
                   <TableCell>{formatPrice(c.totalSpentCents)}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {c.createdAt.toLocaleDateString()}
+                    {formatDate(c.createdAt)}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
                     <Button href={`/admin/customers/${c.id}`} variant="outline" size="sm">
