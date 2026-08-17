@@ -44,7 +44,12 @@ beforeEach(() => {
   vi.useFakeTimers();
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // Drain whatever debounced write a test left scheduled. The store claims its
+  // in-flight slot (the one that owns `syncing`) when the timer is *scheduled*,
+  // so a timer abandoned here and then thrown away by useRealTimers would leak
+  // that slot into the next test and pin `syncing` true there.
+  await vi.runOnlyPendingTimersAsync();
   vi.useRealTimers();
 });
 
@@ -140,11 +145,63 @@ describe("add", () => {
 });
 
 describe("setQuantity — debounced per product", () => {
+  it("counts as syncing from the moment the write is scheduled, not when it fires", async () => {
+    // `syncing` used to stay false for the whole 400ms debounce window, which is
+    // simply a false answer to "is a write outstanding". No component reads the
+    // field yet (see its declaration in the store), so this pins the invariant
+    // for whoever reads it first rather than protecting a live behaviour.
+    useCartStore.getState().hydrate(view([{ ...MILO, quantity: 1 }]));
+    vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([{ ...MILO, quantity: 4 }]));
+
+    useCartStore.getState().setQuantity(MILO.productId, 4);
+
+    expect(actions.setCartItemQuantity).not.toHaveBeenCalled();
+    expect(useCartStore.getState().syncing).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(useCartStore.getState().syncing).toBe(false);
+  });
+
+  it("stays syncing while a second write is still in flight", async () => {
+    // One shared boolean cleared in a `finally` would have the first write to
+    // finish re-enable checkout while the second was still running.
+    const bear = { ...MILO, quantity: 1 };
+    const basket: CartLine = {
+      productId: "p-basket",
+      slug: "cloud-basket",
+      name: "Cloud Basket",
+      priceCents: 38000,
+      stockQty: 5,
+      quantity: 1,
+    };
+    useCartStore.getState().hydrate(view([bear, basket]));
+
+    const resolvers: ((v: CartView) => void)[] = [];
+    vi.mocked(actions.setCartItemQuantity).mockImplementation(
+      () => new Promise<CartView>((resolve) => void resolvers.push(resolve))
+    );
+
+    useCartStore.getState().setQuantity(bear.productId, 2);
+    useCartStore.getState().setQuantity(basket.productId, 3);
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(resolvers).toHaveLength(2);
+
+    resolvers[0](view([bear, basket]));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useCartStore.getState().syncing).toBe(true);
+
+    resolvers[1](view([bear, basket]));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useCartStore.getState().syncing).toBe(false);
+  });
+
   it("updates the UI at once but waits before writing", async () => {
     useCartStore.getState().hydrate(view([{ ...MILO, quantity: 1 }]));
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([{ ...MILO, quantity: 4 }]));
 
-    await useCartStore.getState().setQuantity(MILO.productId, 4);
+    useCartStore.getState().setQuantity(MILO.productId, 4);
 
     expect(useCartStore.getState().lines[0].quantity).toBe(4);
     expect(actions.setCartItemQuantity).not.toHaveBeenCalled();
@@ -159,7 +216,7 @@ describe("setQuantity — debounced per product", () => {
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([{ ...MILO, quantity: 4 }]));
 
     for (const quantity of [2, 3, 4]) {
-      await useCartStore.getState().setQuantity(MILO.productId, quantity);
+      useCartStore.getState().setQuantity(MILO.productId, quantity);
       await vi.advanceTimersByTimeAsync(100);
     }
     await vi.advanceTimersByTimeAsync(400);
@@ -180,8 +237,8 @@ describe("setQuantity — debounced per product", () => {
     useCartStore.getState().hydrate(view([bear, basket]));
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([bear, basket]));
 
-    await useCartStore.getState().setQuantity(bear.productId, 2);
-    await useCartStore.getState().setQuantity(basket.productId, 3);
+    useCartStore.getState().setQuantity(bear.productId, 2);
+    useCartStore.getState().setQuantity(basket.productId, 3);
     await vi.advanceTimersByTimeAsync(400);
 
     expect(actions.setCartItemQuantity).toHaveBeenCalledTimes(2);
@@ -193,7 +250,7 @@ describe("setQuantity — debounced per product", () => {
     useCartStore.getState().hydrate(view([{ ...MILO, quantity: 1 }]));
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([{ ...MILO, quantity: 5 }]));
 
-    await useCartStore.getState().setQuantity(MILO.productId, 99);
+    useCartStore.getState().setQuantity(MILO.productId, 99);
 
     expect(useCartStore.getState().lines[0].quantity).toBe(5);
   });
@@ -202,7 +259,7 @@ describe("setQuantity — debounced per product", () => {
     useCartStore.getState().hydrate(view([{ ...MILO, quantity: 2 }]));
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([]));
 
-    await useCartStore.getState().setQuantity(MILO.productId, 0);
+    useCartStore.getState().setQuantity(MILO.productId, 0);
 
     expect(useCartStore.getState().lines).toEqual([]);
   });
@@ -216,13 +273,26 @@ describe("remove", () => {
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([{ ...MILO, quantity: 3 }]));
     vi.mocked(actions.removeFromCart).mockResolvedValue(view([]));
 
-    await useCartStore.getState().setQuantity(MILO.productId, 3);
+    useCartStore.getState().setQuantity(MILO.productId, 3);
     await useCartStore.getState().remove(MILO.productId);
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(actions.setCartItemQuantity).not.toHaveBeenCalled();
     expect(actions.removeFromCart).toHaveBeenCalledExactlyOnceWith(MILO.productId);
     expect(useCartStore.getState().lines).toEqual([]);
+  });
+
+  it("stops syncing after cancelling a pending write, rather than waiting on a write that will never run", async () => {
+    // The cancelled timer had already been counted as in flight. Not giving that
+    // count back would leave checkout disabled for the rest of the session.
+    useCartStore.getState().hydrate(view([{ ...MILO, quantity: 1 }]));
+    vi.mocked(actions.removeFromCart).mockResolvedValue(view([]));
+
+    useCartStore.getState().setQuantity(MILO.productId, 3);
+    await useCartStore.getState().remove(MILO.productId);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(useCartStore.getState().syncing).toBe(false);
   });
 });
 
@@ -232,12 +302,14 @@ describe("clear", () => {
     vi.mocked(actions.setCartItemQuantity).mockResolvedValue(view([{ ...MILO, quantity: 4 }]));
     vi.mocked(actions.emptyCart).mockResolvedValue(view([]));
 
-    await useCartStore.getState().setQuantity(MILO.productId, 4);
+    useCartStore.getState().setQuantity(MILO.productId, 4);
     await useCartStore.getState().clear();
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(actions.setCartItemQuantity).not.toHaveBeenCalled();
     expect(useCartStore.getState().count).toBe(0);
+    // Same as remove: every cancelled timer hands its in-flight count back.
+    expect(useCartStore.getState().syncing).toBe(false);
   });
 });
 
