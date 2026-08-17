@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products, productImages, orderItems, orders } from "@/lib/db/schema";
@@ -7,8 +8,18 @@ import { BG_CYCLE_CLASSES } from "./bg-cycle";
 
 /** `bg`/`placeholder` are the pre-photography fallback — derived here the
  * same way the old mock catalog derived them, and still used whenever a
- * product has zero uploaded images. */
-async function fetchActiveProducts(): Promise<Product[]> {
+ * product has zero uploaded images.
+ *
+ * Wrapped in React's `cache()`, which deduplicates it per request. Without it a
+ * single product page ran this three times — `generateMetadata` calls
+ * `getProductBySlug`, the page calls it again, and the related rail calls
+ * `getProducts` — for six queries where two do. `lib/auth.ts` wraps `auth()`
+ * for exactly this reason.
+ *
+ * Memoizing rather than adding a by-slug query is deliberate: `bgClassName` is
+ * assigned by a product's index within the whole active catalogue, so a single
+ * row cannot be read on its own without changing what colour it gets. */
+const fetchActiveProducts = cache(async (): Promise<Product[]> => {
   const rows = await db
     .select()
     .from(products)
@@ -69,7 +80,7 @@ async function fetchActiveProducts(): Promise<Product[]> {
       primaryImageUrl: images.find((img) => img.isPrimary)?.url ?? images[0]?.url,
     };
   });
-}
+});
 
 /** Full catalog — used by the Shop page and the Home page's sliding showcase.
  * Server-only: queries the live database directly, so this must not be imported

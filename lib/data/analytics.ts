@@ -59,6 +59,35 @@ export function toDayKey(date: Date): string {
   }).format(date);
 }
 
+/** A timestamp as a calendar date the studio owner would recognise.
+ *
+ * Every date rendered in /admin and /account used to be a bare
+ * `date.toLocaleDateString()`, which formats in the *runtime's* locale and
+ * offset. Two things were wrong with that, and only the second is cosmetic:
+ *
+ * 1. On Vercel the runtime is UTC while every revenue bucket in this file is
+ *    computed in REPORTING_TIME_ZONE, eight hours ahead. An order paid at 07:00
+ *    Manila counted toward one day in the dashboard's chart and printed as the
+ *    day before in the orders table directly beside it. Pinning the zone here
+ *    means the two surfaces cannot disagree, for the same reason
+ *    REPORTING_TIME_ZONE is shared with the SQL rather than restated.
+ * 2. A client component formatting a date this way renders it once on the
+ *    server and again in the browser, in two different locales — a hydration
+ *    mismatch. `AdminTwoFactorSection` was doing exactly that. A fixed locale
+ *    makes both passes produce the same string.
+ *
+ * `en-PH` rather than the visitor's locale: these are studio-facing surfaces
+ * reporting on Philippine operations, and a date that changes format with the
+ * reader is not comparable against the chart beside it. */
+export function formatDate(date: Date | string | number): string {
+  return new Intl.DateTimeFormat("en-PH", {
+    timeZone: REPORTING_TIME_ZONE,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(date));
+}
+
 /** Weekday label for a `YYYY-MM-DD` key.
  *
  * The key is parsed as UTC midnight and formatted in UTC, deliberately *not*
