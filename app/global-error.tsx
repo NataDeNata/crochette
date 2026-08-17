@@ -11,6 +11,17 @@ import { cn } from "@/lib/utils";
  * layout and must render its own <html>/<body>. The layout's next/font
  * variables and stylesheet don't exist here, so they're re-declared below.
  *
+ * COLOUR HERE IS RESTRICTED TO :root TOKENS, AND THAT IS NOT AN OVERSIGHT.
+ * Because this replaces the root layout, components/layout/SiteChrome.tsx never
+ * runs, so the `data-surface="storefront" data-world="cutout"` pair is never
+ * stamped on this <html>. Every cream/cut-out token — --keyline, --sheet,
+ * --press-red, --butter, --ground — is declared on that attribute pair in
+ * globals.css and resolves to NOTHING here: the utility emits a var() that has
+ * no value, and the text falls back to whatever it inherits. So this file uses
+ * --destructive/--muted-foreground/--primary (all on plain :root) where its
+ * siblings app/error.tsx and app/shop/[slug]/not-found.tsx use --press-red and
+ * friends. Do not "consistency-fix" it to match them.
+ *
  * Deliberately dependency-light — no FadeIn (framer-motion), no CartProvider,
  * and a plain <button> rather than components/ui/button.tsx (which pulls in
  * radix-ui and next/link). This runs when everything else has already broken;
@@ -53,11 +64,11 @@ export default function GlobalError({
     <html lang="en" className={cn(cormorant.variable, workSans.variable, "font-sans")}>
       <body>
         <section className="py-[100px] page-gutter text-center">
-          <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">Crochette</div>
+          <div className="text-[13px] tracking-[3px] uppercase text-destructive mb-4">Crochette</div>
           <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-4">
             The site is having a moment
           </h1>
-          <p className="text-[15.5px] text-[oklch(0.42_0.02_60)] max-w-[440px] mx-auto mb-8 leading-[1.6]">
+          <p className="text-[15.5px] text-muted-foreground max-w-[440px] mx-auto mb-8 leading-[1.6]">
             Something failed before the page could load. We&apos;ve been notified. Please try again in a
             moment.
           </p>
@@ -65,12 +76,12 @@ export default function GlobalError({
           <button
             type="button"
             onClick={() => reset()}
-            className="inline-flex h-auto items-center justify-center gap-2 rounded-lg bg-primary px-[30px] py-3.5 text-sm font-medium text-primary-foreground transition-colors duration-200 hover:bg-[oklch(0.34_0.03_60)]"
+            className="inline-flex h-auto items-center justify-center gap-2 rounded-lg bg-primary px-[30px] py-3.5 text-sm font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary/90"
           >
             Reload
           </button>
           {error.digest ? (
-            <p className="mt-8 text-[12px] tracking-[1px] text-[oklch(0.6_0.015_60)]">
+            <p className="mt-8 text-[12px] tracking-[1px] text-muted-foreground/70">
               Reference: {error.digest}
             </p>
           ) : null}

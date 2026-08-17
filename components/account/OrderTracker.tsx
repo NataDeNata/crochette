@@ -7,10 +7,14 @@ const STEPS = [
   { key: "completed", label: "Completed" },
 ] as const;
 
-const ACTIVE_DOT = "bg-[oklch(0.55_0.12_150)]";
-const ACTIVE_LABEL = "text-[oklch(0.4_0.05_150)] font-medium";
-const INACTIVE_DOT = "bg-[oklch(0.88_0.01_60)]";
-const INACTIVE_LABEL = "text-[oklch(0.65_0.01_60)]";
+/* Tokens, not the four oklch literals these were. --sage is on :root so it
+ * resolves on any surface, and the inactive pair leans on --keyline at low
+ * alpha rather than the token at full strength, which is a 2px printed rule's
+ * near-black and would read as a filled black dot instead of an empty one. */
+const ACTIVE_DOT = "bg-sage";
+const ACTIVE_LABEL = "text-sage font-medium";
+const INACTIVE_DOT = "bg-keyline/20";
+const INACTIVE_LABEL = "text-muted-foreground/70";
 
 /** Visual 4-step tracker for an order's fulfillment lifecycle. Only
  * meaningful for orders still moving forward (pending/paid/shipped/completed)

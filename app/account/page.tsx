@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getCustomerOrders, listAddresses } from "@/lib/db/accounts";
 import { formatPrice } from "@/lib/data/products";
+import { formatDate } from "@/lib/data/analytics";
 
 export const metadata: Metadata = {
   title: "My account",
@@ -27,10 +28,10 @@ export default async function AccountDashboardPage() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
-        <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <div className="p-6 rounded-[16px] border-[1.5px] border-keyline/15">
           <h2 className="font-serif font-medium text-xl mb-3.5">Recent orders</h2>
           {recentOrders.length === 0 ? (
-            <p className="text-[13.5px] text-[oklch(0.55_0.02_60)]">No orders yet.</p>
+            <p className="text-[13.5px] text-muted-foreground">No orders yet.</p>
           ) : (
             <div className="flex flex-col gap-2.5">
               {recentOrders.map((o) => (
@@ -40,8 +41,8 @@ export default async function AccountDashboardPage() {
                   className="flex justify-between text-[13.5px] text-inherit"
                 >
                   <span>
-                    {o.createdAt.toLocaleDateString()}{" "}
-                    <span className="text-[oklch(0.55_0.02_60)] capitalize">({o.status})</span>
+                    {formatDate(o.createdAt)}{" "}
+                    <span className="text-muted-foreground capitalize">({o.status})</span>
                   </span>
                   <span>{formatPrice(o.totalCents)}</span>
                 </Link>
@@ -53,7 +54,7 @@ export default async function AccountDashboardPage() {
           </Link>
         </div>
 
-        <div className="p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <div className="p-6 rounded-[16px] border-[1.5px] border-keyline/15">
           <h2 className="font-serif font-medium text-xl mb-3.5">Default address</h2>
           {defaultAddress ? (
             <p className="text-[13.5px] text-muted-foreground leading-[1.6] m-0">
@@ -62,7 +63,7 @@ export default async function AccountDashboardPage() {
               {defaultAddress.postalCode}
             </p>
           ) : (
-            <p className="text-[13.5px] text-[oklch(0.55_0.02_60)]">No saved addresses yet.</p>
+            <p className="text-[13.5px] text-muted-foreground">No saved addresses yet.</p>
           )}
           <Link href="/account/addresses" className="inline-block mt-4 text-[13px]">
             Manage addresses →

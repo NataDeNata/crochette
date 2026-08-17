@@ -8,6 +8,18 @@ const KNOTS = [33, 100, 167];
 
 const wrapperClassName = "step-thread absolute left-12 right-12 top-0 h-11 pointer-events-none z-[-1]";
 
+/* The two oklch literals below stay literals, and this is a judgement, not an
+ * omission. --rose is the nearest token (#dda99e, about oklch(0.78 0.064 32))
+ * and it is close enough to the thread stroke, oklch(0.75 0.06 20) — but the
+ * knots are a second, deliberately darker and more saturated value,
+ * oklch(0.7 0.07 20), which is what makes them read as knots tied *in* the
+ * thread rather than as beads of the same paint. No single token carries both,
+ * so pointing both at --rose would flatten the knots into the line and lose the
+ * only thing this drawing says. Tokenising just the stroke would be worse: the
+ * two values would then drift apart on the next repaint, and the knots would go
+ * from darker-than-the-thread to lighter with nobody touching this file.
+ * If the palette ever gains a paired rose (a --rose plus a deeper --rose-ink),
+ * switch both together. */
 /** Self-drawing thread connecting the 3 "how it works" step badges, echoing
  * the home hero's yarn-line motif. Purely decorative; hidden on narrow
  * viewports via the .step-thread class (globals.css) where the grid wraps

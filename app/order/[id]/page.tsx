@@ -55,18 +55,18 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
 
       {items.length > 0 && (
         <FadeIn delay={0.08}>
-          <div className="mt-10 p-6 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] text-left">
+          <div className="mt-10 p-6 rounded-[16px] border-[1.5px] border-keyline/15 text-left">
             <div className="flex flex-col gap-2.5">
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>
-                    {item.productName} <span className="text-[oklch(0.55_0.02_60)]">× {item.quantity}</span>
+                    {item.productName} <span className="text-muted-foreground">× {item.quantity}</span>
                   </span>
                   <span>{formatPrice(item.unitPriceCents * item.quantity)}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-4 pt-3.5 border-t border-[oklch(0.92_0.015_60)] flex flex-col gap-1.5 text-sm">
+            <div className="mt-4 pt-3.5 border-t border-keyline/15 flex flex-col gap-1.5 text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
                 <span>{formatPrice(order.subtotalCents)}</span>
@@ -76,7 +76,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
                 <span>{formatPrice(order.shippingCents)}</span>
               </div>
               {order.discountCents > 0 && (
-                <div className="flex justify-between text-[oklch(0.55_0.12_150)]">
+                <div className="flex justify-between text-sage">
                   <span>Discount</span>
                   <span>−{formatPrice(order.discountCents)}</span>
                 </div>

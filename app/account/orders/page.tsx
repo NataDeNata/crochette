@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getCustomerOrders } from "@/lib/db/accounts";
 import { formatPrice } from "@/lib/data/products";
+import { formatDate } from "@/lib/data/analytics";
 import { OrderTracker } from "@/components/account/OrderTracker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -28,7 +29,7 @@ export default async function AccountOrdersPage() {
               <Link
                 key={o.id}
                 href={`/order/${o.id}`}
-                className="block p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] text-inherit hover:border-[oklch(0.8_0.02_60)] transition-colors"
+                className="block p-5 rounded-[16px] border-[1.5px] border-keyline/15 text-inherit hover:border-keyline/30 transition-colors"
               >
                 <div className="flex justify-between items-baseline mb-4">
                   <span className="text-sm font-medium">Order {o.id.slice(0, 8)}</span>
@@ -52,7 +53,7 @@ export default async function AccountOrdersPage() {
         <h1 className="font-serif font-medium text-[26px] m-0">Order history</h1>
 
         {orders.length === 0 ? (
-          <p className="text-sm text-[oklch(0.55_0.02_60)]">
+          <p className="text-sm text-muted-foreground">
             No orders yet. <Link href="/shop">Browse the shop</Link>.
           </p>
         ) : (
@@ -61,12 +62,12 @@ export default async function AccountOrdersPage() {
           // scroll. The shared primitive already wraps itself in an
           // `overflow-x-auto` container — the same one every /admin list page
           // relies on — so the columns keep their widths and pan instead.
-          <div className="rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] overflow-hidden">
+          <div className="rounded-[16px] border-[1.5px] border-keyline/15 overflow-hidden">
             <Table className="text-[13.5px]">
               <TableHeader>
-                <TableRow className="bg-[oklch(0.97_0.01_60)]">
+                <TableRow className="bg-secondary">
                   {["Order", "Placed", "Status", "Total"].map((h) => (
-                    <TableHead key={h} className="py-3 px-4 font-semibold text-[oklch(0.45_0.02_60)]">
+                    <TableHead key={h} className="py-3 px-4 font-semibold text-keyline/70">
                       {h}
                     </TableHead>
                   ))}
@@ -80,8 +81,8 @@ export default async function AccountOrdersPage() {
                         {o.id.slice(0, 8)}
                       </Link>
                     </TableCell>
-                    <TableCell className="py-3 px-4 text-[oklch(0.55_0.02_60)]">
-                      {o.createdAt.toLocaleDateString()}
+                    <TableCell className="py-3 px-4 text-muted-foreground">
+                      {formatDate(o.createdAt)}
                     </TableCell>
                     <TableCell className="py-3 px-4 capitalize">{o.status}</TableCell>
                     <TableCell className="py-3 px-4 text-muted-foreground">{formatPrice(o.totalCents)}</TableCell>

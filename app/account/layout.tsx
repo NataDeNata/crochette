@@ -21,7 +21,14 @@ export default async function AccountLayout({ children }: { children: ReactNode 
 
   return (
     <section className="pt-12 page-gutter pb-24 max-w-[900px] mx-auto">
-      <div className="flex items-center justify-between flex-wrap gap-4 mb-9 pb-5 border-b-[1.5px] border-[oklch(0.9_0.02_60)]">
+      {/* `border-keyline/15`, not bare `border-keyline`. Every rule and card
+          outline under /account was a hardcoded cream-palette oklch literal,
+          which is why this whole area sat out the PR #11 repaint — a literal
+          cannot follow a token change. --keyline itself is the near-black 2px
+          printed rule of the cutout world; at full strength it would turn these
+          soft hairlines into heavy black boxes, so they take the same /15 the
+          storefront already uses for hairlines (see app/(home)/page.tsx). */}
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-9 pb-5 border-b-[1.5px] border-keyline/15">
         <nav className="flex gap-6">
           {NAV_LINKS.map((l) => (
             <Link key={l.href} href={l.href} className="nav-link text-sm">

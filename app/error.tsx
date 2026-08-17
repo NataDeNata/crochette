@@ -33,11 +33,11 @@ export default function RouteError({
   return (
     <section className="py-[100px] page-gutter text-center">
       <FadeIn>
-        <div className="text-[13px] tracking-[3px] uppercase text-[oklch(0.5_0.05_20)] mb-4">
+        <div className="text-[13px] tracking-[3px] uppercase text-press-red mb-4">
           Something went wrong
         </div>
         <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-4">A stitch came loose</h1>
-        <p className="text-[15.5px] text-[oklch(0.42_0.02_60)] max-w-[440px] mx-auto mb-8 leading-[1.6]">
+        <p className="text-[15.5px] text-muted-foreground max-w-[440px] mx-auto mb-8 leading-[1.6]">
           We hit an unexpected problem loading this page. It&apos;s been logged on our side. Try again,
           or head back to the collection.
         </p>
@@ -48,7 +48,7 @@ export default function RouteError({
           </Button>
         </div>
         {error.digest ? (
-          <p className="mt-8 text-[12px] tracking-[1px] text-[oklch(0.6_0.015_60)]">
+          <p className="mt-8 text-[12px] tracking-[1px] text-muted-foreground/70">
             Reference: {error.digest}
           </p>
         ) : null}

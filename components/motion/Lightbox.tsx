@@ -25,7 +25,7 @@ export function Lightbox({
       <button
         type="button"
         aria-label="Close"
-        className="absolute -top-12 right-0 flex size-11 items-center justify-center bg-transparent border-0 text-[oklch(0.98_0.01_85)] text-[28px] leading-none cursor-pointer"
+        className="absolute -top-12 right-0 flex size-11 items-center justify-center bg-transparent border-0 text-sheet text-[28px] leading-none cursor-pointer"
       >
         ×
       </button>
@@ -35,7 +35,7 @@ export function Lightbox({
   const panelContent = item.image ? (
     <Image src={item.image} alt={item.alt ?? ""} fill sizes="90vw" className="object-cover" />
   ) : (
-    <span className="[font-family:ui-monospace,monospace] text-sm text-[oklch(0.35_0.03_60)] bg-[oklch(1_0_0/0.7)] px-4 py-2 rounded-lg text-center">
+    <span className="[font-family:ui-monospace,monospace] text-sm text-keyline bg-sheet/70 px-4 py-2 rounded-lg text-center">
       {item.placeholder}
     </span>
   );
@@ -51,14 +51,38 @@ export function Lightbox({
   // AnimatePresence owns when this whole tree actually leaves the DOM.
   return (
     <DialogPrimitive.Root open onOpenChange={(open) => !open && onClose()}>
+      {/* `data-surface`/`data-world` are re-stamped on both children below, and
+       * that is not decoration — without them this subtree has no colours.
+       *
+       * Radix's Portal mounts into `document.body`, so everything inside it
+       * leaves the `<div data-surface="storefront" data-world="cutout">` that
+       * SiteChrome wraps the app in — and every cut-out token (`--keyline`,
+       * `--sheet`, `--press-red`) is declared on *that selector*, not on
+       * `:root`. A `bg-keyline/70` here would resolve `var(--color-keyline)` to
+       * nothing, the declaration would be invalid at computed-value time, and
+       * the scrim would paint fully transparent. The literal `oklch(...)` values
+       * these classes replaced were immune to that, which is exactly why the
+       * substitution needed this and why nothing would have caught it: tsc,
+       * eslint and the unit suite are all blind to an unresolved custom
+       * property, and the failure is a missing backdrop rather than an error.
+       *
+       * Anything else in this project that portals and wants a cut-out token
+       * has the same requirement. */}
       <DialogPrimitive.Portal forceMount>
         <DialogPrimitive.Overlay asChild forceMount>
           {/* Paint only. This used to carry `onClick={onClose}`, which could
            * never fire — see the note on the Content wrapper below, which
            * covers this element and now owns the backdrop click. Leaving a
-           * handler here would read as the thing that closes the lightbox. */}
+           * handler here would read as the thing that closes the lightbox.
+           *
+           * The scrim is --keyline at 70%, not the literal near-black it was:
+           * the close glyph and the caption plate are --sheet and --keyline, so
+           * backdrop and content have to come out of one palette or a repaint
+           * moves one without the other. */}
           <motion.div
-            className="fixed inset-0 z-[100] bg-[oklch(0.2_0.02_60/0.7)]"
+            data-surface="storefront"
+            data-world="cutout"
+            className="fixed inset-0 z-[100] bg-keyline/70"
             initial={reduceMotion ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0 }}
@@ -91,6 +115,8 @@ export function Lightbox({
            * of relying on every descendant to stop bubbling, so adding a
            * control inside the panel later cannot silently start closing it. */}
           <div
+            data-surface="storefront"
+            data-world="cutout"
             className="fixed inset-0 z-[100] flex items-center justify-center"
             onClick={(e) => e.target === e.currentTarget && onClose()}
           >

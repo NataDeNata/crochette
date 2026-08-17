@@ -36,7 +36,7 @@ function AddressCard({ address }: { address: AddressRow }) {
 
   if (editing) {
     return (
-      <div className="p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
+      <div className="p-5 rounded-[16px] border-[1.5px] border-keyline/15">
         <AddressForm address={address} onSaved={() => setEditing(false)} />
         <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)} className="mt-2">
           Cancel
@@ -46,7 +46,7 @@ function AddressCard({ address }: { address: AddressRow }) {
   }
 
   return (
-    <div className="p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)] flex justify-between gap-4 flex-wrap">
+    <div className="p-5 rounded-[16px] border-[1.5px] border-keyline/15 flex justify-between gap-4 flex-wrap">
       <div>
         {(address.label || address.isDefault) && (
           <div className="font-medium text-[13.5px] mb-1">
@@ -111,7 +111,7 @@ export function AddressManager({ addresses }: { addresses: AddressRow[] }) {
       ))}
 
       {adding ? (
-        <div className="p-5 rounded-[16px] border-[1.5px] border-[oklch(0.9_0.02_60)]">
+        <div className="p-5 rounded-[16px] border-[1.5px] border-keyline/15">
           <AddressForm onSaved={() => setAdding(false)} />
           <Button type="button" variant="ghost" size="sm" onClick={() => setAdding(false)} className="mt-2">
             Cancel
