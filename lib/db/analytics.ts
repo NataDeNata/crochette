@@ -2,6 +2,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzl
 import { db } from "@/lib/db";
 import { addresses, customers, orders } from "@/lib/db/schema";
 import { containsPattern } from "@/lib/db/search";
+import { resolvePage } from "@/lib/db/pagination";
 import {
   REPORTING_TIME_ZONE,
   REVENUE_DAYS,
@@ -159,13 +160,12 @@ export async function listCustomersWithTotals({
 
   const [{ total }] = await db.select({ total: count() }).from(customers).where(where);
 
-  // Clamped here rather than by the caller. The other admin lists clamp in the
-  // page component because they own their own count query; this one hides the
-  // count, so a caller couldn't clamp without either a second round trip or a
-  // throwaway first query. Returning the effective page keeps ?page=999
-  // landing on the last real page instead of an empty table.
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const page = Math.min(Math.max(1, requestedPage), totalPages);
+  // Clamped here rather than by the caller, because this function hides the
+  // count: a caller could not clamp without either a second round trip or a
+  // throwaway first query. The arithmetic itself is shared with the three
+  // page-level lists now — it used to be a fourth hand-written copy, and this
+  // comment used to concede the inconsistency rather than remove it.
+  const { page, totalPages, limit, offset } = resolvePage({ total, requestedPage, pageSize });
 
   const totalSpentExpr = sql<string | null>`coalesce(sum(${orders.totalCents}), 0)`;
 
@@ -186,11 +186,14 @@ export async function listCustomersWithTotals({
     .where(where)
     .groupBy(customers.id)
     // Biggest spenders first, since that's the question this page answers.
-    // createdAt is the tiebreak: without a total ordering, LIMIT/OFFSET can
-    // return the same row on two different pages.
-    .orderBy(desc(totalSpentExpr), desc(customers.createdAt))
-    .limit(pageSize)
-    .offset((page - 1) * pageSize);
+    // The two tiebreaks are what make the sort total, and LIMIT/OFFSET needs
+    // that — otherwise the same row can come back on two different pages while
+    // another never comes back at all. `createdAt` alone was not enough: it is
+    // not a unique column either, so two accounts created in the same
+    // millisecond (a seed, an import) still tied. The primary key ends it.
+    .orderBy(desc(totalSpentExpr), desc(customers.createdAt), desc(customers.id))
+    .limit(limit)
+    .offset(offset);
 
   return {
     total,

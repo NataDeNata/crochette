@@ -4,6 +4,14 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+/* THE FIVE oklch LITERALS BELOW ARE DELIBERATE AND MUST NOT BE TOKENISED.
+ * Everywhere else in app/ and components/ a hardcoded oklch value was a bug —
+ * a colour that cannot follow a repaint, which is why /account and the error
+ * pages sat out PR #11. These five are the opposite case: they are the actual
+ * yarn a customer is choosing between, so they are content, not theme. The yarn
+ * does not change colour when the site does, and swapping Sage here for
+ * --sage would make the swatch a picture of the website instead of a picture of
+ * the thread that arrives in the parcel. */
 const SWATCHES = [
   { label: "Rose", swatchClass: "bg-[oklch(0.75_0.09_20)]" },
   { label: "Sage", swatchClass: "bg-[oklch(0.78_0.06_150)]" },

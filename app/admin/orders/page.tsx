@@ -3,6 +3,7 @@ import { desc, count, eq, ilike, or, and, inArray, type SQL } from "drizzle-orm"
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { formatDate } from "@/lib/data/analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +13,7 @@ import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
 import { containsPattern } from "@/lib/db/search";
+import { readEnumParam, readPageParam, resolvePage } from "@/lib/db/pagination";
 import {
   OrdersBulkBar,
   OrdersSelectAllCheckbox,
@@ -29,28 +31,34 @@ export default async function AdminOrdersPage({
 }) {
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
-  const status = ORDER_STATUSES.includes(sp.status as (typeof ORDER_STATUSES)[number]) ? sp.status! : "";
-  const rawPage = Math.max(1, Number(sp.page) || 1);
+  const status = readEnumParam(ORDER_STATUSES, sp.status);
+  const requestedPage = readPageParam(sp.page);
 
   const conditions: SQL[] = [];
   if (q) {
     const pattern = containsPattern(q);
     conditions.push(or(ilike(orders.customerName, pattern), ilike(orders.customerEmail, pattern))!);
   }
-  if (status) conditions.push(eq(orders.status, status as (typeof ORDER_STATUSES)[number]));
+  if (status) conditions.push(eq(orders.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
 
   const [{ total }] = await db.select({ total: count() }).from(orders).where(where);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Math.min(rawPage, totalPages);
+  const { page, totalPages, limit, offset } = resolvePage({ total, requestedPage, pageSize: PAGE_SIZE });
 
   const rows = await db
     .select()
     .from(orders)
     .where(where)
-    .orderBy(desc(orders.createdAt))
-    .limit(PAGE_SIZE)
-    .offset((page - 1) * PAGE_SIZE);
+    // The `id` tiebreak is what makes this sort total, and LIMIT/OFFSET needs
+    // that. `created_at` is not unique — a bulk insert, or two checkouts in the
+    // same millisecond, tie — and on a tie Postgres may order the rows however
+    // the plan happens to, differently per query. With OFFSET on top that means
+    // one order can be returned on both page 1 and page 2 while another is
+    // never returned at all. Same fix and same reasoning as
+    // lib/data/products.server.ts, where the ties came from seed data.
+    .orderBy(desc(orders.createdAt), desc(orders.id))
+    .limit(limit)
+    .offset(offset);
 
   const itemCounts = rows.length
     ? await db
@@ -128,7 +136,7 @@ export default async function AdminOrdersPage({
                       <AdminStatusTag status={r.status} />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {r.createdAt.toLocaleDateString()}
+                      {formatDate(r.createdAt)}
                     </TableCell>
                     <TableCell className="pr-4 text-right">
                       <Button href={`/admin/orders/${r.id}`} variant="outline" size="sm">

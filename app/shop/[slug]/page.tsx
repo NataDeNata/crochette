@@ -12,10 +12,13 @@ import { getProductBySlug, getProducts } from "@/lib/data/products.server";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { OG_IMAGE, SITE_URL } from "@/lib/site";
 
-export async function generateStaticParams() {
-  const products = await getProducts();
-  return products.map((p) => ({ slug: p.slug }));
-}
+/* `generateStaticParams` was removed here. It could never have taken effect:
+ * `app/layout.tsx` awaits `auth()` unconditionally, which forces the whole tree
+ * dynamic, so this route is rendered per request and Next never asks for a
+ * param list. The proof is CI — it runs `next build` with no repository secret
+ * and therefore no DATABASE_URL, and `lib/db/index.ts` throws without one, so a
+ * build that actually called this would fail rather than pass. Restoring it
+ * means removing the unconditional `auth()` from the root layout first. */
 
 export async function generateMetadata({
   params,
@@ -61,9 +64,10 @@ export default async function ProductPage({
   const categoryLabel = CATEGORIES.find((c) => c.value === product.category)?.name ?? product.category;
 
   /* Four more from the same category. `getProducts()` is the same read
-   * `getProductBySlug` already went through, so this costs one extra query
-   * rather than a second trip per card — and a shopper who has decided this
-   * particular bear isn't it has somewhere to go other than back. */
+   * `getProductBySlug` already went through, and that read is now `cache()`d
+   * per request, so this costs no query at all rather than a trip per card — and
+   * a shopper who has decided this particular bear isn't it has somewhere to go
+   * other than back. */
   const related = (await getProducts())
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);

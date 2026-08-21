@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { count, eq, desc } from "drizzle-orm";
+import { count, eq, desc, sql } from "drizzle-orm";
 import {
   AlertTriangle,
   ArrowRight,
@@ -14,7 +14,7 @@ import { db } from "@/lib/db";
 import { products, customOrderRequests, orders, discountCodes } from "@/lib/db/schema";
 import { lowStockCondition } from "@/lib/db/inventory";
 import { getMonthOverMonth, getRevenueLast7Days } from "@/lib/db/analytics";
-import { formatDelta } from "@/lib/data/analytics";
+import { formatDate, formatDelta } from "@/lib/data/analytics";
 import { formatPrice } from "@/lib/data/products";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,7 @@ import { RevenueChart } from "@/components/admin/RevenueChart";
 
 export default async function AdminDashboardPage() {
   const [
-    [{ productCount }],
-    [{ activeProductCount }],
-    [{ lowStockCount }],
+    [productCounts],
     [{ newRequestCount }],
     [{ newOrderCount }],
     [{ activeDiscountCount }],
@@ -37,9 +35,21 @@ export default async function AdminDashboardPage() {
     revenueBars,
     mom,
   ] = await Promise.all([
-    db.select({ productCount: count() }).from(products),
-    db.select({ activeProductCount: count() }).from(products).where(eq(products.status, "active")),
-    db.select({ lowStockCount: count() }).from(products).where(lowStockCondition),
+    // Three conditional aggregates over one scan of `products`, the same shape
+    // getMonthOverMonth uses. It was three separate count() round trips, and
+    // every statement in this Promise.all takes a pool slot at once:
+    // lib/db/index.ts creates the postgres client without `max`, so the pool is
+    // postgres.js's default 10, and this project has already hit Supabase's
+    // 200-connection cap (EMAXCONN) in development. A dashboard render that
+    // needs ten slots is the whole pool. The other counts below are
+    // single-table, single-condition and already minimal.
+    db
+      .select({
+        productCount: sql<string>`count(*)`,
+        activeProductCount: sql<string>`count(*) filter (where ${eq(products.status, "active")})`,
+        lowStockCount: sql<string>`count(*) filter (where ${lowStockCondition})`,
+      })
+      .from(products),
     db.select({ newRequestCount: count() }).from(customOrderRequests).where(eq(customOrderRequests.status, "new")),
     db.select({ newOrderCount: count() }).from(orders).where(eq(orders.status, "paid")),
     db.select({ activeDiscountCount: count() }).from(discountCodes).where(eq(discountCodes.active, true)),
@@ -71,6 +81,17 @@ export default async function AdminDashboardPage() {
     getRevenueLast7Days(),
     getMonthOverMonth(),
   ]);
+
+  // Postgres `count()` is bigint, which postgres.js hands back as a *string* to
+  // avoid precision loss, and drizzle does not re-decode raw `sql` fields — so
+  // these need coercing before they reach the JSX. Skipping it fails silently
+  // in two ways: `lowStockCount > 0` would compare a string, and the "N active"
+  // meta line would still render because template strings stringify anything.
+  // (drizzle's own count() helper does this coercion internally; a raw
+  // aggregate does not.)
+  const productCount = Number(productCounts.productCount);
+  const activeProductCount = Number(productCounts.activeProductCount);
+  const lowStockCount = Number(productCounts.lowStockCount);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
@@ -205,7 +226,7 @@ export default async function AdminDashboardPage() {
                       </Link>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {o.createdAt.toLocaleDateString()}
+                      {formatDate(o.createdAt)}
                     </TableCell>
                     <TableCell>{formatPrice(o.totalCents)}</TableCell>
                     <TableCell className="pr-4">

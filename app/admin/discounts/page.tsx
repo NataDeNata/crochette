@@ -1,21 +1,45 @@
-import { desc } from "drizzle-orm";
+import { count, desc } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { discountCodes } from "@/lib/db/schema";
+import { readPageParam, resolvePage } from "@/lib/db/pagination";
 import { formatPrice } from "@/lib/data/products";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { DeleteDiscountButton } from "@/components/admin/DeleteDiscountButton";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
+
+const PAGE_SIZE = 20;
 
 function formatValue(row: { type: "percentage" | "fixed"; value: number }) {
   return row.type === "percentage" ? `${row.value}% off` : `${formatPrice(row.value)} off`;
 }
 
-export default async function AdminDiscountsPage() {
-  const rows = await db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt));
+export default async function AdminDiscountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const sp = await searchParams;
+  const requestedPage = readPageParam(sp.page);
+
+  const [{ total }] = await db.select({ total: count() }).from(discountCodes);
+  const { page, totalPages, limit, offset } = resolvePage({ total, requestedPage, pageSize: PAGE_SIZE });
+
+  const rows = await db
+    .select()
+    .from(discountCodes)
+    // The `id` tiebreak makes the sort total, which LIMIT/OFFSET requires:
+    // `created_at` is not unique, and on a tie one code can come back on two
+    // pages while another never appears at all. Full reasoning in
+    // app/admin/orders/page.tsx.
+    .orderBy(desc(discountCodes.createdAt), desc(discountCodes.id))
+    .limit(limit)
+    .offset(offset);
+
   // Read once per request rather than once per row, so every row in a table is
   // judged against the same instant.
   //
@@ -96,6 +120,14 @@ export default async function AdminDiscountsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={total}
+        basePath="/admin/discounts"
+        params={{}}
+      />
     </div>
   );
 }

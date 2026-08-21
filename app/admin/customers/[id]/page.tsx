@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Mail } from "lucide-react";
 import { getCustomerDetail } from "@/lib/db/analytics";
 import { formatPrice } from "@/lib/data/products";
+import { formatDate } from "@/lib/data/analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -43,7 +44,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
         <Card>
           <CardContent className="flex flex-col gap-3">
             <DetailRow label="Email">{customer.email}</DetailRow>
-            <DetailRow label="Customer since">{customer.createdAt.toLocaleDateString()}</DetailRow>
+            <DetailRow label="Customer since">{formatDate(customer.createdAt)}</DetailRow>
 
             <DetailDivider />
 
@@ -106,7 +107,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
                         {/* The public confirmation page, reused as-is — the same
                             thing /account/orders links to for the customer. */}
                         <Link href={`/order/${o.id}`} className="text-inherit hover:underline">
-                          {o.createdAt.toLocaleDateString()}
+                          {formatDate(o.createdAt)}
                         </Link>
                       </TableCell>
                       <TableCell>{formatPrice(o.totalCents)}</TableCell>

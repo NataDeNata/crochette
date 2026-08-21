@@ -1,6 +1,7 @@
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { discountCodes } from "@/lib/db/schema";
+import { formatPrice } from "@/lib/data/products";
 import { logWarn } from "@/lib/observability/log";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -32,7 +33,11 @@ export async function resolveDiscountCode(
   if (row.minSubtotalCents != null && subtotalCents < row.minSubtotalCents) {
     return {
       discount: null,
-      error: `That code needs a subtotal of at least ${(row.minSubtotalCents / 100).toFixed(2)} to apply.`,
+      // formatPrice, not hand-rolled cents arithmetic: a bare "500.00" leaves the
+      // shopper guessing at the currency. Safe to import here because
+      // lib/data/products.ts is the pure half of the server/client split — the
+      // queries live in products.server.ts, so this pulls in no db dependency.
+      error: `That code needs a subtotal of at least ${formatPrice(row.minSubtotalCents)} to apply.`,
     };
   }
 

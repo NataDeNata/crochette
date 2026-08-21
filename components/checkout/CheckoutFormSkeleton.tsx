@@ -67,7 +67,7 @@ export function CheckoutFormSkeleton() {
           ))}
         </div>
 
-        <div className="mt-[18px] pt-3.5 border-t border-[oklch(0.92_0.015_60)] flex flex-col gap-2">
+        <div className="mt-[18px] pt-3.5 border-t border-keyline/15 flex flex-col gap-2">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-20 rounded-full" />
             <Skeleton className="h-4 w-16 rounded-full" />

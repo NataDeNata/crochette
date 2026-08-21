@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { desc, count, and, eq, ilike, or, inArray, type SQL } from "drizzle-orm";
 import { Image as ImageIcon, Plus } from "lucide-react";
 import { db } from "@/lib/db";
@@ -15,6 +16,7 @@ import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { LowStockBadge } from "@/components/admin/LowStockBadge";
 import { containsPattern } from "@/lib/db/search";
+import { readPageParam, resolvePage } from "@/lib/db/pagination";
 
 const PAGE_SIZE = 20;
 
@@ -26,7 +28,7 @@ export default async function AdminProductsPage({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const stock = sp.stock === "low" ? "low" : "";
-  const rawPage = Math.max(1, Number(sp.page) || 1);
+  const requestedPage = readPageParam(sp.page);
 
   const conditions: SQL[] = [];
   // Name, slug and description — the three free-text columns. Slug is included
@@ -54,16 +56,19 @@ export default async function AdminProductsPage({
     db.select({ lowStockCount: count() }).from(products).where(lowStockCondition),
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Math.min(rawPage, totalPages);
+  const { page, totalPages, limit, offset } = resolvePage({ total, requestedPage, pageSize: PAGE_SIZE });
 
   const rows = await db
     .select()
     .from(products)
     .where(where)
-    .orderBy(desc(products.createdAt))
-    .limit(PAGE_SIZE)
-    .offset((page - 1) * PAGE_SIZE);
+    // Total ordering for LIMIT/OFFSET — see app/admin/orders/page.tsx. This is
+    // the list where it bites hardest: six of the seven seeded products share a
+    // `created_at` identical to the millisecond, which is the same six-way tie
+    // that reshuffled the storefront's hero.
+    .orderBy(desc(products.createdAt), desc(products.id))
+    .limit(limit)
+    .offset(offset);
 
   // Cover photos for just this page's products — an `inArray` over the 20 ids
   // rather than joining the whole product_images table, mirroring how the
@@ -139,12 +144,20 @@ export default async function AdminProductsPage({
                 <CardContent className="flex h-full flex-col gap-2">
                   <Link
                     href={`/admin/products/${p.id}`}
-                    className="flex h-[120px] items-center justify-center overflow-hidden rounded-md bg-muted text-inherit"
+                    className="relative flex h-[120px] items-center justify-center overflow-hidden rounded-md bg-muted text-inherit"
                   >
                     {cover ? (
-                      /* eslint-disable-next-line @next/next/no-img-element -- Vercel Blob URL,
-                         same reasoning as the custom-order reference photos. */
-                      <img src={cover} alt="" className="size-full object-cover" />
+                      // `relative` added to the box above so `fill` has something to anchor to.
+                      // Fixed 120px height, fluid width from the grid column, hence `fill`
+                      // rather than width/height — and the uploaded original stops being the
+                      // thing served into a cover thumb.
+                      <Image
+                        src={cover}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        className="object-cover"
+                      />
                     ) : (
                       <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <ImageIcon className="size-3.5" aria-hidden />

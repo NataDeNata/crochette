@@ -11,6 +11,12 @@ import {
   type TotpActionState,
 } from "@/app/admin/settings/actions";
 import { IDLE_STATE } from "@/lib/actions/types";
+/* Safe in a client bundle by design — lib/data/analytics.ts is the pure half of
+ * the analytics split, with no `db` import. Using it here is also the point: a
+ * bare `toLocaleDateString()` in a client component formats once on the server
+ * and again in the browser, in two different locales, which is a hydration
+ * mismatch. A pinned locale and timezone makes both passes agree. */
+import { formatDate } from "@/lib/data/analytics";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
 import { Button } from "@/components/ui/button";
@@ -190,7 +196,7 @@ function ActiveState({
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
         <span className="flex items-center gap-2 font-medium text-sage-foreground">
           <ShieldCheck className="size-4" aria-hidden />
-          On since {new Date(confirmedAt).toLocaleDateString()}
+          On since {formatDate(confirmedAt)}
         </span>
       </div>
 

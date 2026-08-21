@@ -38,7 +38,7 @@ export default async function AccountLoginPage({
 
   return (
     <section className="min-h-[60vh] flex items-center justify-center p-6">
-      <div className="w-full max-w-[360px] p-10 rounded-[24px] bg-card border-[1.5px] border-[oklch(0.9_0.02_60)]">
+      <div className="w-full max-w-[360px] p-10 rounded-[24px] bg-card border-[1.5px] border-keyline/15">
         <div className="font-serif font-medium text-[26px] text-center mb-1.5">Welcome back</div>
         <p className="text-[13px] text-muted-foreground text-center mb-7">
           Sign in to your Crochette account

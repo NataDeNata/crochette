@@ -62,3 +62,11 @@ next-env.d.ts
 .vercel
 .env*
 !.env.test
+
+# The design-review skill installs its own agents, hook config and reference
+# library here. That is per-machine tooling which happens to land inside
+# .github/, not project code, so it does not belong in the repo. Scoped to the
+# impeccable payload so real CI workflows still get committed.
+.github/agents/impeccable-*.agent.md
+.github/hooks/impeccable.json
+.github/skills/impeccable/

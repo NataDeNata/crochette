@@ -9,7 +9,7 @@ import { TextField } from "@/components/forms/TextField";
 import type { AddressRow } from "@/lib/db/schema";
 
 const fieldClassName =
-  "h-auto rounded-xl border-[1.5px] border-input bg-[oklch(0.98_0.01_85)] px-[14px] py-3 text-sm";
+  "h-auto rounded-xl border-[1.5px] border-input bg-card px-[14px] py-3 text-sm";
 
 function Field(props: ComponentProps<typeof TextField>) {
   return <TextField {...props} className={fieldClassName} />;
