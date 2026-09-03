@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { ScrollAwayLogo } from "@/components/motion/ScrollAwayLogo";
 import { Sheet } from "@/components/layout/Sheet";
 import { VALUES } from "@/lib/data/about";
 import { OG_IMAGE } from "@/lib/site";
@@ -27,10 +28,21 @@ export default function AboutPage() {
 
           The two "About" / "Our values" kickers are gone as well: the craft
           floor bans them outright and each heading below carries itself. */}
+      {/* The badge opens the page and scrolls away into the copy. Outside the
+          Sheet below rather than inside it: a Sheet is a printed panel with its
+          own padding, and the overture is meant to sit on bare ground so that
+          the first thing that reads as *paper* is the one carrying the
+          heading. */}
+      <ScrollAwayLogo />
+
       <Sheet innerClassName="py-10 sm:py-14 lg:py-16">
         <div className="max-w-[1320px] mx-auto">
           <FadeIn>
-            <h1 className="type-sheet-display text-[clamp(34px,5.4vw,66px)] text-keyline text-balance mt-8 max-w-[15ch]">
+            {/* `mt-8` is dropped here. It was clearing the top of the page for
+                a heading that used to be the first thing on it; the badge now
+                supplies far more room than that, and keeping it opened a gap
+                the eye reads as the section having lost its top edge. */}
+            <h1 className="type-sheet-display text-[clamp(34px,5.4vw,66px)] text-keyline text-balance max-w-[15ch]">
               A small studio, made from yarn and patience
             </h1>
             <div className="mt-8 grid gap-6 md:grid-cols-2 md:gap-14">
