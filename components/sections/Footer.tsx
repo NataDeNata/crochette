@@ -7,14 +7,20 @@ export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
       <div className="max-w-[1344px] mx-auto">
         <div className="footer-grid grid gap-12 mb-12">
           <div>
-            {/* The footer is the underside of the sheet: back onto the ground,
-                with the wordmark on its butter plate exactly as the masthead
-                carries it, so the page opens and closes on the same mark. */}
-            <div className="mb-5 inline-flex items-center gap-2.5 border-2 border-keyline bg-butter px-3 py-1.5">
+            {/* The footer is the underside of the sheet: the wordmark keeps its
+                butter plate exactly as the masthead carries it, so the page
+                opens and closes on the same mark, and the badge sits beside
+                the plate rather than inside it. */}
+            <div className="mb-5 flex items-center gap-2.5">
               {/* Same badge as the masthead, two pixels smaller to match the
                   wordmark beside it. See `BrandMark` in Nav.tsx for why the
                   square crop is deliberate. Not `priority`: the footer is
-                  below the fold on every route. */}
+                  below the fold on every route.
+
+                  The round clip earns more here than it does up top. The
+                  masthead stands this cream JPEG on cream; the footer stands it
+                  on the dark ground, where four square cream corners would read
+                  as a lit tile rather than as a badge. */}
               <Image
                 src="/logo.jpg"
                 alt=""
@@ -23,7 +29,7 @@ export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
                 height={930}
                 className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
               />
-              <span className="type-sheet-display text-[16px] uppercase text-keyline">
+              <span className="type-sheet-display border-2 border-keyline bg-butter px-3 py-1.5 text-[16px] uppercase text-keyline">
                 Yarns and Buttons
               </span>
             </div>

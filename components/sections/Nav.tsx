@@ -41,9 +41,13 @@ const DRAWER_CLASS =
  *
  * `priority` because this sits in the sticky masthead and is in view on every
  * route from first paint; lazy-loading it would pop the wordmark sideways once
- * it arrived. Known limitation: the badge is an opaque JPEG on cream, so on the
- * butter plate it prints a faint square edge. A transparent PNG or SVG is the
- * fix, and until one exists no amount of CSS here removes it. */
+ * it arrived.
+ *
+ * It sits *outside* the butter plate, which now holds only the wordmark. That
+ * is what makes the opaque JPEG survivable: the badge is a cream image on the
+ * cream ground rather than on butter, so the corners it cannot make
+ * transparent have almost nothing to print against. The round clip takes off
+ * what is left. A transparent PNG or SVG would still be the honest fix. */
 function BrandMark() {
   return (
     <Image
@@ -145,18 +149,20 @@ export function Nav({
        the failure mode is a nav that looks slightly wrong, not one that prints
        two controls on top of each other. */
     <nav className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
-      {/* The wordmark, with the press-out mark beside it, both printed on a
-          sand plate so the masthead reads as a printed label lying on the
-          ground rather than as text floating on a colour. */}
+      {/* The badge sits on the ground; the wordmark keeps the sand plate. The
+          plate used to wrap both, which put an opaque cream photograph on
+          butter and printed a square edge around it. Only the wordmark is a
+          printed label now — the badge is an object lying beside it. */}
       <Link
         href="/"
         // `justify-self-start` because a grid item stretches to fill its track
-        // by default, and this one is a bordered plate — left to stretch, the
-        // butter rectangle would run the full width of the left `1fr`.
-        className="group flex items-center gap-2.5 justify-self-start bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
+        // by default. The plate has moved to the span, but the link is still
+        // the grid item, so without this the whole cluster would run the full
+        // width of the left `1fr` and push the badge away from the wordmark.
+        className="group flex items-center gap-2.5 justify-self-start text-inherit"
       >
         <BrandMark />
-        <span className="type-sheet-display text-[17px] uppercase text-keyline">
+        <span className="type-sheet-display bg-butter border-2 border-keyline px-3 py-1.5 text-[17px] uppercase text-keyline">
           Yarns and Buttons
         </span>
       </Link>
