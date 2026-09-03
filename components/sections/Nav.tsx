@@ -31,33 +31,45 @@ function links(hasGallery: boolean) {
 const DRAWER_CLASS =
   "nav-drawer absolute top-full left-0 right-0 bg-sheet border-b-2 border-keyline flex flex-col px-5 py-2";
 
-/* The studio's mark: the Yarns and Buttons rope-and-buttons badge, replacing
- * the authored press-out SVG that stood in before there was a real logo.
+/* The studio's mark, and now the whole masthead brand: the plated wordmark
+ * that used to sit beside this is gone, so the badge carries the name alone.
  *
  * The source file is 624×930 — a circular badge with cream bands above and
- * below it. `aspect-square` + `object-cover` crops those bands off so the
- * circle fills the box, rather than letting the whole portrait frame shrink to
- * fit and leaving the badge tiny between two empty margins.
+ * below it. `object-cover` on a square box crops those bands off so the circle
+ * fills the box, rather than letting the whole portrait frame shrink to fit and
+ * leaving the badge tiny between two empty margins.
+ *
+ * **56px is a load-bearing number, not a taste.** It is what makes the nav
+ * 56 + 16 + 16 padding + 1 border = 89px, which is the value `--nav-h` in
+ * globals.css publishes to `calc(100svh - var(--nav-h))`. Change this and you
+ * must change that token with it, or the homepage hero stops being exactly one
+ * screen. It is also the size at which the lettering inside the badge stops
+ * being a dark smudge — at the 30px it wore beside the wordmark, a viewer who
+ * did not already know the name could not read it, which is survivable next to
+ * the name in text and not survivable once the badge *is* the name.
+ *
+ * `alt` carries the studio name rather than being empty. It was `alt=""
+ * aria-hidden` while the wordmark stood next to it — correct then, because the
+ * text supplied the link's accessible name and announcing both would say it
+ * twice. With the text gone that same markup would leave the home link with no
+ * accessible name at all: a link announced as "link, graphic" and nothing else.
  *
  * `priority` because this sits in the sticky masthead and is in view on every
- * route from first paint; lazy-loading it would pop the wordmark sideways once
- * it arrived.
+ * route from first paint.
  *
- * It sits *outside* the butter plate, which now holds only the wordmark. That
- * is what makes the opaque JPEG survivable: the badge is a cream image on the
- * cream ground rather than on butter, so the corners it cannot make
- * transparent have almost nothing to print against. The round clip takes off
- * what is left. A transparent PNG or SVG would still be the honest fix. */
+ * The badge is an opaque JPEG on cream, sitting on the cream ground, so the
+ * corners it cannot make transparent have almost nothing to print against and
+ * the round clip takes off what is left. A transparent PNG or SVG is still the
+ * honest fix, and would let the round clip go. */
 function BrandMark() {
   return (
     <Image
       src="/logo.jpg"
-      alt=""
-      aria-hidden
+      alt="Yarns and Buttons"
       width={624}
       height={930}
       priority
-      className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
+      className="h-14 w-14 shrink-0 rounded-full object-cover"
     />
   );
 }
@@ -149,22 +161,18 @@ export function Nav({
        the failure mode is a nav that looks slightly wrong, not one that prints
        two controls on top of each other. */
     <nav className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
-      {/* The badge sits on the ground; the wordmark keeps the sand plate. The
-          plate used to wrap both, which put an opaque cream photograph on
-          butter and printed a square edge around it. Only the wordmark is a
-          printed label now — the badge is an object lying beside it. */}
+      {/* The badge alone. The plated wordmark that stood here said the name a
+          second time, in a typeface that was not the one the logo sets it in —
+          the badge already carries "Yarns and Buttons" inside its own ring. */}
       <Link
         href="/"
         // `justify-self-start` because a grid item stretches to fill its track
-        // by default. The plate has moved to the span, but the link is still
-        // the grid item, so without this the whole cluster would run the full
-        // width of the left `1fr` and push the badge away from the wordmark.
-        className="group flex items-center gap-2.5 justify-self-start text-inherit"
+        // by default, and this link is now only as wide as a 56px circle. Left
+        // to stretch it would span the whole left `1fr`, putting a click target
+        // across empty ground between the badge and the links.
+        className="group flex items-center justify-self-start text-inherit"
       >
         <BrandMark />
-        <span className="type-sheet-display bg-butter border-2 border-keyline px-3 py-1.5 text-[17px] uppercase text-keyline">
-          Yarns and Buttons
-        </span>
       </Link>
 
       <div className="nav-desktop-links gap-9 text-sm font-medium tracking-[0.3px]">
