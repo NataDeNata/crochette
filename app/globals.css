@@ -498,7 +498,7 @@
  ---break---
  */
 :root {
-  /* Crochette brand palette (cream/terracotta) — replaces shadcn's default
+  /* Yarns and Buttons brand palette (cream/terracotta) — replaces shadcn's default
    * neutral gray theme so every shadcn primitive matches the hand-tuned
    * oklch tokens already used throughout the storefront. */
   --background: oklch(0.975 0.012 85);

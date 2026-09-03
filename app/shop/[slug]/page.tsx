@@ -36,7 +36,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `/shop/${product.slug}` },
     openGraph: {
-      title: `${product.name} | Crochette`,
+      title: `${product.name} | Yarns and Buttons`,
       description,
       // Falls back to the site card rather than to nothing: a product with no
       // photograph uploaded yet would otherwise unfurl bare, and a page-level
@@ -45,7 +45,7 @@ export async function generateMetadata({
       images: [product.primaryImageUrl ? { url: product.primaryImageUrl } : OG_IMAGE],
     },
     twitter: {
-      title: `${product.name} | Crochette`,
+      title: `${product.name} | Yarns and Buttons`,
       description,
       images: [product.primaryImageUrl ?? OG_IMAGE.url],
     },

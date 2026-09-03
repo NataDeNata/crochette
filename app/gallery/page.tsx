@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Works in progress, finished pieces, and the little moments in between.",
   alternates: { canonical: "/gallery" },
   openGraph: {
-    title: "Gallery | Crochette",
+    title: "Gallery | Yarns and Buttons",
     description: "Works in progress, finished pieces, and the little moments in between.",
     images: [OG_IMAGE],
   },

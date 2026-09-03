@@ -64,7 +64,7 @@ export default function GlobalError({
     <html lang="en" className={cn(cormorant.variable, workSans.variable, "font-sans")}>
       <body>
         <section className="py-[100px] page-gutter text-center">
-          <div className="text-[13px] tracking-[3px] uppercase text-destructive mb-4">Crochette</div>
+          <div className="text-[13px] tracking-[3px] uppercase text-destructive mb-4">Yarns and Buttons</div>
           <h1 className="font-serif font-medium text-[clamp(32px,4vw,46px)] mb-4">
             The site is having a moment
           </h1>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Session } from "next-auth";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -30,40 +31,30 @@ function links(hasGallery: boolean) {
 const DRAWER_CLASS =
   "nav-drawer absolute top-full left-0 right-0 bg-sheet border-b-2 border-keyline flex flex-col px-5 py-2";
 
-/* The studio's mark, in this world's own grammar: a press-out. A solid keyline
- * square with a dashed die line inside it and a fold tab on top — the same
- * three-part construction every figure on the sheet is built from, reduced to
- * 26px. Authored SVG rather than a glyph, because a font character here would
- * be the one mark on the page that did not come off the sheet. */
-function PressOutMark() {
+/* The studio's mark: the Yarns and Buttons rope-and-buttons badge, replacing
+ * the authored press-out SVG that stood in before there was a real logo.
+ *
+ * The source file is 624×930 — a circular badge with cream bands above and
+ * below it. `aspect-square` + `object-cover` crops those bands off so the
+ * circle fills the box, rather than letting the whole portrait frame shrink to
+ * fit and leaving the badge tiny between two empty margins.
+ *
+ * `priority` because this sits in the sticky masthead and is in view on every
+ * route from first paint; lazy-loading it would pop the wordmark sideways once
+ * it arrived. Known limitation: the badge is an opaque JPEG on cream, so on the
+ * butter plate it prints a faint square edge. A transparent PNG or SVG is the
+ * fix, and until one exists no amount of CSS here removes it. */
+function BrandMark() {
   return (
-    <svg
+    <Image
+      src="/logo.jpg"
+      alt=""
       aria-hidden
-      width="26"
-      height="26"
-      viewBox="0 0 26 26"
-      fill="none"
-      className="shrink-0 text-keyline"
-    >
-      <path d="M9.5 5.5V3.2h7v2.3" stroke="currentColor" strokeWidth="1.8" />
-      <rect
-        x="1.4"
-        y="5.5"
-        width="23.2"
-        height="19.1"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <rect
-        x="5.4"
-        y="9.2"
-        width="15.2"
-        height="11.6"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeDasharray="2.6 2.4"
-      />
-    </svg>
+      width={624}
+      height={930}
+      priority
+      className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
+    />
   );
 }
 
@@ -164,9 +155,9 @@ export function Nav({
         // butter rectangle would run the full width of the left `1fr`.
         className="group flex items-center gap-2.5 justify-self-start bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
       >
-        <PressOutMark />
+        <BrandMark />
         <span className="type-sheet-display text-[17px] uppercase text-keyline">
-          Crochette
+          Yarns and Buttons
         </span>
       </Link>
 

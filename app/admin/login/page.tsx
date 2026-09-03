@@ -24,7 +24,7 @@ export default async function AdminLoginPage({
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-[360px] rounded-3xl border border-border bg-card p-10 shadow-sm">
-        <div className="mb-1.5 text-center font-serif text-2xl font-medium">Crochette</div>
+        <div className="mb-1.5 text-center font-serif text-2xl font-medium">Yarns and Buttons</div>
         <p className="mb-7 text-center text-[13px] text-muted-foreground">Studio admin sign in</p>
         {changed ? (
           <p className="mb-4 rounded-lg bg-muted px-3 py-2 text-center text-[13px]">

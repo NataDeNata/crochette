@@ -35,7 +35,7 @@ export default async function AdminCustomersPage({
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <AdminPageHeader
         title="Customers"
-        subtitle="Everyone with a Crochette account"
+        subtitle="Everyone with a Yarns and Buttons account"
         actions={
           <AdminSearchBar
             basePath="/admin/customers"

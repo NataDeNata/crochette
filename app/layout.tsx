@@ -46,7 +46,7 @@ const archivo = Archivo({
   display: "swap",
 });
 
-const SITE_NAME = "Crochette";
+const SITE_NAME = "Yarns and Buttons";
 const SITE_DESCRIPTION =
   "Handmade crochet decor and companions, stitched with quiet care. Shop the collection or request a custom piece.";
 

@@ -16,7 +16,7 @@ import { ImageResponse } from "next/og";
  * is repainted again, this file is a second place to change.
  */
 
-export const alt = "Crochette — handmade crochet decor, stitched by hand in small batches";
+export const alt = "Yarns and Buttons — handmade crochet decor, stitched by hand in small batches";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

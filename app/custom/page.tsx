@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Tell us the size, colors, and character, and we'll turn it into a one-of-a-kind piece.",
   alternates: { canonical: "/custom" },
   openGraph: {
-    title: "Custom Orders | Crochette",
+    title: "Custom Orders | Yarns and Buttons",
     description: "Tell us the size, colors, and character, and we'll turn it into a one-of-a-kind piece.",
     images: [OG_IMAGE],
   },

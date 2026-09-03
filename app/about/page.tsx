@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "A small studio, made from yarn and patience.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About | Crochette",
+    title: "About | Yarns and Buttons",
     description: "A small studio, made from yarn and patience.",
     images: [OG_IMAGE],
   },
@@ -35,7 +35,7 @@ export default function AboutPage() {
             </h1>
             <div className="mt-8 grid gap-6 md:grid-cols-2 md:gap-14">
               <p className="text-[17px] leading-[1.7] text-muted-foreground max-w-[58ch]">
-                Crochette began as a way to slow down, turning simple skeins into
+                Yarns and Buttons began as a way to slow down, turning simple skeins into
                 bears, blossoms, and little companions for cozy homes.
               </p>
               <p className="text-[17px] leading-[1.7] text-muted-foreground max-w-[58ch]">

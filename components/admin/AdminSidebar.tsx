@@ -69,7 +69,7 @@ export function AdminSidebar({
         <span className="flex size-9 flex-none items-center justify-center rounded-full bg-brand text-brand-foreground">
           <Scissors className="size-4" aria-hidden />
         </span>
-        <span className="font-serif text-lg leading-tight font-medium">Crochette</span>
+        <span className="font-serif text-lg leading-tight font-medium">Yarns and Buttons</span>
       </Link>
 
       <nav className="flex flex-col gap-0.5">
