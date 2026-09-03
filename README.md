@@ -1,12 +1,15 @@
-# Crochette
+# Yarns and Buttons
 
 Handmade-crochet e-commerce storefront: a fixed product catalog plus a custom-order intake pipeline. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion, and Postgres via Drizzle ORM.
+
+> **The npm package, the Vercel project and the repository are all still called `crochette`,** as is the deployment at `crochette-zeta.vercel.app`. Only the studio's display name changed. Three identifiers keep the old string permanently and must not be "tidied up": `KEY_INFO` in `lib/security/secret-box.ts` is HKDF input for the admin's TOTP secret box, and `COOKIE_NAME` / `LEGACY_KEY` in `lib/cart/` are live cart identity. Renaming the first makes every stored secret undecryptable; renaming the others orphans carts in progress.
 
 ## Stack
 
 - **Framework**: Next.js 16 (Turbopack) + React 19 + TypeScript
 - **Styling**: Tailwind CSS v4 + shadcn/ui (Radix), `next/font` (Cormorant Garamond + Work Sans). Tailwind is the sole styling mechanism — no inline `style={{}}` outside Framer Motion's own animation API
-- **Animation**: Framer Motion — transform/opacity-only, `prefers-reduced-motion`-aware (`components/motion/`)
+- **Animation**: Framer Motion — transform/opacity-only, `prefers-reduced-motion`-aware (`components/motion/`). Scroll-linked effects track `window.scrollY` by hand rather than through `useScroll`; see `ScrollAwayLogo.tsx` for why
+- **Brand mark**: `public/logo.jpg` — the masthead brand at 56px, the footer's at 28px, and the full-screen overture on `/about`. An opaque JPEG on cream, so every use clips it round; a transparent PNG or SVG would let that go
 - **Database**: PostgreSQL (Supabase) via Drizzle ORM (`lib/db/`)
 - **Auth**: Auth.js v5 — one config, two Credentials providers (`admin`, `customer`) plus Google for customers, on a shared JWT session (`lib/auth.ts`). Admin sessions are capped at 8h absolute and are revoked by rotating the password (`lib/auth-session.ts`)
 - **Payments**: Xendit hosted checkout (Payment Sessions) — Stripe doesn't support PH-registered merchants (`lib/payments/xendit.ts`)
