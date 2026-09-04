@@ -1,0 +1,8 @@
+# Shell scripts must keep LF endings.
+#
+# This repo is developed on Windows with core.autocrlf=true, which rewrites
+# checked-out files to CRLF. That is harmless for source Git never executes,
+# but a bash script with CRLF endings fails at run time with `$'\r': command
+# not found` — an error that points at the shell rather than at the line
+# endings, so it reads as a broken script rather than a checkout artefact.
+*.sh text eol=lf
