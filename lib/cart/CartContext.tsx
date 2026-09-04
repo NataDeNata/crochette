@@ -15,9 +15,9 @@ import type { CartView } from "@/lib/db/cart";
  * need no changes. That keeps the storage swap reviewable on its own instead of
  * spreading across the UI at the same time.
  *
- * The mutators still return void. They're now async underneath, but no caller
- * awaits them and none should: the optimistic update in the store has already
- * applied by the time they return, which is the whole point.
+ * Most mutators still return void: the optimistic update in the store has
+ * already applied by the time they return, so nothing is worth awaiting.
+ * `addItem` is the one exception — see its own note below.
  */
 
 export type CartItem = {
@@ -31,10 +31,18 @@ export type CartItem = {
 
 type CartContextValue = {
   items: CartItem[];
+  /**
+   * Resolves once the server has confirmed the add — not on the optimistic
+   * update, which has already applied to `items` before this is even called.
+   * Await it to know when it is honest to say "added" rather than "adding";
+   * see AddToCartButton and Cutout's quick-add for the two callers that do.
+   * Never rejects: a failed sync is swallowed in the store (see its
+   * `reconcile`), so the promise always settles.
+   */
   addItem: (
     product: { id: string; slug: string; name: string; priceCents: number; stockQty: number },
     quantity: number,
-  ) => void;
+  ) => Promise<void>;
   removeItem: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
   clear: () => void;
@@ -49,6 +57,16 @@ type CartContextValue = {
    * bounced straight back to /cart because of exactly that.
    */
   loaded: boolean;
+  /**
+   * True while any write is running or sitting on the quantity debounce.
+   *
+   * For a "cart is still catching up" indicator — disabling checkout, showing
+   * an "Updating…" line — rather than for gating a specific row: it is one
+   * flag for the whole cart, not per line, so it cannot say *which* item is
+   * mid-write. A per-button spinner on add/remove is driven by that call's own
+   * promise instead (see `addItem`'s note), which this flag does not replace.
+   */
+  syncing: boolean;
 };
 
 /**
@@ -74,6 +92,14 @@ export function CartProvider({
     // Server-rendered cart is preferred: it paints the badge correctly on the
     // first frame. Falling back to a client read keeps the cart correct even
     // where the server hasn't supplied one, at the cost of a brief empty state.
+    //
+    // This deliberately still runs on every new `initialCart`, which is a fresh
+    // object on every RSC payload and therefore also on payloads older than
+    // what the client already knows — a prefetch, a back navigation, the
+    // re-render a cookie-writing Server Action triggers. Filtering those here
+    // would only cover this one call site; `hydrate` refuses them in the store
+    // instead, where every hydration path gets the same guard. See its note in
+    // lib/cart/store.ts for which snapshots are refused and why.
     if (initialCart) hydrate(initialCart);
     else void refresh();
   }, [initialCart, hydrate, refresh]);
@@ -94,6 +120,7 @@ export function useCart(): CartContextValue {
   const subtotalCents = useCartStore((s) => s.subtotalCents);
   const count = useCartStore((s) => s.count);
   const loaded = useCartStore((s) => s.loaded);
+  const syncing = useCartStore((s) => s.syncing);
   const add = useCartStore((s) => s.add);
   const setQuantityInStore = useCartStore((s) => s.setQuantity);
   const removeInStore = useCartStore((s) => s.remove);
@@ -105,8 +132,24 @@ export function useCart(): CartContextValue {
       subtotalCents,
       count,
       loaded,
+      syncing,
       addItem: (product, quantity) => {
-        void add(
+        /* The toast fires after `add` resolves, not on the click — the
+         * reverse of how this used to work. It used to fire on intent, on the
+         * reasoning that a failed sync leaves the optimistic line in place
+         * and checkout re-reads and re-prices regardless, so nothing about the
+         * announcement's timing could turn into a wrong charge. True then and
+         * still true, but the buttons that call this now show their own
+         * spinner-then-confirmed state for the same reason: not because
+         * getting it wrong was dangerous, but because "Added" printed on
+         * intent isn't yet true when it's said. The toast is that same
+         * standard applied to the one confirmation a shopper is not looking
+         * at when it happens.
+         *
+         * The promise this returns never rejects (see `add`'s note in
+         * store.ts), so the toast always fires — the `.then` is sequencing,
+         * not error handling. */
+        return add(
           {
             productId: product.id,
             slug: product.slug,
@@ -115,26 +158,27 @@ export function useCart(): CartContextValue {
             stockQty: product.stockQty,
           },
           quantity,
-        );
-        /* The only confirmation used to be the nav badge incrementing — a
-         * two-character change in the far corner of the screen, away from
-         * where the click happened, and invisible to anyone not watching for
-         * it. Raised here rather than in each button so the product page's
-         * "Add to cart" and the card's quick-add can't drift apart, and so a
-         * third entry point gets it for free.
-         *
-         * Deliberately fired on intent, not on the server's reply: the store
-         * is optimistic-then-authoritative by design, a failed sync leaves the
-         * optimistic line in place, and checkout re-reads and re-prices the
-         * cart server-side regardless. */
-        toast.success(`${product.name} added to your cart`, {
-          action: { label: "View cart", onClick: () => router.push("/cart") },
+        ).then(() => {
+          toast.success(`${product.name} added to your cart`, {
+            action: { label: "View cart", onClick: () => router.push("/cart") },
+          });
         });
       },
       removeItem: (productId) => void removeInStore(productId),
       setQuantity: (productId, quantity) => void setQuantityInStore(productId, quantity),
       clear: () => void clearInStore(),
     }),
-    [lines, subtotalCents, count, loaded, add, setQuantityInStore, removeInStore, clearInStore, router],
+    [
+      lines,
+      subtotalCents,
+      count,
+      loaded,
+      syncing,
+      add,
+      setQuantityInStore,
+      removeInStore,
+      clearInStore,
+      router,
+    ],
   );
 }

@@ -94,6 +94,12 @@ export const useCartStore = create<CartState>((set, get) => {
    */
   let pendingWrites = 0;
 
+  /** The `readAt` of the newest server snapshot this store has applied.
+   *
+   * Guards `hydrate`, which is fed by a prop the server re-renders — see the
+   * note on `hydrate` below for the cases that deliver a stale one. */
+  let lastAppliedAt = 0;
+
   function beginWrite() {
     pendingWrites += 1;
     set({ syncing: true });
@@ -115,6 +121,11 @@ export const useCartStore = create<CartState>((set, get) => {
   async function reconcile(run: () => Promise<CartView>) {
     try {
       const view = await run();
+      // A mutation's own response is authoritative by construction: the write
+      // it reports is the newest thing that has happened to this cart. It is
+      // applied unconditionally and it sets the floor that `hydrate` measures
+      // later snapshots against.
+      if (view.readAt !== undefined) lastAppliedAt = Math.max(lastAppliedAt, view.readAt);
       set({ lines: view.lines, ...totals(view.lines), loaded: true });
     } catch {
       // Swallowed on purpose — see above.
@@ -151,7 +162,48 @@ export const useCartStore = create<CartState>((set, get) => {
     syncing: false,
     loaded: false,
 
-    hydrate: (view) => set({ lines: view.lines, ...totals(view.lines), loaded: true }),
+    /* Seed from a cart the server rendered into the page.
+     *
+     * NOT an unconditional assignment, and that is the whole point of it. The
+     * caller is CartProvider, whose `initialCart` prop is a fresh object on
+     * every RSC payload, so this runs again on payloads that are older than
+     * what the client already knows:
+     *
+     *   - a prefetched route render (the cart page prefetches /checkout by
+     *     name, so the payload is built while the shopper is still editing);
+     *   - a back or forward navigation serving a cached payload;
+     *   - the re-render Next performs automatically when a Server Action
+     *     writes a cookie, which the first guest add-to-cart always does.
+     *
+     * Applying one of those replaced live state with a snapshot from before
+     * the shopper's last change: a removed line reappeared, then the real
+     * response removed it a second time. That flicker is the bug this guard
+     * exists for, and it is upstream of any animation.
+     *
+     * Two refusals, in order:
+     *
+     *   1. Any write outstanding — running, or scheduled on the quantity
+     *      debounce. The server has not been told about it yet, so no render
+     *      of that server's state can be newer than what is on screen.
+     *   2. A snapshot no newer than the last one applied. `readAt` is a server
+     *      clock compared only against another server clock, so the browser's
+     *      clock never enters into it.
+     *
+     * A snapshot with no `readAt` is trusted, because the only one the app
+     * produces is the empty-cart literal a mutation returns when there is no
+     * cart to read, and rejecting it would be worse than applying it. The
+     * first-load case falls out of this for free: `lastAppliedAt` starts at 0,
+     * so the initial render always wins and the badge still paints correctly
+     * on the first frame, which is why the prop exists at all.
+     */
+    hydrate: (view) => {
+      if (pendingWrites > 0) return;
+      if (view.readAt !== undefined) {
+        if (view.readAt <= lastAppliedAt) return;
+        lastAppliedAt = view.readAt;
+      }
+      set({ lines: view.lines, ...totals(view.lines), loaded: true });
+    },
 
     refresh: () => sync(() => getCart()),
 

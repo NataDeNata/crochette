@@ -43,7 +43,7 @@ export function CheckoutForm({
   defaultEmail?: string;
 }) {
   const router = useRouter();
-  const { items, subtotalCents, loaded } = useCart();
+  const { items, subtotalCents, loaded, syncing } = useCart();
   const [state, formAction, isPending] = useActionState(submitCheckout, IDLE_STATE);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
@@ -264,7 +264,18 @@ export function CheckoutForm({
 
         <FieldError error={state.status === "error" ? state.message : undefined} />
 
-        <SubmitButton isPending={isPending} label="Continue to payment" pendingLabel="Preparing checkout…" />
+        {/* `syncing` folded into the same `isPending`, not a separate check: a
+            shopper who reaches this page with a write still catching up
+            (a debounced quantity edit, a stray remove) should not be able to
+            submit against the `subtotalCents` this form is showing until it
+            has. The label reads the same for both — "preparing" is honest
+            either way, and a shopper does not need to know which of the two
+            reasons the button is briefly unavailable for. */}
+        <SubmitButton
+          isPending={isPending || syncing}
+          label="Continue to payment"
+          pendingLabel="Preparing checkout…"
+        />
       </form>
 
       <div>

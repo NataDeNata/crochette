@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { products, productImages } from "@/lib/db/schema";
 import { ProductImageUploadForm } from "@/components/admin/ProductImageUploadForm";
-import { ProductImageRow } from "@/components/admin/ProductImageRow";
+import { ProductImagesMetaForm } from "@/components/admin/ProductImagesMetaForm";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
@@ -37,20 +37,16 @@ export default async function ProductImagesPage({ params }: { params: Promise<{ 
       {images.length === 0 ? (
         <p className="m-0 text-sm text-muted-foreground">No photos yet. Upload some above.</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {images.map((image, i) => (
-            <ProductImageRow
-              key={image.id}
-              id={image.id}
-              url={image.url}
-              isPrimary={image.isPrimary}
-              caption={image.caption ?? ""}
-              alt={image.alt ?? ""}
-              canMoveUp={i > 0}
-              canMoveDown={i < images.length - 1}
-            />
-          ))}
-        </div>
+        <ProductImagesMetaForm
+          productId={product.id}
+          images={images.map((image) => ({
+            id: image.id,
+            url: image.url,
+            isPrimary: image.isPrimary,
+            caption: image.caption ?? "",
+            alt: image.alt ?? "",
+          }))}
+        />
       )}
     </div>
   );

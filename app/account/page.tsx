@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getCustomerOrders, listAddresses } from "@/lib/db/accounts";
 import { formatPrice } from "@/lib/data/products";
 import { formatDate } from "@/lib/data/analytics";
+import { hasFeaturedGallery } from "@/lib/data/gallery";
 
 export const metadata: Metadata = {
   title: "My account",
@@ -14,7 +15,11 @@ export default async function AccountDashboardPage() {
   const session = await auth();
   const customerId = session!.user.id;
 
-  const [orders, addressList] = await Promise.all([getCustomerOrders(customerId), listAddresses(customerId)]);
+  const [orders, addressList, hasGallery] = await Promise.all([
+    getCustomerOrders(customerId),
+    listAddresses(customerId),
+    hasFeaturedGallery(),
+  ]);
   const recentOrders = orders.slice(0, 3);
   const defaultAddress = addressList.find((a) => a.isDefault) ?? addressList[0];
 
@@ -69,6 +74,21 @@ export default async function AccountDashboardPage() {
             Manage addresses →
           </Link>
         </div>
+
+        {/* Same condition the storefront nav uses for its own Gallery link
+            (hasFeaturedGallery) — no point pointing an account holder at a
+            page that's currently empty. */}
+        {hasGallery && (
+          <div className="p-6 rounded-[16px] border-[1.5px] border-keyline/15">
+            <h2 className="font-serif font-medium text-xl mb-3.5">Gallery</h2>
+            <p className="text-[13.5px] text-muted-foreground m-0">
+              See finished pieces from the studio, curated separately from the shop.
+            </p>
+            <Link href="/gallery" className="inline-block mt-4 text-[13px]">
+              View the gallery →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

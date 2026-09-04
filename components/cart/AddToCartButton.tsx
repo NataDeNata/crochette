@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/lib/cart/CartContext";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +19,8 @@ export function AddToCartButton({
   product: { id: string; slug: string; name: string; priceCents: number; stockQty: number };
 }) {
   const { addItem } = useCart();
-  const reduceMotion = useReducedMotion();
   const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
   const outOfStock = product.stockQty <= 0;
@@ -86,36 +86,62 @@ export function AddToCartButton({
 
       <Button
         type="button"
-        disabled={outOfStock}
-        onClick={() => {
-          if (outOfStock) return;
-          addItem(product, Math.min(quantity, maxQuantity));
+        disabled={outOfStock || adding}
+        onClick={async () => {
+          if (outOfStock || adding) return;
+          setAdding(true);
+          // Waits for the server's confirmation before claiming "Added" — see
+          // addItem's note in CartContext.tsx. The optimistic line is already
+          // in the cart by the time this call is even made; this wait is only
+          // about when the button is honest to say so, not about whether the
+          // item is really there.
+          await addItem(product, Math.min(quantity, maxQuantity));
+          setAdding(false);
           setQuantity(1);
           setAdded(true);
           setTimeout(() => setAdded(false), 1600);
         }}
         className="min-w-[168px] disabled:bg-secondary disabled:text-muted-foreground disabled:opacity-100"
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={outOfStock ? "out" : added ? "added" : "add"}
-            initial={reduceMotion ? undefined : { opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
-            transition={{ duration: 0.16 }}
-            className="inline-flex items-center gap-2"
-          >
-            {outOfStock ? (
-              "Sold out"
-            ) : added ? (
-              <>
-                Added <CheckMark />
-              </>
-            ) : (
-              "Add to cart"
-            )}
-          </motion.span>
-        </AnimatePresence>
+        {/* A plain conditional, not the `AnimatePresence` + dynamically-keyed
+         * `motion.span` this used to be. That combination does not actually
+         * work: measured directly (a component-level `console.log` next to a
+         * parallel plain `<span>` carrying the identical condition) — React's
+         * own state cycled outOfStock → adding → added → outOfStock exactly
+         * as coded, on every render, and the plain span updated with it every
+         * time, while the `motion.span` inside `AnimatePresence` stayed
+         * frozen on whatever it first rendered and never updated again for
+         * the rest of the button's lifetime. Not a timing artifact — held
+         * disabled for a full ~2 real seconds while genuinely `adding`, and
+         * the label never once read "Adding" or "Added" in that window.
+         *
+         * Root cause not chased further: framer-motion 12.42.2 on React
+         * 19.2.4, `mode="wait"` with a single child re-keyed three ways in
+         * quick succession, is enough to reproduce it, and reproducing it is
+         * where the return on more digging stopped being worth it. Cutout's
+         * quick-add icon swap next to this button already uses a plain
+         * ternary for the same kind of state and was never wrapped in this,
+         * which is presumably why it was never seen there.
+         *
+         * The fade this cost is the smaller loss than a button that can get
+         * stuck claiming "Add to cart" while genuinely mid-request or already
+         * confirmed — the entire reason a loading state was added here in the
+         * first place. */}
+        <span className="inline-flex items-center gap-2">
+          {outOfStock ? (
+            "Sold out"
+          ) : adding ? (
+            <>
+              Adding <Spinner className="h-3.5 w-3.5" />
+            </>
+          ) : added ? (
+            <>
+              Added <CheckMark />
+            </>
+          ) : (
+            "Add to cart"
+          )}
+        </span>
       </Button>
     </div>
   );

@@ -1,19 +1,17 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useTransition } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 import {
   deleteProductImage,
   reorderProductImage,
   setPrimaryProductImage,
-  updateProductImageMeta,
 } from "@/app/admin/products/images-actions";
-import { IDLE_STATE } from "@/lib/actions/types";
+import { IDLE_STATE, type FormActionState } from "@/lib/actions/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FieldError } from "@/components/forms/FieldError";
-import { SubmitButton } from "@/components/forms/SubmitButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +24,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+/** Reorder, cover and delete are instant per-row actions — called directly
+ * rather than through a `<form>`, so they can sit inside the page-level form
+ * ProductImagesMetaForm wraps this row in without nesting one `<form>`
+ * inside another. Caption/alt stay plain named inputs that outer form reads
+ * on submit; this component holds no state for them. */
 export function ProductImageRow({
   id,
   url,
@@ -43,26 +46,14 @@ export function ProductImageRow({
   canMoveUp: boolean;
   canMoveDown: boolean;
 }) {
-  const [metaState, metaAction, metaPending] = useActionState(updateProductImageMeta.bind(null, id), IDLE_STATE);
-  const [deleteState, deleteAction, deletePending] = useActionState(deleteProductImage.bind(null, id), IDLE_STATE);
-  const [primaryState, primaryAction] = useActionState(setPrimaryProductImage.bind(null, id), IDLE_STATE);
-  const [upState, upAction] = useActionState(reorderProductImage.bind(null, id, "up"), IDLE_STATE);
-  const [downState, downAction] = useActionState(reorderProductImage.bind(null, id, "down"), IDLE_STATE);
+  const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (deleteState.status === "error" && deleteState.message) toast.error(deleteState.message);
-  }, [deleteState]);
-  useEffect(() => {
-    if (primaryState.status === "error" && primaryState.message) toast.error(primaryState.message);
-  }, [primaryState]);
-  useEffect(() => {
-    if (upState.status === "error" && upState.message) toast.error(upState.message);
-  }, [upState]);
-  useEffect(() => {
-    if (downState.status === "error" && downState.message) toast.error(downState.message);
-  }, [downState]);
-
-  const metaFieldErrors = metaState.fieldErrors ?? {};
+  function run(action: () => Promise<FormActionState>) {
+    startTransition(async () => {
+      const result = await action();
+      if (result.status === "error" && result.message) toast.error(result.message);
+    });
+  }
 
   return (
     <div className="flex gap-4 rounded-xl border border-border bg-card p-4">
@@ -73,53 +64,17 @@ export function ProductImageRow({
             Cover
           </span>
         )}
-      </div>
 
-      <div className="flex flex-col gap-2 flex-1 min-w-0">
-        <form action={metaAction} className="flex flex-col gap-2">
-          <div>
-            <Input name="caption" placeholder="Caption (optional)" defaultValue={caption} />
-            <FieldError error={metaFieldErrors.caption?.[0]} />
-          </div>
-          <div>
-            <Input name="alt" placeholder="Alt text (optional)" defaultValue={alt} />
-            <FieldError error={metaFieldErrors.alt?.[0]} />
-          </div>
-          <div className="flex items-center gap-2">
-            <SubmitButton isPending={metaPending} label="Save" pendingLabel="Saving…" />
-            {metaState.status === "success" && <span className="text-xs text-sage">Saved.</span>}
-          </div>
-        </form>
-      </div>
-
-      <div className="flex flex-col gap-1.5 shrink-0">
-        <div className="flex gap-1.5">
-          <form action={upAction}>
-            <Button type="submit" variant="outline" size="sm" disabled={!canMoveUp} aria-label="Move up">
-              ↑
-            </Button>
-          </form>
-          <form action={downAction}>
-            <Button type="submit" variant="outline" size="sm" disabled={!canMoveDown} aria-label="Move down">
-              ↓
-            </Button>
-          </form>
-        </div>
-        <form action={primaryAction}>
-          <Button type="submit" variant="outline" size="sm" disabled={isPrimary} className="w-full">
-            {isPrimary ? "Cover photo" : "Set as cover"}
-          </Button>
-        </form>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              disabled={isPending}
+              aria-label="Delete photo"
+              className="absolute -right-1.5 -top-1.5 flex size-6 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-destructive text-destructive-foreground transition-colors duration-150 hover:bg-destructive/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-destructive disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Delete
-            </Button>
+              <X className="size-3.5" aria-hidden />
+            </button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -128,14 +83,58 @@ export function ProductImageRow({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <form action={deleteAction}>
-                <AlertDialogAction type="submit" variant="destructive" disabled={deletePending}>
-                  {deletePending ? "Deleting…" : "Delete"}
-                </AlertDialogAction>
-              </form>
+              <AlertDialogAction
+                type="button"
+                variant="destructive"
+                disabled={isPending}
+                onClick={() => run(() => deleteProductImage(id, IDLE_STATE, new FormData()))}
+              >
+                {isPending ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      </div>
+
+      <div className="flex flex-col gap-2 flex-1 min-w-0">
+        <input type="hidden" name="imageId" value={id} />
+        <Input name={`caption-${id}`} placeholder="Caption (optional)" defaultValue={caption} />
+        <Input name={`alt-${id}`} placeholder="Alt text (optional)" defaultValue={alt} />
+      </div>
+
+      <div className="flex flex-col gap-1.5 shrink-0">
+        <div className="flex gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canMoveUp || isPending}
+            aria-label="Move up"
+            onClick={() => run(() => reorderProductImage(id, "up", IDLE_STATE, new FormData()))}
+          >
+            ↑
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canMoveDown || isPending}
+            aria-label="Move down"
+            onClick={() => run(() => reorderProductImage(id, "down", IDLE_STATE, new FormData()))}
+          >
+            ↓
+          </Button>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isPrimary || isPending}
+          className="w-full"
+          onClick={() => run(() => setPrimaryProductImage(id, IDLE_STATE, new FormData()))}
+        >
+          {isPrimary ? "Cover photo" : "Set as cover"}
+        </Button>
       </div>
     </div>
   );

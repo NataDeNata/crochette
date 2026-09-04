@@ -228,6 +228,29 @@
   color: oklch(0.94 0.02 60);
 }
 
+/* Below the width where the footer grid stacks, every one of these becomes a
+ * full-width row a thumb has to find. Measured there, they were 20px tall with
+ * 10px between them — the text's own line box and nothing else, which is a
+ * 20px target in a column of near-identical ones. The rule is scoped to the
+ * stacked layout because it is about thumbs, not about the link: on the
+ * desktop grid these sit in four narrow columns where 20px rows are read, not
+ * tapped, and 40px ones would just stretch the footer.
+ *
+ * `inline-flex` so the height applies at all — an inline box ignores it — and
+ * so the label stays vertically centred in the taller box. The links keep
+ * their own width, so the underline and the hover colour still land on the
+ * word rather than on a full-width band. It shares the 900px query with
+ * `.footer-grid` below for the same reason the nav's three rules share 860px:
+ * they are one change, and a second breakpoint declared elsewhere is how a
+ * layout ends up with a width where half of it has happened. */
+@media (max-width: 900px) {
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+}
+
 .cart-icon-link {
   background: oklch(0.92 0.025 75);
   transition: background-color 0.2s ease;
@@ -1114,6 +1137,26 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
 
   .page-reveal {
     animation: page-reveal 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* The mobile drawer's entrance, moved here off Framer for the reason this
+   * whole block exists.
+   *
+   * It was an AnimatePresence exit, which holds the drawer mounted until the
+   * tween settles. Measured on the live site with frames stalled: a closed
+   * drawer sitting at opacity 0 with `pointer-events: auto`, 371x258 across
+   * the top of the page, and `elementFromPoint` at its centre returning one of
+   * its own links. An invisible menu was eating taps on the content beneath
+   * it. The drawer is conditionally rendered now, so closed means gone. */
+  .nav-drawer {
+    animation: nav-drawer-reveal 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes nav-drawer-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
   }
 
   /* Shorter and plainer than the others: a validation message appearing next

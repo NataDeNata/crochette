@@ -6,6 +6,7 @@ import { useState, type MouseEvent } from "react";
 import type { Product } from "@/lib/data/products";
 import { formatPrice, LOW_STOCK_THRESHOLD } from "@/lib/data/products";
 import { useCart } from "@/lib/cart/CartContext";
+import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
 
 /* A figure on the sheet — the one construction every product surface in this
@@ -58,6 +59,7 @@ export function Cutout({
   quickAdd?: boolean;
 }) {
   const { addItem } = useCart();
+  const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
   const soldOut = product.stockQty <= 0;
@@ -72,11 +74,15 @@ export function Cutout({
 
   const alt = product.images.find((img) => img.isPrimary)?.alt || product.name;
 
-  function handleQuickAdd(e: MouseEvent) {
+  async function handleQuickAdd(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (soldOut) return;
-    addItem(product, 1);
+    if (soldOut || adding) return;
+    setAdding(true);
+    // See AddToCartButton's identical wait: the checkmark should mean the
+    // server has confirmed, not just that the tap registered.
+    await addItem(product, 1);
+    setAdding(false);
     setAdded(true);
     setTimeout(() => setAdded(false), 1400);
   }
@@ -177,6 +183,16 @@ export function Cutout({
                     {product.placeholder}
                   </span>
                 )}
+
+                {/* Same automatic "New"/"Bestseller" badge ProductGallery shows
+                    on the product's own page — see computeAutoTag. Top-left so
+                    it never collides with the sold-out plate, which is
+                    bottom-centred, or the quick-add tab below the arch. */}
+                {!soldOut && product.tag && (
+                  <span className="type-sheet-spec absolute top-2 left-2 z-[1] border-2 border-keyline bg-butter px-2 py-1 text-keyline">
+                    {product.tag}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -188,11 +204,12 @@ export function Cutout({
           {quickAdd && !soldOut && (
             <button
               type="button"
+              disabled={adding}
               onClick={handleQuickAdd}
               aria-label={`Add ${product.name} to cart`}
-              className="absolute left-1/2 -bottom-px z-[2] flex h-11 w-11 -translate-x-1/2 cursor-pointer items-center justify-center border-2 border-keyline bg-sheet text-keyline transition-colors duration-200 hover:bg-butter focus-visible:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+              className="absolute left-1/2 -bottom-px z-[2] flex h-11 w-11 -translate-x-1/2 items-center justify-center border-2 border-keyline bg-sheet text-keyline transition-colors duration-200 enabled:cursor-pointer enabled:hover:bg-butter focus-visible:bg-butter focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red disabled:cursor-not-allowed"
             >
-              {added ? <CheckMark /> : <PlusMark />}
+              {adding ? <Spinner className="h-3.5 w-3.5" /> : added ? <CheckMark /> : <PlusMark />}
             </button>
           )}
         </div>
