@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/lib/cart/CartContext";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";
 
 export default function CartPage() {
-  const { items, removeItem, setQuantity, subtotalCents, loaded } = useCart();
+  const { items, removeItem, setQuantity, subtotalCents, loaded, syncing } = useCart();
 
   // Gated on `loaded`, not just on `items.length`. The cart is server-owned and
   // the store starts empty, so an ungated check renders "Your cart is empty"
@@ -179,6 +180,25 @@ export default function CartPage() {
       </div>
 
       <div className="mt-8 flex flex-col gap-2 border-t-2 border-keyline pt-6 text-[15px]">
+        {/* Announces that the figures below are still catching up to a change
+            that has already shown on screen — a quantity edit still on its
+            debounce, a remove still confirming. The rows and the nav badge
+            update the instant a shopper acts (see the cart row fix this
+            landed alongside for why that stays true), but the totals below
+            are arithmetic over `lines`, and `lines` can still move again
+            before the server has the last word. `aria-live` because it can
+            appear with no click of its own — a debounce firing on its own
+            clock — so a screen reader needs to be told rather than relying on
+            focus already being here. */}
+        {syncing && (
+          <div
+            aria-live="polite"
+            className="mb-1 flex items-center gap-1.5 text-[13px] text-keyline/60"
+          >
+            <Spinner className="h-3 w-3" />
+            Updating…
+          </div>
+        )}
         <div className="flex justify-between text-muted-foreground">
           <span>Subtotal</span>
           <span className="tabular-nums">{formatPrice(subtotalCents)}</span>
@@ -193,14 +213,27 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* `prefetch` is explicit because /checkout is a dynamic route: it awaits
-          auth() and then listAddresses(), so Next's default treatment leaves
-          the work to click time. Anyone looking at a filled cart is very likely
-          to go there next, and warming it now turns the slowest hop in the
-          purchase flow into a mostly-resolved one. */}
-      <Button href="/checkout" prefetch className="mt-8 w-full text-center">
-        Proceed to checkout
-      </Button>
+      {/* Two different elements, not one Button whose `disabled` sometimes
+          applies: `Button` renders an anchor when given `href`, and an anchor
+          has no disabled state — setting the prop would be silently inert.
+          Swapping to the plain button form while `syncing` is what actually
+          stops the click, and it says why: a shopper landing on /checkout
+          mid-sync would see a subtotal that has not caught up to their last
+          edit yet. Checkout re-prices server-side regardless, so nothing
+          here is a correctness fix — it is the same standard as the
+          "Updating…" line above, applied to the one control that leaves this
+          page. `prefetch` on the live link, not this one: warming a route the
+          shopper cannot yet reach buys nothing. */}
+      {syncing ? (
+        <Button type="button" disabled className="mt-8 w-full text-center">
+          <Spinner className="h-3.5 w-3.5" />
+          Updating cart…
+        </Button>
+      ) : (
+        <Button href="/checkout" prefetch className="mt-8 w-full text-center">
+          Proceed to checkout
+        </Button>
+      )}
     </Envelope>
   );
 }
