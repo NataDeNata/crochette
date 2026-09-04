@@ -2,7 +2,7 @@
 
 Handmade-crochet e-commerce storefront: a fixed product catalog plus a custom-order intake pipeline. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion, and Postgres via Drizzle ORM.
 
-> **The npm package, the Vercel project and the repository are all still called `crochette`,** as is the deployment at `crochette-zeta.vercel.app`. Only the studio's display name changed. Three identifiers keep the old string permanently and must not be "tidied up": `KEY_INFO` in `lib/security/secret-box.ts` is HKDF input for the admin's TOTP secret box, and `COOKIE_NAME` / `LEGACY_KEY` in `lib/cart/` are live cart identity. Renaming the first makes every stored secret undecryptable; renaming the others orphans carts in progress.
+> **The npm package, the Vercel project and the repository are all still called `crochette`,** as is the deployment at `crochette-zeta.vercel.app`. Only the studio's display name changed. **The Vercel account and project are being renamed to `yarnsandbuttons`; the deployment hostname moves with them.** Nothing in the code names that host any more — `SITE_URL` in `lib/site.ts` reads the origin from `NEXT_PUBLIC_SITE_URL`, falling back to Vercel's own production-domain variable, so the rename is a configuration change rather than an edit here. Three identifiers keep the old string permanently and must not be "tidied up": `KEY_INFO` in `lib/security/secret-box.ts` is HKDF input for the admin's TOTP secret box, and `COOKIE_NAME` / `LEGACY_KEY` in `lib/cart/` are live cart identity. Renaming the first makes every stored secret undecryptable; renaming the others orphans carts in progress.
 
 ## Stack
 

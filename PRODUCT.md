@@ -29,7 +29,7 @@ The custom-order pipeline is the part a neighboring storefront template could no
 - **One studio, one operator.** Every admin surface is used by one person who knows the inventory personally. There are no roles, no teams, no approval flows.
 - **Phones first, in practice.** Traffic arrives from social links. The storefront is verified down to 320px.
 - **Philippines-only.** Prices are integer centavos (PHP), the same unit Xendit's API expects. Shipping is a flat ₱100. Reporting timezone is hardcoded `Asia/Manila`. International shipping and multi-currency are explicit non-goals.
-- **Live as a demo, not yet transacting.** The site runs at `crochette-zeta.vercel.app` with real payments deliberately switched off pending a custom domain. That is a standing decision, not unfinished work.
+- **Live as a demo, not yet transacting.** The site runs at `crochette-zeta.vercel.app` — moving to `yarnsandbuttons.vercel.app` as the Vercel account and project are renamed — with real payments deliberately switched off pending a custom domain. That is a standing decision, not unfinished work.
 
 ## Capabilities and Constraints
 
@@ -49,7 +49,7 @@ The custom-order pipeline is the part a neighboring storefront template could no
 
 ## Brand Commitments
 
-- **Name:** Yarns and Buttons. A single-owner handmade-crochet studio, "Cozy Creations · Est. 2023". Renamed from Crochette; the package, repo, Vercel project and `crochette-zeta.vercel.app` deployment keep the old name, as do three data keys that must never be renamed (see the constraints above and `README.md`).
+- **Name:** Yarns and Buttons. A single-owner handmade-crochet studio, "Cozy Creations · Est. 2023". Renamed from Crochette; the package and repo keep the old name, as do three data keys that must never be renamed (see the constraints above and `README.md`). The Vercel account, project and deployment hostname are being brought onto the new name.
 - **Logo:** `public/logo.jpg` — a circular rope-and-buttons badge that sets the studio name in script inside its own ring. It is the masthead brand outright: there is no wordmark beside it, because the badge already says the name and a text copy repeated it in a second typeface. **Two properties constrain every use.** It is an opaque JPEG on cream, so it is clipped round wherever it appears — square corners read as a lit tile on the dark footer. And its lettering does not resolve below roughly 200px, which is why the 56px masthead use is a mark rather than a readable name, and why `/about` shows it large. A transparent PNG or SVG, or a horizontal lockup for small sizes, would lift both limits.
 - **Palette:** a hand-tuned cream and terracotta family in oklch, defined as tokens in `app/globals.css`. `--brand` is the terracotta `oklch(0.55 0.09 20)`, deliberately distinct from `--primary`, which is the dark ink. This palette was chosen over an imported design system's darker colors specifically to keep the lighter landing-page feel.
 - **Typography:** Cormorant (serif) for display, Work Sans (sans) for text.
