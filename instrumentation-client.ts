@@ -7,6 +7,7 @@ import {
   beforeBreadcrumb,
   IGNORE_ERRORS,
 } from "@/lib/observability/sentry-shared";
+import { SITE_HOST } from "@/lib/site";
 
 // Next 16 / Sentry v10 replaced the old `sentry.client.config.ts` with this file.
 if (SENTRY_DSN) {
@@ -29,7 +30,18 @@ if (SENTRY_DSN) {
     // Only report errors originating from our own bundle. Browser extensions
     // and injected scripts otherwise dominate the issue stream on a
     // consumer-facing storefront.
-    allowUrls: [/crochette-zeta\.vercel\.app/, /localhost/],
+    //
+    // Derived from SITE_HOST rather than written out. This was a literal
+    // `/crochette-zeta\.vercel\.app/`, which is the worst kind of duplicate:
+    // it names the deployment host a second time, in a place nothing links
+    // back to lib/site.ts, and it fails *silently*. Rename the project and
+    // this allowlist matches nothing — no error, no warning, just an issue
+    // stream that quietly goes empty and reads as "no bugs in production".
+    //
+    // Plain strings, not regexes: Sentry matches these as substrings against
+    // the script URL, so a host needs no escaping and cannot be broken by a
+    // dot in the domain being read as "any character".
+    allowUrls: [SITE_HOST, "localhost"],
 
     beforeSend,
     beforeBreadcrumb,
