@@ -159,11 +159,17 @@ export default function CartPage() {
                   {formatPrice(item.priceCents * item.quantity)}
                 </div>
 
+                {/* `min-h-11` and the horizontal padding are the tap target,
+                    not decoration. Measured on a phone this was 58x17: the one
+                    destructive control in the cart, at well under half the
+                    44px the rest of this row already clears. The underline
+                    still sits under the word rather than under the padding, so
+                    it reads the same as before at any width. */}
                 <button
                   type="button"
                   onClick={() => removeItem(item.productId)}
                   aria-label={`Remove ${item.name} from cart`}
-                  className="type-sheet-spec bg-transparent border-0 cursor-pointer text-keyline/60 underline underline-offset-4 transition-colors duration-200 hover:text-press-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+                  className="type-sheet-spec -mr-2 inline-flex min-h-11 shrink-0 items-center bg-transparent border-0 px-2 cursor-pointer text-keyline/60 underline underline-offset-4 transition-colors duration-200 hover:text-press-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
                 >
                   Remove
                 </button>
