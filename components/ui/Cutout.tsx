@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  *
  * Four layers, outside in: the dashed cut line, the white trim margin the
  * scissors are meant to leave, the die-cut window, and the photograph. All
- * three edges share `.diecut-arch`, so the curve is one declaration rather
+ * three edges share `.diecut-card`, so the corner is one declaration rather
  * than three numbers kept in step by hand.
  *
  * The tab is the load-bearing part of the paper-doll grammar — it is what says
@@ -124,11 +124,11 @@ export function Cutout({
 
         <div className="relative">
           {/* Cut line → trim margin → window. */}
-          <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
-            <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
+          <div className="diecut-card border-2 border-dashed border-keyline p-1.5">
+            <div className="diecut-card border-2 border-keyline bg-sheet p-1.5">
               <div
                 className={cn(
-                  "diecut-arch relative overflow-hidden aspect-4/5",
+                  "diecut-card relative overflow-hidden aspect-4/5",
                   // Only ever seen behind a piece with no photograph uploaded.
                   // --ground-deep is the mid taupe kept for that case; the
                   // scrim below is what dims a photograph that does exist.
@@ -187,7 +187,7 @@ export function Cutout({
                 {/* Same automatic "New"/"Bestseller" badge ProductGallery shows
                     on the product's own page — see computeAutoTag. Top-left so
                     it never collides with the sold-out plate, which is
-                    bottom-centred, or the quick-add tab below the arch. */}
+                    bottom-centred, or the quick-add tab below the card. */}
                 {!soldOut && product.tag && (
                   <span className="type-sheet-spec absolute top-2 left-2 z-[1] border-2 border-keyline bg-butter px-2 py-1 text-keyline">
                     {product.tag}
@@ -197,7 +197,7 @@ export function Cutout({
             </div>
           </div>
 
-          {/* Quick-add rides the base of the arch as its own small tab, so the
+          {/* Quick-add rides the base of the card as its own small tab, so the
               one control on a figure is built the same way the figure is. It
               is deliberately not a floating circle over the photograph: this
               world has no pills, and a piece is judged on the photograph. */}

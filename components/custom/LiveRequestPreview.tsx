@@ -63,7 +63,7 @@ function AnimatedSwap({
  * cut line and fold tab are printed, and the window inside them is blank
  * until the customer's own words fill it.
  *
- * Every layer is the same construction the catalogue uses (`.diecut-arch`,
+ * Every layer is the same construction the catalogue uses (`.diecut-card`,
  * the dashed cut line, the trim margin, the butter tab), which is what makes
  * the promise legible without a caption: what you are describing will end up
  * looking like the things you were just browsing.
@@ -131,9 +131,9 @@ export function LiveRequestPreview({
       </div>
 
       {/* Cut line → trim margin → the window that is still blank. */}
-      <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
-        <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
-          <div className="diecut-arch relative flex aspect-4/5 flex-col items-center justify-center overflow-hidden bg-secondary px-6 text-center">
+      <div className="diecut-card border-2 border-dashed border-keyline p-1.5">
+        <div className="diecut-card border-2 border-keyline bg-sheet p-1.5">
+          <div className="diecut-card relative flex aspect-4/5 flex-col items-center justify-center overflow-hidden bg-secondary px-6 text-center">
             {hero ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

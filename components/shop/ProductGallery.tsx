@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 /* The plate: this piece at the size you judge it by.
  *
- * The main image takes the same die-cut arch every figure on the sheet does,
+ * The main image takes the same die-cut card every figure on the sheet does,
  * with the cut line and trim margin around it, so the thing you clicked and
  * the thing you are now looking at are recognisably the same object. The
  * thumbnails are square keyline chips instead — they are a control strip, not
@@ -45,11 +45,11 @@ export function ProductGallery({
   if (images.length === 0) {
     return (
       <div className="relative">
-        <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
-          <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
+        <div className="diecut-card border-2 border-dashed border-keyline p-1.5">
+          <div className="diecut-card border-2 border-keyline bg-sheet p-1.5">
             <div
               className={cn(
-                "diecut-arch relative flex aspect-4/5 items-end justify-center overflow-hidden",
+                "diecut-card relative flex aspect-4/5 items-end justify-center overflow-hidden",
                 bgClassName,
               )}
             >
@@ -75,9 +75,9 @@ export function ProductGallery({
   return (
     <div className="flex flex-col gap-5">
       <div className="relative">
-        <div className="diecut-arch border-2 border-dashed border-keyline p-1.5">
-          <div className="diecut-arch border-2 border-keyline bg-sheet p-1.5">
-            <div className="diecut-arch relative aspect-4/5 overflow-hidden">
+        <div className="diecut-card border-2 border-dashed border-keyline p-1.5">
+          <div className="diecut-card border-2 border-keyline bg-sheet p-1.5">
+            <div className="diecut-card relative aspect-4/5 overflow-hidden">
               {tagBadge}
               <GalleryTile
                 item={items[activeIndex]}

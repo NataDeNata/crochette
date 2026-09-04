@@ -51,7 +51,7 @@ export default function CartPage() {
             above a button reading "Browse the sheets" answered neither in a
             vocabulary anyone shares. */}
         <div className="flex flex-col items-center py-10 text-center">
-          <div className="diecut-arch aspect-4/5 w-[130px] border-2 border-dashed border-keyline/40" />
+          <div className="diecut-card aspect-4/5 w-[130px] border-2 border-dashed border-keyline/40" />
           <h1 className="type-sheet-display mt-8 text-[30px] text-keyline">
             Your cart is empty
           </h1>

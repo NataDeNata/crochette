@@ -355,8 +355,13 @@
 
 /* Four columns since the policy links landed: the studio blurb, Explore,
  * The small print, Get in touch. */
+/* Three columns, not four: the "Get in touch" column came out with the dead
+ * contact address (see Footer.tsx). The brand column keeps its extra width —
+ * it carries the wordmark plate and a line of prose, the other two carry short
+ * link lists — so the remaining two simply share the space it does not need
+ * rather than stretching their links across half a footer each. */
 .footer-grid {
-  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  grid-template-columns: 1.6fr 1fr 1fr;
 }
 
 @media (max-width: 900px) {
@@ -1051,12 +1056,32 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
  * an edge that genuinely exists.
  */
 
-/* The die-cut silhouette: an arch, the shape a press-out figure actually takes
- * when the die follows a head and shoulders. One declaration, shared by the
- * photograph and by the dashed cut line that rings it, so the two are the same
- * curve by construction rather than by two numbers kept in step by hand. */
-.diecut-arch {
-  border-radius: 50% 50% 4px 4px / 42% 42% 4px 4px;
+/* The die-cut silhouette: a rectangle with trimmed corners.
+ *
+ * It was an arch — the shape a press-out figure takes when the die follows a
+ * head and shoulders — and the curve cost more than it earned. The photographs
+ * are shot square, and the arch ate their top corners: a piece framed to fill
+ * its frame lost the two corners of it, and every product surface in the world
+ * cropped the same evidence away. The figure still reads as pressed out
+ * without the curve, because the dashed cut line and the fold tab are what
+ * carry that grammar — the silhouette was only ever agreeing with them.
+ *
+ * Three layers nest here — cut line, trim margin, window — each inset from its
+ * parent by the 6px trim padding. One shared radius would print visibly fatter
+ * corners on the inner layers than the outer, so each level steps down by
+ * roughly that inset and the corners stay concentric. The innermost keeps 4px
+ * rather than going square: the photograph is the layer actually looked at. */
+.diecut-card {
+  --diecut-radius: 14px;
+  border-radius: var(--diecut-radius);
+}
+
+.diecut-card .diecut-card {
+  --diecut-radius: 8px;
+}
+
+.diecut-card .diecut-card .diecut-card {
+  --diecut-radius: 4px;
 }
 
 /* The press-out — this world's one authored moment. A figure stands off the
@@ -1067,8 +1092,11 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
  * standing off it; drawing the second as a zero-blur block would collapse the
  * only distinction the effect exists to make.
  *
- * `filter: drop-shadow` rather than `box-shadow`, because the figure is an
- * arch and a box shadow would print a rectangle behind a curved die-cut. */
+ * `filter: drop-shadow` rather than `box-shadow`, because the figure is not
+ * its own bounding box: the fold tab is a narrow plate standing above a wider
+ * card, so a box shadow would print one rectangle around both and fill in the
+ * notches either side of the tab. This stays true now the die-cut is a
+ * rectangle — it is the tab, not the curve, that makes the silhouette. */
 .cutout-figure {
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
