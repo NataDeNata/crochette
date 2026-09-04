@@ -355,8 +355,13 @@
 
 /* Four columns since the policy links landed: the studio blurb, Explore,
  * The small print, Get in touch. */
+/* Three columns, not four: the "Get in touch" column came out with the dead
+ * contact address (see Footer.tsx). The brand column keeps its extra width —
+ * it carries the wordmark plate and a line of prose, the other two carry short
+ * link lists — so the remaining two simply share the space it does not need
+ * rather than stretching their links across half a footer each. */
 .footer-grid {
-  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  grid-template-columns: 1.6fr 1fr 1fr;
 }
 
 @media (max-width: 900px) {
@@ -1051,12 +1056,32 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
  * an edge that genuinely exists.
  */
 
-/* The die-cut silhouette: an arch, the shape a press-out figure actually takes
- * when the die follows a head and shoulders. One declaration, shared by the
- * photograph and by the dashed cut line that rings it, so the two are the same
- * curve by construction rather than by two numbers kept in step by hand. */
-.diecut-arch {
-  border-radius: 50% 50% 4px 4px / 42% 42% 4px 4px;
+/* The die-cut silhouette: a rectangle with trimmed corners.
+ *
+ * It was an arch — the shape a press-out figure takes when the die follows a
+ * head and shoulders — and the curve cost more than it earned. The photographs
+ * are shot square, and the arch ate their top corners: a piece framed to fill
+ * its frame lost the two corners of it, and every product surface in the world
+ * cropped the same evidence away. The figure still reads as pressed out
+ * without the curve, because the dashed cut line and the fold tab are what
+ * carry that grammar — the silhouette was only ever agreeing with them.
+ *
+ * Three layers nest here — cut line, trim margin, window — each inset from its
+ * parent by the 6px trim padding. One shared radius would print visibly fatter
+ * corners on the inner layers than the outer, so each level steps down by
+ * roughly that inset and the corners stay concentric. The innermost keeps 4px
+ * rather than going square: the photograph is the layer actually looked at. */
+.diecut-card {
+  --diecut-radius: 14px;
+  border-radius: var(--diecut-radius);
+}
+
+.diecut-card .diecut-card {
+  --diecut-radius: 8px;
+}
+
+.diecut-card .diecut-card .diecut-card {
+  --diecut-radius: 4px;
 }
 
 /* The press-out — this world's one authored moment. A figure stands off the
@@ -1067,8 +1092,11 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
  * standing off it; drawing the second as a zero-blur block would collapse the
  * only distinction the effect exists to make.
  *
- * `filter: drop-shadow` rather than `box-shadow`, because the figure is an
- * arch and a box shadow would print a rectangle behind a curved die-cut. */
+ * `filter: drop-shadow` rather than `box-shadow`, because the figure is not
+ * its own bounding box: the fold tab is a narrow plate standing above a wider
+ * card, so a box shadow would print one rectangle around both and fill in the
+ * notches either side of the tab. This stays true now the die-cut is a
+ * rectangle — it is the tab, not the curve, that makes the silhouette. */
 .cutout-figure {
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
@@ -1091,6 +1119,44 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
      * without anything moving. */
     transform: none;
   }
+}
+
+/* THE LIGHTBOX'S TWO LAYERS, AND WHY THEY CANNOT USE A UTILITY.
+ *
+ * The lightbox portals into `document.body`, which takes it out of the
+ * `[data-surface="storefront"][data-world="cutout"]` wrapper where every
+ * cut-out token is declared — so both its layers re-stamp those two attributes
+ * to get `--keyline` and friends back. That part works.
+ *
+ * What comes with them is the problem. The same `[data-surface="storefront"]`
+ * rule that carries the tokens also ends with `background-color:
+ * var(--background)`, so re-stamping the attribute paints **an opaque cream
+ * sheet** on both layers: the scrim, whose own `bg-keyline/70` it outranks,
+ * and the full-screen Content wrapper above it, which never asked for a
+ * background at all. Two opaque creams over the page, and the result is a
+ * lightbox with no backdrop — the enlarged photograph floating on what looks
+ * like the page it came from, with a `--sheet`-coloured close glyph printed
+ * cream-on-cream and effectively invisible.
+ *
+ * It outranks the utility because that rule is *unlayered* — a plain selector
+ * sitting after `@import "tailwindcss"` — while `bg-keyline/70` lives in the
+ * utilities layer, and any unlayered declaration beats any layered one no
+ * matter what the specificity says. This is the same footgun the note at the
+ * top of this file records for `page-gutter`, and the reason that one is an
+ * `@utility` rather than a plain class.
+ *
+ * So the fix has to be a plain rule too. `[data-surface][class]` is (0,2,0)
+ * against the attribute rule's (0,1,0), both unlayered, this one later —
+ * it wins on every count rather than on tie-breaks alone. */
+.lightbox-layer[data-surface="storefront"] {
+  background-color: transparent;
+}
+
+.lightbox-scrim[data-surface="storefront"] {
+  /* The scrim is --keyline at 70%, not a literal near-black: the close glyph
+   * and the caption plate are --sheet and --keyline, so backdrop and content
+   * have to come out of one palette or a repaint moves one without the other. */
+  background-color: color-mix(in oklab, var(--keyline) 70%, transparent);
 }
 
 /* ENTRANCES WHOSE RESTING STATE IS VISIBLE.

@@ -250,7 +250,7 @@ export function ShopGrid({ products }: { products: Product[] }) {
 function EmptySheet({ query }: { query: string }) {
   return (
     <div className="mt-14 flex flex-col items-center pb-6 text-center">
-      <div className="diecut-arch aspect-4/5 w-[150px] border-2 border-dashed border-keyline/40" />
+      <div className="diecut-card aspect-4/5 w-[150px] border-2 border-dashed border-keyline/40" />
       <p className="type-sheet-display mt-7 text-[22px] text-keyline">
         Nothing on this sheet
       </p>

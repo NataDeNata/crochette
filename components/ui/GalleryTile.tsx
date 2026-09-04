@@ -31,8 +31,9 @@ export function GalleryTile({
   );
 
   /* A plate, not a card: square trim and a 2px key rule, the same weight every
-   * other edge on the sheet is printed at. No die-cut arch here — the gallery
-   * is the uncut centrefold, and an arch would promise a piece for sale. */
+   * other edge on the sheet is printed at. No die-cut corner here — the
+   * gallery is the uncut centrefold, and a die-cut would promise a piece for
+   * sale. */
   const baseClassName = cn(
     "h-full overflow-hidden relative flex items-center justify-center border-2 border-keyline",
     item.image ? undefined : item.bgClassName,

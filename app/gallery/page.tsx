@@ -22,8 +22,9 @@ export default async function GalleryPage() {
   return (
     <>
       {/* The centrefold: the one spread in this world that is never die-cut.
-          Every other surface frames a photograph inside an arch because the
-          arch means "this comes off the page and you can own it". The gallery
+          Every other surface frames a photograph inside a cut line and trimmed
+          corners because that construction means "this comes off the page and
+          you can own it". The gallery
           exists to show work rather than to sell a specific piece, so cutting
           it would make a promise the page cannot keep. Plates run to the
           gutter instead. */}

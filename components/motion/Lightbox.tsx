@@ -17,32 +17,82 @@ export function Lightbox({
 }) {
   const reduceMotion = useReducedMotion();
 
+  /* Pinned to the viewport, not to the panel.
+   *
+   * It used to sit at `-top-12` — 48px *above* the panel's top edge — which
+   * worked only while the panel was a small 4:3 box with a wide band of scrim
+   * around it. Now the panel is sized to the viewport, that band is a few
+   * percent of the screen height, and on a short viewport (a phone held
+   * sideways) 48px of it does not exist: the button would have been clipped
+   * off the top of the screen, taking the only visible way out with it.
+   *
+   * It hangs off the full-screen wrapper instead, so its position does not
+   * depend on the panel's size at all. `text-sheet` stays legible because it
+   * is over the scrim rather than over the photograph.
+   *
+   * A bare glyph gave this a ~20x28px hit area — fine for a mouse, well under
+   * the 44px touch minimum. The size comes from the box; the glyph is
+   * unchanged. */
   const closeButton = (
     <DialogPrimitive.Close asChild>
-      {/* A bare glyph gave this a ~20x28px hit area — fine for a mouse, well
-          under the 44px touch minimum. The size comes from the box now; the
-          glyph itself is unchanged. */}
       <button
         type="button"
         aria-label="Close"
-        className="absolute -top-12 right-0 flex size-11 items-center justify-center bg-transparent border-0 text-sheet text-[28px] leading-none cursor-pointer"
+        className="absolute top-3 right-3 z-[1] flex size-11 items-center justify-center border-0 bg-transparent text-[28px] leading-none text-sheet cursor-pointer"
       >
         ×
       </button>
     </DialogPrimitive.Close>
   );
 
+  /* `object-contain`, not `object-cover`.
+   *
+   * This is the enlarged view — the one surface in the app whose entire job is
+   * showing the whole photograph — and `cover` scales the image up until it
+   * fills the box, then crops whatever overhangs. Every other photo in this
+   * world is deliberately cropped: the figures on the sheet are a uniform
+   * 4:5 die-cut, and the gallery mosaic trims to its tile. That is the design.
+   * But it means the lightbox was the only way to see a photograph whole, and
+   * it was cropping too, so there was no such way at all.
+   *
+   * `pointer-events-none` because `fill` renders an <img> covering the entire
+   * panel, letterbox included. Without it that element swallows every click on
+   * what plainly looks like backdrop, and the dead zone grows with the panel.
+   * With it, clicks fall through to the panel's own handler below. */
   const panelContent = item.image ? (
-    <Image src={item.image} alt={item.alt ?? ""} fill sizes="90vw" className="object-cover" />
+    <Image
+      src={item.image}
+      alt={item.alt ?? ""}
+      fill
+      sizes="(max-width: 1200px) 92vw, 1200px"
+      className="pointer-events-none object-contain"
+    />
   ) : (
     <span className="[font-family:ui-monospace,monospace] text-sm text-keyline bg-sheet/70 px-4 py-2 rounded-lg text-center">
       {item.placeholder}
     </span>
   );
 
+  /* The panel is sized to the viewport, not to a fixed 640px 4:3 box.
+   *
+   * That box was the other half of the same bug, and the worse half: it fixed
+   * the *frame's* ratio before `object-fit` was ever consulted, so a 4:5
+   * portrait — which is what this catalogue is shot in — lost about a third of
+   * its height no matter what. It was also barely an enlargement; 640px wide
+   * on a desktop is roughly the size of the plate you clicked to get here.
+   *
+   * No ratio is imposed now, so the photograph scales to fit whatever shape it
+   * actually is. The placeholder case keeps the old compact box: it holds a
+   * line of text on a colour field, and stretching that to fill a screen would
+   * be a large empty rectangle. */
   const panelClassName = cn(
-    "relative w-[min(640px,90vw)] aspect-[4/3] rounded-3xl overflow-hidden flex items-center justify-center",
-    item.image ? undefined : item.bgClassName,
+    "relative flex items-center justify-center",
+    item.image
+      ? "h-[min(85svh,1000px)] w-[min(1200px,92vw)]"
+      : cn(
+          "aspect-[4/3] w-[min(640px,90vw)] overflow-hidden rounded-3xl",
+          item.bgClassName,
+        ),
   );
 
   // Root's `open` is hardcoded true: this component is only ever rendered
@@ -82,7 +132,7 @@ export function Lightbox({
           <motion.div
             data-surface="storefront"
             data-world="cutout"
-            className="fixed inset-0 z-[100] bg-keyline/70"
+            className="lightbox-scrim fixed inset-0 z-[100]"
             initial={reduceMotion ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0 }}
@@ -117,23 +167,29 @@ export function Lightbox({
           <div
             data-surface="storefront"
             data-world="cutout"
-            className="fixed inset-0 z-[100] flex items-center justify-center"
+            className="lightbox-layer fixed inset-0 z-[100] flex items-center justify-center"
             onClick={(e) => e.target === e.currentTarget && onClose()}
           >
+            {closeButton}
             <DialogPrimitive.Title className="sr-only">{item.alt || "Gallery image"}</DialogPrimitive.Title>
             <DialogPrimitive.Description className="sr-only">
-              Enlarged gallery image. Press Escape or click outside to close.
+              Enlarged gallery image. Press Escape or click to close.
             </DialogPrimitive.Description>
             {/* No `pointer-events-auto` and no `stopPropagation` any more:
              * the first paired with a `pointer-events-none` on the wrapper
              * that Radix was overriding anyway, and the second is redundant
              * now the backdrop handler checks the event target. */}
+            {/* No click handler on the panel, deliberately. framer-motion sets
+             * `pointer-events: none` inline on a `layoutId` element, so a
+             * handler here is unreachable dead code — measured, not assumed.
+             * The panel and its image are both transparent to the pointer, so
+             * every click inside the panel resolves to the wrapper above and
+             * is handled by its `target === currentTarget` test. */}
             <motion.div
               layoutId={layoutId}
               className={panelClassName}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              {closeButton}
               {panelContent}
             </motion.div>
           </div>
