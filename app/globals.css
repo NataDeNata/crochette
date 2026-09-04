@@ -1121,6 +1121,44 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
   }
 }
 
+/* THE LIGHTBOX'S TWO LAYERS, AND WHY THEY CANNOT USE A UTILITY.
+ *
+ * The lightbox portals into `document.body`, which takes it out of the
+ * `[data-surface="storefront"][data-world="cutout"]` wrapper where every
+ * cut-out token is declared — so both its layers re-stamp those two attributes
+ * to get `--keyline` and friends back. That part works.
+ *
+ * What comes with them is the problem. The same `[data-surface="storefront"]`
+ * rule that carries the tokens also ends with `background-color:
+ * var(--background)`, so re-stamping the attribute paints **an opaque cream
+ * sheet** on both layers: the scrim, whose own `bg-keyline/70` it outranks,
+ * and the full-screen Content wrapper above it, which never asked for a
+ * background at all. Two opaque creams over the page, and the result is a
+ * lightbox with no backdrop — the enlarged photograph floating on what looks
+ * like the page it came from, with a `--sheet`-coloured close glyph printed
+ * cream-on-cream and effectively invisible.
+ *
+ * It outranks the utility because that rule is *unlayered* — a plain selector
+ * sitting after `@import "tailwindcss"` — while `bg-keyline/70` lives in the
+ * utilities layer, and any unlayered declaration beats any layered one no
+ * matter what the specificity says. This is the same footgun the note at the
+ * top of this file records for `page-gutter`, and the reason that one is an
+ * `@utility` rather than a plain class.
+ *
+ * So the fix has to be a plain rule too. `[data-surface][class]` is (0,2,0)
+ * against the attribute rule's (0,1,0), both unlayered, this one later —
+ * it wins on every count rather than on tie-breaks alone. */
+.lightbox-layer[data-surface="storefront"] {
+  background-color: transparent;
+}
+
+.lightbox-scrim[data-surface="storefront"] {
+  /* The scrim is --keyline at 70%, not a literal near-black: the close glyph
+   * and the caption plate are --sheet and --keyline, so backdrop and content
+   * have to come out of one palette or a repaint moves one without the other. */
+  background-color: color-mix(in oklab, var(--keyline) 70%, transparent);
+}
+
 /* ENTRANCES WHOSE RESTING STATE IS VISIBLE.
  *
  * The shop grid, the checkout form and every page body used to enter through
