@@ -15,7 +15,7 @@ export async function findCustomerByEmail(email: string) {
  * duplicated**. Google asserts `email_verified`, which is the standard bar for
  * this, and the caller enforces it before we ever get here. The consequence is
  * worth stating plainly: whoever controls the Google account controls the
- * Crochette account. That is intended, and it is why the verified check is
+ * Yarns and Buttons account. That is intended, and it is why the verified check is
  * mandatory rather than advisory.
  *
  * `name` only fills a gap — it never overwrites a name the customer set

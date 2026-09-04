@@ -8,7 +8,7 @@ import { FadeIn } from "@/components/motion/FadeIn";
  * unstyled default. /shop/[slug] keeps its own more specific version. */
 
 /* The title used to be the root default — so a 404 announced itself in the tab
- * and in a bookmark as "Crochette | Handmade crochet decor", indistinguishable
+ * and in a bookmark as "Yarns and Buttons | Handmade crochet decor", indistinguishable
  * from the homepage. `noindex` alongside it: this page answers 404, but saying
  * so in the metadata costs nothing and covers the streamed-status case this
  * project has already been bitten by once. */

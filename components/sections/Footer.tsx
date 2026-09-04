@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import Image from "next/image";
 
 export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
   return (
@@ -6,39 +7,30 @@ export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
       <div className="max-w-[1344px] mx-auto">
         <div className="footer-grid grid gap-12 mb-12">
           <div>
-            {/* The footer is the underside of the sheet: back onto the ground,
-                with the wordmark on its butter plate exactly as the masthead
-                carries it, so the page opens and closes on the same mark. */}
-            <div className="mb-5 inline-flex items-center gap-2.5 border-2 border-keyline bg-butter px-3 py-1.5">
-              <svg
+            {/* The footer is the underside of the sheet: the wordmark keeps its
+                butter plate exactly as the masthead carries it, so the page
+                opens and closes on the same mark, and the badge sits beside
+                the plate rather than inside it. */}
+            <div className="mb-5 flex items-center gap-2.5">
+              {/* Same badge as the masthead, two pixels smaller to match the
+                  wordmark beside it. See `BrandMark` in Nav.tsx for why the
+                  square crop is deliberate. Not `priority`: the footer is
+                  below the fold on every route.
+
+                  The round clip earns more here than it does up top. The
+                  masthead stands this cream JPEG on cream; the footer stands it
+                  on the dark ground, where four square cream corners would read
+                  as a lit tile rather than as a badge. */}
+              <Image
+                src="/logo.jpg"
+                alt=""
                 aria-hidden
-                width="22"
-                height="22"
-                viewBox="0 0 26 26"
-                fill="none"
-                className="shrink-0 text-keyline"
-              >
-                <path d="M9.5 5.5V3.2h7v2.3" stroke="currentColor" strokeWidth="1.8" />
-                <rect
-                  x="1.4"
-                  y="5.5"
-                  width="23.2"
-                  height="19.1"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                />
-                <rect
-                  x="5.4"
-                  y="9.2"
-                  width="15.2"
-                  height="11.6"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeDasharray="2.6 2.4"
-                />
-              </svg>
-              <span className="type-sheet-display text-[16px] uppercase text-keyline">
-                Crochette
+                width={624}
+                height={930}
+                className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
+              />
+              <span className="type-sheet-display border-2 border-keyline bg-butter px-3 py-1.5 text-[16px] uppercase text-keyline">
+                Yarns and Buttons
               </span>
             </div>
             <p className="text-sm leading-[1.7] text-footer-muted max-w-[280px]">
@@ -107,7 +99,7 @@ export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
             --footer-border stays where it is -- a decorative rule, not a
             control boundary, so 1.4.11's 3:1 does not apply to it. */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-[13px] text-footer-subtle border-t border-footer-border pt-6 text-center">
-          <span>© 2026 Crochette. Made by hand, in small batches.</span>
+          <span>© 2026 Yarns and Buttons. Made by hand, in small batches.</span>
         </div>
       </div>
     </footer>

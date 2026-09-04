@@ -7,11 +7,11 @@ import { OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: "The terms you are agreeing to when you buy from Crochette.",
+  description: "The terms you are agreeing to when you buy from Yarns and Buttons.",
   alternates: { canonical: "/terms" },
   openGraph: {
-    title: "Terms | Crochette",
-    description: "The terms you are agreeing to when you buy from Crochette.",
+    title: "Terms | Yarns and Buttons",
+    description: "The terms you are agreeing to when you buy from Yarns and Buttons.",
     images: [OG_IMAGE],
   },
 };
@@ -25,7 +25,7 @@ export default function TermsPage() {
     >
       <PolicySection heading="Who you are buying from">
         <p>
-          Crochette, a single-owner studio operating from{" "}
+          Yarns and Buttons, a single-owner studio operating from{" "}
           <Confirm>[business address and registration number, if registered]</Confirm>.
           Contact:{" "}
           <a href="mailto:hello@crochette.shop" className="underline">
@@ -94,7 +94,7 @@ export default function TermsPage() {
 
       <PolicySection heading="Our work is ours">
         <p>
-          The photographs, text and designs on this site belong to Crochette. Please do
+          The photographs, text and designs on this site belong to Yarns and Buttons. Please do
           not reuse them to sell your own work. Buying a piece buys the piece, not the
           pattern or the right to reproduce it commercially.
         </p>

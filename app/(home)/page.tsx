@@ -136,7 +136,7 @@ export default async function Home() {
             </h2>
             <div>
               <p className="text-[17px] leading-[1.7] text-muted-foreground mb-4 max-w-[65ch]">
-                Crochette began as a way to slow down: turning simple skeins into bears,
+                Yarns and Buttons began as a way to slow down: turning simple skeins into bears,
                 blossoms and little companions for cozy homes.
               </p>
               <p className="text-[17px] leading-[1.7] text-muted-foreground max-w-[65ch]">

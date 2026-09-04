@@ -14,7 +14,7 @@ import QRCode from "qrcode";
  * wrong TOTP code just says "invalid".
  */
 
-const ISSUER = "Crochette";
+const ISSUER = "Yarns and Buttons";
 
 /** SHA-1/6-digit/30-second, and none of those are a modernisation opportunity:
  * they are what Google Authenticator, 1Password, Aegis and the rest actually

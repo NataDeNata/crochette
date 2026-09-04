@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   // should be indexed.
   alternates: { canonical: "/shop" },
   openGraph: {
-    title: "Shop | Crochette",
+    title: "Shop | Yarns and Buttons",
     description: "Amigurumi, flowers, and cozy decor. Every piece made by hand, in small batches.",
     images: [OG_IMAGE],
   },

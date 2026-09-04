@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
   alternates: { canonical: "/contact" },
   openGraph: {
-    title: "Contact | Crochette",
+    title: "Contact | Yarns and Buttons",
     description: "Questions about an order, shipping, or just want to say hello? We'd love to hear from you.",
     images: [OG_IMAGE],
   },

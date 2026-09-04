@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Session } from "next-auth";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -30,40 +31,46 @@ function links(hasGallery: boolean) {
 const DRAWER_CLASS =
   "nav-drawer absolute top-full left-0 right-0 bg-sheet border-b-2 border-keyline flex flex-col px-5 py-2";
 
-/* The studio's mark, in this world's own grammar: a press-out. A solid keyline
- * square with a dashed die line inside it and a fold tab on top — the same
- * three-part construction every figure on the sheet is built from, reduced to
- * 26px. Authored SVG rather than a glyph, because a font character here would
- * be the one mark on the page that did not come off the sheet. */
-function PressOutMark() {
+/* The studio's mark, and now the whole masthead brand: the plated wordmark
+ * that used to sit beside this is gone, so the badge carries the name alone.
+ *
+ * The source file is 624×930 — a circular badge with cream bands above and
+ * below it. `object-cover` on a square box crops those bands off so the circle
+ * fills the box, rather than letting the whole portrait frame shrink to fit and
+ * leaving the badge tiny between two empty margins.
+ *
+ * **56px is a load-bearing number, not a taste.** It is what makes the nav
+ * 56 + 16 + 16 padding + 1 border = 89px, which is the value `--nav-h` in
+ * globals.css publishes to `calc(100svh - var(--nav-h))`. Change this and you
+ * must change that token with it, or the homepage hero stops being exactly one
+ * screen. It is also the size at which the lettering inside the badge stops
+ * being a dark smudge — at the 30px it wore beside the wordmark, a viewer who
+ * did not already know the name could not read it, which is survivable next to
+ * the name in text and not survivable once the badge *is* the name.
+ *
+ * `alt` carries the studio name rather than being empty. It was `alt=""
+ * aria-hidden` while the wordmark stood next to it — correct then, because the
+ * text supplied the link's accessible name and announcing both would say it
+ * twice. With the text gone that same markup would leave the home link with no
+ * accessible name at all: a link announced as "link, graphic" and nothing else.
+ *
+ * `priority` because this sits in the sticky masthead and is in view on every
+ * route from first paint.
+ *
+ * The badge is an opaque JPEG on cream, sitting on the cream ground, so the
+ * corners it cannot make transparent have almost nothing to print against and
+ * the round clip takes off what is left. A transparent PNG or SVG is still the
+ * honest fix, and would let the round clip go. */
+function BrandMark() {
   return (
-    <svg
-      aria-hidden
-      width="26"
-      height="26"
-      viewBox="0 0 26 26"
-      fill="none"
-      className="shrink-0 text-keyline"
-    >
-      <path d="M9.5 5.5V3.2h7v2.3" stroke="currentColor" strokeWidth="1.8" />
-      <rect
-        x="1.4"
-        y="5.5"
-        width="23.2"
-        height="19.1"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <rect
-        x="5.4"
-        y="9.2"
-        width="15.2"
-        height="11.6"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeDasharray="2.6 2.4"
-      />
-    </svg>
+    <Image
+      src="/logo.jpg"
+      alt="Yarns and Buttons"
+      width={624}
+      height={930}
+      priority
+      className="h-14 w-14 shrink-0 rounded-full object-cover"
+    />
   );
 }
 
@@ -154,20 +161,18 @@ export function Nav({
        the failure mode is a nav that looks slightly wrong, not one that prints
        two controls on top of each other. */
     <nav className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-4 page-gutter bg-ground border-b border-nav-border">
-      {/* The wordmark, with the press-out mark beside it, both printed on a
-          sand plate so the masthead reads as a printed label lying on the
-          ground rather than as text floating on a colour. */}
+      {/* The badge alone. The plated wordmark that stood here said the name a
+          second time, in a typeface that was not the one the logo sets it in —
+          the badge already carries "Yarns and Buttons" inside its own ring. */}
       <Link
         href="/"
         // `justify-self-start` because a grid item stretches to fill its track
-        // by default, and this one is a bordered plate — left to stretch, the
-        // butter rectangle would run the full width of the left `1fr`.
-        className="group flex items-center gap-2.5 justify-self-start bg-butter border-2 border-keyline px-3 py-1.5 text-inherit"
+        // by default, and this link is now only as wide as a 56px circle. Left
+        // to stretch it would span the whole left `1fr`, putting a click target
+        // across empty ground between the badge and the links.
+        className="group flex items-center justify-self-start text-inherit"
       >
-        <PressOutMark />
-        <span className="type-sheet-display text-[17px] uppercase text-keyline">
-          Crochette
-        </span>
+        <BrandMark />
       </Link>
 
       <div className="nav-desktop-links gap-9 text-sm font-medium tracking-[0.3px]">

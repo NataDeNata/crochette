@@ -498,7 +498,7 @@
  ---break---
  */
 :root {
-  /* Crochette brand palette (cream/terracotta) — replaces shadcn's default
+  /* Yarns and Buttons brand palette (cream/terracotta) — replaces shadcn's default
    * neutral gray theme so every shadcn primitive matches the hand-tuned
    * oklch tokens already used throughout the storefront. */
   --background: oklch(0.975 0.012 85);
@@ -543,9 +543,20 @@
    * themselves to "one screen below the nav" without restating the number.
    * It was previously a bare `89px` inlined into three separate
    * `calc(100vh-89px)` expressions in app/(home)/page.tsx plus a fourth in its
-   * loading.tsx skeleton — four copies of a figure derived from Nav.tsx's
-   * py-[22px] + the 44px icon buttons + the 1px bottom border. Same at every
-   * breakpoint: the icons don't shrink, so neither does the nav. */
+   * loading.tsx skeleton.
+   *
+   * 89px = Nav.tsx's 56px brand badge + py-4 (16px twice) + the 1px bottom
+   * border. Whatever is tallest in the bar sets this, and that is now the
+   * badge: it overtook the 44px icon buttons when the masthead became
+   * logo-only. Still the same at every breakpoint — neither the badge nor the
+   * icons shrink, so neither does the nav.
+   *
+   * This value had drifted before that change and was measured back into line
+   * rather than trusted: the derivation above it read py-[22px], but the class
+   * had since become py-4, so the real bar was 77px against a token claiming
+   * 89px and the hero was overshooting one screen by 12px. If you change the
+   * badge size or the nav padding, measure the bar and correct this — it is a
+   * hand-maintained copy of a number CSS cannot read back. */
   --nav-h: 89px;
 
   /* Footer — a dark surface with its own colour roles, given a namespace for
