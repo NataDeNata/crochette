@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     "What to do if a piece arrives damaged, is not what you ordered, or simply is not right.",
   alternates: { canonical: "/returns" },
   openGraph: {
-    title: "Returns | Crochette",
+    title: "Returns | Yarns and Buttons",
     description:
       "What to do if a piece arrives damaged, is not what you ordered, or simply is not right.",
     images: [OG_IMAGE],

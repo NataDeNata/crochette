@@ -19,7 +19,7 @@ function getResend(): Resend {
  * domain address (e.g. orders@crochette.com) once one is configured — see
  * .env.example. Until then, Resend only delivers to the account's own
  * verified email, regardless of the "to" address used below. */
-export const EMAIL_FROM = "Crochette <onboarding@resend.dev>";
+export const EMAIL_FROM = "Yarns and Buttons <onboarding@resend.dev>";
 
 export async function sendEmail(params: { to: string; subject: string; html: string }) {
   const resend = getResend();

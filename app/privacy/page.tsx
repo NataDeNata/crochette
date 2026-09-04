@@ -6,12 +6,12 @@ import { OG_IMAGE } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Privacy",
   description:
-    "What Crochette collects, why, who else sees it, and how to have it deleted.",
+    "What Yarns and Buttons collects, why, who else sees it, and how to have it deleted.",
   alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy | Crochette",
+    title: "Privacy | Yarns and Buttons",
     description:
-      "What Crochette collects, why, who else sees it, and how to have it deleted.",
+      "What Yarns and Buttons collects, why, who else sees it, and how to have it deleted.",
     images: [OG_IMAGE],
   },
 };
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
     >
       <PolicySection heading="Who is responsible">
         <p>
-          Crochette, a single-owner studio operating from{" "}
+          Yarns and Buttons, a single-owner studio operating from{" "}
           <Confirm>[business address — required by the Data Privacy Act]</Confirm>.
           Questions and requests:{" "}
           <a href="mailto:hello@crochette.shop" className="underline">

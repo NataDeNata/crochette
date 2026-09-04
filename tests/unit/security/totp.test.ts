@@ -98,7 +98,10 @@ describe("totpUri", () => {
     const uri = totpUri(RFC_SECRET, "owner@example.com");
     // The issuer is what stops the entry reading as an anonymous "6-digit code"
     // in an app holding a dozen of them.
-    expect(uri).toContain("issuer=Crochette");
+    // Encoded rather than spelled out: the issuer now has spaces in it, so
+    // asserting the literal would be asserting this library's choice of escape
+    // for them rather than that the issuer is present at all.
+    expect(uri).toContain(`issuer=${encodeURIComponent("Yarns and Buttons")}`);
     expect(uri).toContain(encodeURIComponent("owner@example.com"));
     expect(uri).toContain(`secret=${RFC_SECRET}`);
     expect(uri.startsWith("otpauth://totp/")).toBe(true);

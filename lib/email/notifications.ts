@@ -39,7 +39,7 @@ function escapeHtml(value: string) {
 
 function wrapEmail(bodyHtml: string) {
   return `<div style="font-family: Georgia, 'Cormorant Garamond', serif; color: #3a332c; max-width: 480px; margin: 0 auto;">
-    <h1 style="font-size: 22px; font-weight: 500; margin-bottom: 4px;">Crochette</h1>
+    <h1 style="font-size: 22px; font-weight: 500; margin-bottom: 4px;">Yarns and Buttons</h1>
     ${bodyHtml}
     <p style="margin-top: 32px; font-size: 12px; color: #8a8175;">Made by hand, in small batches.</p>
   </div>`;
@@ -140,7 +140,7 @@ export async function notifyOrderPaid(order: {
     sendEmailSafe(
       {
         to: order.customerEmail,
-        subject: "Your Crochette order is confirmed",
+        subject: "Your Yarns and Buttons order is confirmed",
         html: wrapEmail(`
           <p>Hi ${safeName},</p>
           <p>Thank you for your order! We've received your payment and will start preparing it soon.</p>
@@ -189,7 +189,7 @@ export async function notifyOrderShipped(order: {
   await sendEmailSafe(
     {
       to: order.customerEmail,
-      subject: "Your Crochette order has shipped!",
+      subject: "Your Yarns and Buttons order has shipped!",
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
         <p>Good news, your order is on its way!</p>
@@ -214,7 +214,7 @@ export async function notifyOrderDelivered(order: {
   await sendEmailSafe(
     {
       to: order.customerEmail,
-      subject: "Your Crochette order is complete",
+      subject: "Your Yarns and Buttons order is complete",
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
         <p>Your order is marked complete. We hope you love your piece! If anything's not quite right, just reply and let us know.</p>
@@ -231,7 +231,7 @@ export async function notifyAccountCreated(data: { email: string; name: string }
   await sendEmailSafe(
     {
       to: data.email,
-      subject: "Welcome to Crochette",
+      subject: "Welcome to Yarns and Buttons",
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
         <p>Your account is ready. You can now save shipping addresses and see your order history any time you're signed in.</p>

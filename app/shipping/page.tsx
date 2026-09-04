@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "How long a handmade piece takes to make, how it ships, and what it costs to get it to you.",
   alternates: { canonical: "/shipping" },
   openGraph: {
-    title: "Shipping | Crochette",
+    title: "Shipping | Yarns and Buttons",
     description:
       "How long a handmade piece takes to make, how it ships, and what it costs to get it to you.",
     images: [OG_IMAGE],
