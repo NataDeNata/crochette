@@ -7,6 +7,7 @@ import { MAX_PRODUCT_IMAGES } from "@/lib/validation/product-images";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { FieldError } from "@/components/forms/FieldError";
 import { PhotoAttach } from "@/components/custom/PhotoAttach";
+import { AdminBusyOverlay } from "@/components/admin/AdminBusyOverlay";
 
 export function ProductImageUploadForm({ productId }: { productId: string }) {
   const action = uploadProductImages.bind(null, productId);
@@ -14,6 +15,7 @@ export function ProductImageUploadForm({ productId }: { productId: string }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+      {isPending && <AdminBusyOverlay label="Uploading photos…" />}
       <PhotoAttach
         name="images"
         maxPhotos={MAX_PRODUCT_IMAGES}

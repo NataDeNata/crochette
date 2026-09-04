@@ -183,6 +183,16 @@ export function Cutout({
                     {product.placeholder}
                   </span>
                 )}
+
+                {/* Same automatic "New"/"Bestseller" badge ProductGallery shows
+                    on the product's own page — see computeAutoTag. Top-left so
+                    it never collides with the sold-out plate, which is
+                    bottom-centred, or the quick-add tab below the arch. */}
+                {!soldOut && product.tag && (
+                  <span className="type-sheet-spec absolute top-2 left-2 z-[1] border-2 border-keyline bg-butter px-2 py-1 text-keyline">
+                    {product.tag}
+                  </span>
+                )}
               </div>
             </div>
           </div>

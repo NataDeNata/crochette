@@ -58,6 +58,12 @@ export const products = pgTable("products", {
   description: text("description"),
   priceCents: integer("price_cents").notNull(),
   category: productCategoryEnum("category").notNull(),
+  /** No longer admin-editable and no longer read for display — the "New"/
+   * "Bestseller" badge shown on the storefront is now computed at read time
+   * from `createdAt` and units sold (see `computeAutoTag` in
+   * lib/data/products.server.ts). Column kept rather than migrated away in
+   * the same pass that stopped writing to it; safe to drop in a later
+   * migration once nothing reads it. */
   tag: text("tag"),
   status: productStatusEnum("status").notNull().default("active"),
   stockQty: integer("stock_qty").notNull().default(0),

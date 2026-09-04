@@ -18,7 +18,6 @@ const validProduct = {
   description: "A small bear.",
   priceDollars: "1200",
   category: "amigurumi",
-  tag: "",
   status: "active",
   stockQty: "4",
   lowStockThreshold: "3",

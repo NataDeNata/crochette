@@ -2,6 +2,18 @@ import { z } from "zod";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Derives a URL-safe slug from a product name, e.g. "Milo the Bear" ->
+ * "milo-the-bear". Used by ProductForm to fill the slug field as the admin
+ * types the name, so the storefront URL doesn't need typing out by hand —
+ * the field stays editable for the rare case a different slug is wanted. */
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 /** Mirrors the `products.low_stock_threshold` column default in
  * lib/db/schema.ts. Duplicated as a plain literal rather than imported from
  * the schema so client components (ProductForm) can use it without pulling
@@ -19,7 +31,6 @@ export const productSchema = z.object({
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   priceDollars: z.coerce.number().positive("Price must be greater than 0").max(100000),
   category: z.enum(["amigurumi", "flowers", "home-decor", "baskets"]),
-  tag: z.string().trim().max(40).optional().or(z.literal("")),
   status: z.enum(["active", "draft", "sold_out"]),
   stockQty: z.coerce.number().int().min(0).max(100000),
   /** min(0) is intentional — 0 is the "never alert me about this one" escape

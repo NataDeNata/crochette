@@ -2,17 +2,13 @@
 
 import { eq, asc, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { put, del } from "@vercel/blob";
+import { del } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { products, productImages } from "@/lib/db/schema";
 import { productImageMetaSchema, MAX_PRODUCT_IMAGES } from "@/lib/validation/product-images";
-import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
-import { invalidFields, type FormActionState } from "@/lib/actions/types";
+import { uploadProductImageFiles } from "@/lib/db/product-images";
+import type { FormActionState } from "@/lib/actions/types";
 import { logError } from "@/lib/observability/log";
-
-function sanitizeFilename(name: string) {
-  return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
-}
 
 function revalidateStorefront(slug: string) {
   revalidatePath("/");
@@ -47,45 +43,14 @@ export async function uploadProductImages(
     };
   }
 
-  for (const file of files) {
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      return { status: "error", message: "Photos must be JPG, PNG, or WebP." };
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      return { status: "error", message: "Each photo must be 5MB or smaller." };
-    }
-  }
-
-  let uploads;
-  try {
-    uploads = await Promise.all(
-      files.map((file) =>
-        put(`products/${productId}/${crypto.randomUUID()}-${sanitizeFilename(file.name)}`, file, {
-          access: "public",
-        })
-      )
-    );
-  } catch (err) {
-    logError("admin.product_image.blob_upload_failed", err, { productId });
-    return { status: "error", message: "Couldn't upload those photos. Please try again." };
-  }
-
   const hasAnyExisting = existing.length > 0;
   const startPosition = existing.reduce((max, row) => Math.max(max, row.position), -1) + 1;
 
-  try {
-    await db.insert(productImages).values(
-      uploads.map((upload, i) => ({
-        productId,
-        url: upload.url,
-        position: startPosition + i,
-        isPrimary: !hasAnyExisting && i === 0,
-      }))
-    );
-  } catch (err) {
-    logError("admin.product_image.db_insert_failed", err, { productId });
-    return { status: "error", message: "Photos uploaded but couldn't be saved. Please try again." };
-  }
+  const result = await uploadProductImageFiles(productId, files, {
+    startPosition,
+    markFirstPrimary: !hasAnyExisting,
+  });
+  if (result.error) return { status: "error", message: result.error };
 
   const slug = await getProductSlug(productId);
   if (slug) revalidateStorefront(slug);
@@ -223,39 +188,48 @@ export async function setPrimaryProductImage(
   return { status: "success", message: "Cover photo updated." };
 }
 
-export async function updateProductImageMeta(
-  imageId: string,
+/** Every photo's caption/alt on one page, saved with one button rather than
+ * one "Save" per row — the page-level form (ProductImagesMetaForm) submits
+ * every row's fields at once, named `caption-${id}`/`alt-${id}`, plus a
+ * repeated `imageId` field listing which rows are present. Reorder, cover
+ * and delete stay separate, instant, per-row actions below: those change
+ * structure immediately on click, the same as every other admin list in
+ * this app, and bundling them into a "changes pending" save would make a
+ * reorder feel unsaved until a second, unrelated click. */
+export async function updateProductImagesMeta(
+  productId: string,
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
-  const parsed = productImageMetaSchema.safeParse({
-    caption: formData.get("caption") || undefined,
-    alt: formData.get("alt") || undefined,
-  });
+  const ids = formData.getAll("imageId").map(String);
+  if (ids.length === 0) return { status: "success" };
 
-  if (!parsed.success) return invalidFields(parsed.error);
-
-  const [row] = await db
-    .select({ productId: productImages.productId })
-    .from(productImages)
-    .where(eq(productImages.id, imageId));
-  if (!row) {
-    return { status: "error", message: "That photo no longer exists." };
+  const updates: { id: string; caption: string | null; alt: string | null }[] = [];
+  for (const id of ids) {
+    const parsed = productImageMetaSchema.safeParse({
+      caption: formData.get(`caption-${id}`) || undefined,
+      alt: formData.get(`alt-${id}`) || undefined,
+    });
+    if (!parsed.success) {
+      return { status: "error", message: "One of the captions or alt texts is too long. Please shorten it and try again." };
+    }
+    updates.push({ id, caption: parsed.data.caption || null, alt: parsed.data.alt || null });
   }
 
   try {
-    await db
-      .update(productImages)
-      .set({ caption: parsed.data.caption || null, alt: parsed.data.alt || null })
-      .where(eq(productImages.id, imageId));
+    await db.transaction(async (tx) => {
+      for (const u of updates) {
+        await tx.update(productImages).set({ caption: u.caption, alt: u.alt }).where(eq(productImages.id, u.id));
+      }
+    });
   } catch (err) {
-    logError("admin.product_image.meta_update_failed", err, { imageId });
+    logError("admin.product_image.meta_bulk_update_failed", err, { productId });
     return { status: "error", message: "Couldn't save changes. Please try again." };
   }
 
-  const slug = await getProductSlug(row.productId);
+  const slug = await getProductSlug(productId);
   if (slug) revalidateStorefront(slug);
-  revalidatePath(`/admin/products/${row.productId}/images`);
+  revalidatePath(`/admin/products/${productId}/images`);
 
-  return { status: "success", message: "Saved." };
+  return { status: "success", message: "Photo details saved." };
 }

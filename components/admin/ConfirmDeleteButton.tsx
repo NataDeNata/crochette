@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { IDLE_STATE, type FormActionState } from "@/lib/actions/types";
 import { Button } from "@/components/ui/button";
+import { AdminBusyOverlay } from "@/components/admin/AdminBusyOverlay";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,7 @@ export function ConfirmDeleteButton({
 
   return (
     <AlertDialog>
+      {isPending && <AdminBusyOverlay label="Deleting…" />}
       <AlertDialogTrigger asChild>
         <Button type="button" variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
           Delete

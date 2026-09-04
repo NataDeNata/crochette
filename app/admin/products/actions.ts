@@ -7,6 +7,8 @@ import { del } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { products, orderItems, productImages } from "@/lib/db/schema";
 import { productSchema } from "@/lib/validation/product";
+import { MAX_PRODUCT_IMAGES } from "@/lib/validation/product-images";
+import { uploadProductImageFiles } from "@/lib/db/product-images";
 import { invalidFields, type FormActionState } from "@/lib/actions/types";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { logError } from "@/lib/observability/log";
@@ -18,7 +20,6 @@ function parseProductForm(formData: FormData) {
     description: formData.get("description") || undefined,
     priceDollars: formData.get("priceDollars"),
     category: formData.get("category"),
-    tag: formData.get("tag") || undefined,
     status: formData.get("status"),
     stockQty: formData.get("stockQty"),
     lowStockThreshold: formData.get("lowStockThreshold"),
@@ -37,7 +38,6 @@ function toRow(data: ReturnType<typeof productSchema.parse>) {
     description: data.description || null,
     priceCents: Math.round(data.priceDollars * 100),
     category: data.category,
-    tag: data.tag || null,
     status: data.status,
     stockQty: data.stockQty,
     lowStockThreshold: data.lowStockThreshold,
@@ -57,8 +57,18 @@ export async function createProduct(_prevState: FormActionState, formData: FormD
   const parsed = parseProductForm(formData);
   if (!parsed.success) return invalidFields(parsed.error);
 
+  // Photos attached on the create form itself — see ProductForm's
+  // PhotoAttach section. Optional: a product can still be created with none
+  // and photographed later from its own Photos page.
+  const files = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length > MAX_PRODUCT_IMAGES) {
+    return { status: "error", message: `A product can have up to ${MAX_PRODUCT_IMAGES} photos.` };
+  }
+
+  let productId: string;
   try {
-    await db.insert(products).values(toRow(parsed.data));
+    const [row] = await db.insert(products).values(toRow(parsed.data)).returning({ id: products.id });
+    productId = row.id;
   } catch (err) {
     logError("admin.product.create_failed", err, { slug: parsed.data.slug });
     const message = isUniqueViolation(err) ? "That slug is already in use." : "Couldn't create the product. Please try again.";
@@ -66,6 +76,17 @@ export async function createProduct(_prevState: FormActionState, formData: FormD
   }
 
   revalidateStorefront(parsed.data.slug);
+
+  if (files.length) {
+    const result = await uploadProductImageFiles(productId, files);
+    if (result.error) {
+      // The product itself was created successfully — only the photos
+      // failed. Land on its Photos page to retry rather than silently
+      // dropping them or leaving the admin on a form that looks unsaved.
+      redirect(`/admin/products/${productId}/images`);
+    }
+  }
+
   redirect("/admin/products");
 }
 
