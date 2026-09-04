@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCart } from "@/lib/cart/CartContext";
@@ -10,7 +9,6 @@ import { formatPrice } from "@/lib/data/products";
 
 export default function CartPage() {
   const { items, removeItem, setQuantity, subtotalCents, loaded } = useCart();
-  const reduceMotion = useReducedMotion();
 
   // Gated on `loaded`, not just on `items.length`. The cart is server-owned and
   // the store starts empty, so an ungated check renders "Your cart is empty"
@@ -78,30 +76,28 @@ export default function CartPage() {
         {items.length} {items.length === 1 ? "item" : "items"}
       </p>
 
+      {/* No AnimatePresence, and that is the fix rather than a simplification.
+          The rows were `motion.div`s with an exit tween, which made a line's
+          presence in the DOM depend on an animation finishing: AnimatePresence
+          holds an exiting child mounted until its tween settles, so a stalled
+          or interrupted frame loop leaves a removed row drawn on screen. That
+          was observed in the wild as a row that vanished, came back and went
+          again, and reproduced here as a removed line still printing its own
+          price beside a subtotal that had already dropped it.
+
+          The previous attempt at this changed *which* property was animated
+          (height to opacity, to stop `layout` projection fighting the tween).
+          It could not have been enough: the tween was still in the unmount
+          path. Nothing about whether a shopper's cart contains a line should
+          be routed through the animation scheduler.
+
+          It is also what this surface's own doctrine asks for. `/cart` is an
+          Operate surface (see the Envelope note at the foot of this file) and
+          drops every expressive move; the row list was the last one left. */}
       <div className="flex flex-col gap-1">
-        <AnimatePresence initial={false}>
           {items.map((item) => (
-            <motion.div
+            <div
               key={item.productId}
-              layout={!reduceMotion}
-              initial={reduceMotion ? undefined : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              // Opacity only. This was `{ opacity: 0, height: 0 }`, and
-              // animating height on an element that also carries `layout` sets
-              // the two against each other: layout projection re-measures the
-              // element while the tween drives the same property. An exit
-              // animation is a promise to unmount — AnimatePresence holds the
-              // child until it settles — so anything that stops it settling can
-              // strand the row on screen after its product is gone from the
-              // cart. Opacity is not a layout property and cannot be fought
-              // over.
-              //
-              // It also brings this list back in line with the project's own
-              // rule that animation is transform/opacity only (PRODUCT.md).
-              // The remaining rows still slide up smoothly; that is `layout` on
-              // the siblings doing its job, and it is unaffected.
-              exit={reduceMotion ? undefined : { opacity: 0 }}
-              transition={{ duration: 0.2 }}
               // Two tiers below `sm`: the name/price block on its own row, the
               // controls on a second full-width row. The five controls used to
               // share one unwrapped line, which overflowed a 320px screen by
@@ -172,9 +168,8 @@ export default function CartPage() {
                   Remove
                 </button>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
       </div>
 
       <div className="mt-8 flex flex-col gap-2 border-t-2 border-keyline pt-6 text-[15px]">
