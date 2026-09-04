@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCart } from "@/lib/cart/CartContext";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";
 
 export default function CartPage() {
-  const { items, removeItem, setQuantity, subtotalCents, loaded } = useCart();
-  const reduceMotion = useReducedMotion();
+  const { items, removeItem, setQuantity, subtotalCents, loaded, syncing } = useCart();
 
   // Gated on `loaded`, not just on `items.length`. The cart is server-owned and
   // the store starts empty, so an ungated check renders "Your cart is empty"
@@ -78,30 +77,28 @@ export default function CartPage() {
         {items.length} {items.length === 1 ? "item" : "items"}
       </p>
 
+      {/* No AnimatePresence, and that is the fix rather than a simplification.
+          The rows were `motion.div`s with an exit tween, which made a line's
+          presence in the DOM depend on an animation finishing: AnimatePresence
+          holds an exiting child mounted until its tween settles, so a stalled
+          or interrupted frame loop leaves a removed row drawn on screen. That
+          was observed in the wild as a row that vanished, came back and went
+          again, and reproduced here as a removed line still printing its own
+          price beside a subtotal that had already dropped it.
+
+          The previous attempt at this changed *which* property was animated
+          (height to opacity, to stop `layout` projection fighting the tween).
+          It could not have been enough: the tween was still in the unmount
+          path. Nothing about whether a shopper's cart contains a line should
+          be routed through the animation scheduler.
+
+          It is also what this surface's own doctrine asks for. `/cart` is an
+          Operate surface (see the Envelope note at the foot of this file) and
+          drops every expressive move; the row list was the last one left. */}
       <div className="flex flex-col gap-1">
-        <AnimatePresence initial={false}>
           {items.map((item) => (
-            <motion.div
+            <div
               key={item.productId}
-              layout={!reduceMotion}
-              initial={reduceMotion ? undefined : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              // Opacity only. This was `{ opacity: 0, height: 0 }`, and
-              // animating height on an element that also carries `layout` sets
-              // the two against each other: layout projection re-measures the
-              // element while the tween drives the same property. An exit
-              // animation is a promise to unmount — AnimatePresence holds the
-              // child until it settles — so anything that stops it settling can
-              // strand the row on screen after its product is gone from the
-              // cart. Opacity is not a layout property and cannot be fought
-              // over.
-              //
-              // It also brings this list back in line with the project's own
-              // rule that animation is transform/opacity only (PRODUCT.md).
-              // The remaining rows still slide up smoothly; that is `layout` on
-              // the siblings doing its job, and it is unaffected.
-              exit={reduceMotion ? undefined : { opacity: 0 }}
-              transition={{ duration: 0.2 }}
               // Two tiers below `sm`: the name/price block on its own row, the
               // controls on a second full-width row. The five controls used to
               // share one unwrapped line, which overflowed a 320px screen by
@@ -163,21 +160,45 @@ export default function CartPage() {
                   {formatPrice(item.priceCents * item.quantity)}
                 </div>
 
+                {/* `min-h-11` and the horizontal padding are the tap target,
+                    not decoration. Measured on a phone this was 58x17: the one
+                    destructive control in the cart, at well under half the
+                    44px the rest of this row already clears. The underline
+                    still sits under the word rather than under the padding, so
+                    it reads the same as before at any width. */}
                 <button
                   type="button"
                   onClick={() => removeItem(item.productId)}
                   aria-label={`Remove ${item.name} from cart`}
-                  className="type-sheet-spec bg-transparent border-0 cursor-pointer text-keyline/60 underline underline-offset-4 transition-colors duration-200 hover:text-press-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
+                  className="type-sheet-spec -mr-2 inline-flex min-h-11 shrink-0 items-center bg-transparent border-0 px-2 cursor-pointer text-keyline/60 underline underline-offset-4 transition-colors duration-200 hover:text-press-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-press-red"
                 >
                   Remove
                 </button>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
       </div>
 
       <div className="mt-8 flex flex-col gap-2 border-t-2 border-keyline pt-6 text-[15px]">
+        {/* Announces that the figures below are still catching up to a change
+            that has already shown on screen — a quantity edit still on its
+            debounce, a remove still confirming. The rows and the nav badge
+            update the instant a shopper acts (see the cart row fix this
+            landed alongside for why that stays true), but the totals below
+            are arithmetic over `lines`, and `lines` can still move again
+            before the server has the last word. `aria-live` because it can
+            appear with no click of its own — a debounce firing on its own
+            clock — so a screen reader needs to be told rather than relying on
+            focus already being here. */}
+        {syncing && (
+          <div
+            aria-live="polite"
+            className="mb-1 flex items-center gap-1.5 text-[13px] text-keyline/60"
+          >
+            <Spinner className="h-3 w-3" />
+            Updating…
+          </div>
+        )}
         <div className="flex justify-between text-muted-foreground">
           <span>Subtotal</span>
           <span className="tabular-nums">{formatPrice(subtotalCents)}</span>
@@ -192,14 +213,27 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* `prefetch` is explicit because /checkout is a dynamic route: it awaits
-          auth() and then listAddresses(), so Next's default treatment leaves
-          the work to click time. Anyone looking at a filled cart is very likely
-          to go there next, and warming it now turns the slowest hop in the
-          purchase flow into a mostly-resolved one. */}
-      <Button href="/checkout" prefetch className="mt-8 w-full text-center">
-        Proceed to checkout
-      </Button>
+      {/* Two different elements, not one Button whose `disabled` sometimes
+          applies: `Button` renders an anchor when given `href`, and an anchor
+          has no disabled state — setting the prop would be silently inert.
+          Swapping to the plain button form while `syncing` is what actually
+          stops the click, and it says why: a shopper landing on /checkout
+          mid-sync would see a subtotal that has not caught up to their last
+          edit yet. Checkout re-prices server-side regardless, so nothing
+          here is a correctness fix — it is the same standard as the
+          "Updating…" line above, applied to the one control that leaves this
+          page. `prefetch` on the live link, not this one: warming a route the
+          shopper cannot yet reach buys nothing. */}
+      {syncing ? (
+        <Button type="button" disabled className="mt-8 w-full text-center">
+          <Spinner className="h-3.5 w-3.5" />
+          Updating cart…
+        </Button>
+      ) : (
+        <Button href="/checkout" prefetch className="mt-8 w-full text-center">
+          Proceed to checkout
+        </Button>
+      )}
     </Envelope>
   );
 }

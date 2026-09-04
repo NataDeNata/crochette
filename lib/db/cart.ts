@@ -23,6 +23,20 @@ export type CartView = {
   lines: CartLine[];
   subtotalCents: number;
   count: number;
+  /** When the server read this cart, in server-clock milliseconds.
+   *
+   * The client store keeps the newest snapshot it has applied and refuses an
+   * older one, because a cart view can reach the browser long after it was
+   * rendered: a prefetched route payload, a back navigation, the automatic
+   * re-render Next performs when a Server Action writes a cookie. Replacing
+   * live state with one of those resurrects a line the shopper just removed.
+   *
+   * Only ever compared against another `readAt`, never against `Date.now()` in
+   * the browser, so the two clocks never have to agree. Optional because the
+   * empty-cart literal in app/cart/actions.ts is not a read of anything and has
+   * no honest timestamp to give — see the store's `hydrate` for how a snapshot
+   * without one is treated. */
+  readAt?: number;
 };
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -142,6 +156,9 @@ export async function getCartView(cartId: string, exec: Executor = db): Promise<
     lines,
     subtotalCents: lines.reduce((sum, l) => sum + l.priceCents * l.quantity, 0),
     count: lines.reduce((sum, l) => sum + l.quantity, 0),
+    // Stamped after the read rather than before it, so a slow query dates the
+    // snapshot by when it was true and not by when it was asked for.
+    readAt: Date.now(),
   };
 }
 
