@@ -294,14 +294,49 @@ say "Payments are switched off today, so nothing breaks this minute - but an"
 say "un-updated webhook means orders never reach 'paid' once they are on."
 printf '\n'
 open_url "https://dashboard.xendit.co/settings/developers#callbacks"
-step "Find the invoice / payment-paid callback URL."
+step "Find the PAYMENT SESSIONS callback - the 'payment_session.completed'"
+say  "    event. NOT the legacy Invoices callback."
 step "Set it to:"
 say  "    $NEXT_PUBLIC_SITE_URL/api/webhooks/xendit"
 step "Save."
 printf '\n'
+warn "app/api/webhooks/xendit/route.ts tests for 'payment_session.completed'"
+warn "and ignores everything else. Re-point the Invoices callback by mistake"
+warn "and the real one stays on the dead host - which, with payments off,"
+warn "nothing surfaces until the first live order fails to reach 'paid'."
+printf '\n'
+note "Check the Test/Live mode toggle matches the XENDIT_SECRET_KEY set in"
+note "Vercel Production."
+printf '\n'
+warn "Do NOT regenerate the x-callback-token. It must keep matching"
+warn "XENDIT_WEBHOOK_TOKEN in Vercel, or every webhook is rejected and no"
+warn "order can reach 'paid'. If it does change, update Vercel and redeploy."
+printf '\n'
 note "Return URLs need no change here - the app builds those in code from the"
 note "origin you set in stage 4."
 pause "Done? Press Enter."
+
+printf '\n'
+say "Confirming the endpoint is live on the new host..."
+_wh=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+  "$NEXT_PUBLIC_SITE_URL/api/webhooks/xendit" \
+  -H 'content-type: application/json' \
+  -H 'x-callback-token: wizard-probe-not-a-real-token' \
+  -d '{"event":"ping"}' 2>/dev/null || echo "000")
+if [[ "$_wh" == "400" ]]; then
+  say "  -> HTTP 400: reachable, and rejecting a bad token. Correct."
+  printf '\n'
+  note "That probe just wrote a log line that answers a question this check"
+  note "cannot: a MISSING XENDIT_WEBHOOK_TOKEN returns the same 400. In"
+  note "Vercel -> Logs, filter for 'webhook.xendit':"
+  note "  webhook.xendit.auth_failed          -> token is set. Good."
+  note "  webhook.xendit.token_not_configured -> env var missing in Production;"
+  note "                                         set it, then redeploy."
+else
+  warn "  -> HTTP $_wh (expected 400). The route should reject an unsigned"
+  warn "     POST. Check the deployment before switching payments on."
+fi
+pause "Press Enter."
 
 # -- 7 ---------------------------------------------------------------------
 stage "Xendit: fix the merchant display name"
