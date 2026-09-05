@@ -23,8 +23,11 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { RevenueChart } from "@/components/admin/RevenueChart";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export default async function AdminDashboardPage() {
+  await requireAdminPage();
+
   const [
     [productCounts],
     [{ newRequestCount }],

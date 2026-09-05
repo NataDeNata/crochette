@@ -10,8 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { DetailDivider, DetailRow } from "@/components/admin/AdminDetail";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export default async function AdminCustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage();
+
   const { id } = await params;
   const detail = await getCustomerDetail(id);
   if (!detail) notFound();

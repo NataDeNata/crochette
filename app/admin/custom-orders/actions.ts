@@ -9,12 +9,15 @@ import { customOrderUpdateSchema } from "@/lib/validation/custom-order-admin";
 import { invalidFields, type FormActionState } from "@/lib/actions/types";
 import { blankToCents } from "@/lib/validation/coerce";
 import { logError } from "@/lib/observability/log";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export async function updateCustomOrder(
   id: string,
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const parsed = customOrderUpdateSchema.safeParse({
     status: formData.get("status"),
     quotedPriceDollars: formData.get("quotedPriceDollars") || undefined,

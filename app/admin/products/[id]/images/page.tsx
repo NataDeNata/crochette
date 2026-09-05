@@ -7,8 +7,11 @@ import { ProductImageUploadForm } from "@/components/admin/ProductImageUploadFor
 import { ProductImagesMetaForm } from "@/components/admin/ProductImagesMetaForm";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export default async function ProductImagesPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage();
+
   const { id } = await params;
   const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1);
   if (!product) notFound();

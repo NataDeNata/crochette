@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export const metadata: Metadata = { title: "Customers", robots: { index: false, follow: false } };
 
@@ -19,6 +20,8 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: Promise<{ page?: string; q?: string }>;
 }) {
+  await requireAdminPage();
+
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const rawPage = Math.max(1, Number(sp.page) || 1);

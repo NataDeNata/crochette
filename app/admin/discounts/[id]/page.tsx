@@ -8,10 +8,13 @@ import { DiscountForm } from "@/components/admin/DiscountForm";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export const metadata: Metadata = { title: "Edit discount code", robots: { index: false, follow: false } };
 
 export default async function EditDiscountPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage();
+
   const { id } = await params;
   const [row] = await db.select().from(discountCodes).where(eq(discountCodes.id, id)).limit(1);
   if (!row) notFound();

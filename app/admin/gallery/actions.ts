@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { productImages } from "@/lib/db/schema";
 import type { FormActionState } from "@/lib/actions/types";
 import { logError } from "@/lib/observability/log";
+import { requireAdmin } from "@/lib/auth-guard";
 
 function revalidateGallery() {
   revalidatePath("/");
@@ -18,6 +19,8 @@ export async function addToGallery(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const [{ maxOrder } = { maxOrder: null }] = await db
     .select({ maxOrder: sql<number | null>`max(${productImages.galleryOrder})` })
     .from(productImages)
@@ -42,6 +45,8 @@ export async function removeFromGallery(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   try {
     await db
       .update(productImages)
@@ -62,6 +67,8 @@ export async function reorderGalleryImage(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const featured = await db
     .select({ id: productImages.id, galleryOrder: productImages.galleryOrder })
     .from(productImages)
