@@ -11,6 +11,7 @@ import { DeleteDiscountButton } from "@/components/admin/DeleteDiscountButton";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 const PAGE_SIZE = 20;
 
@@ -23,6 +24,8 @@ export default async function AdminDiscountsPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requireAdminPage();
+
   const sp = await searchParams;
   const requestedPage = readPageParam(sp.page);
 

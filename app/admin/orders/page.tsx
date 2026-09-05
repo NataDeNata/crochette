@@ -20,6 +20,7 @@ import {
   OrderRowCheckbox,
   OrdersSelectionProvider,
 } from "@/components/admin/OrdersBulkSelection";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 const ORDER_STATUSES = ["pending", "paid", "failed", "shipped", "completed", "cancelled"] as const;
 const PAGE_SIZE = 20;
@@ -29,6 +30,8 @@ export default async function AdminOrdersPage({
 }: {
   searchParams: Promise<{ page?: string; q?: string; status?: string }>;
 }) {
+  await requireAdminPage();
+
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = readEnumParam(ORDER_STATUSES, sp.status);

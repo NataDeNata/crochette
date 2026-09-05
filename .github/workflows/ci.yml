@@ -30,6 +30,15 @@ jobs:
 
       - run: npm ci
 
+      # Reads only package-lock.json against npm's public advisory data — no
+      # secrets.* reference, so this runs the same on a fork PR as anywhere
+      # else. High/critical only: moderate advisories in dev-only tooling
+      # (e.g. drizzle-kit's esbuild-kit chain) would otherwise make this red
+      # on packages that never ship, which is the noise this gate exists to
+      # avoid, not the thing it exists to catch.
+      - name: Dependency advisories
+        run: npm audit --audit-level=high
+
       - name: Lint
         run: npm run lint
 

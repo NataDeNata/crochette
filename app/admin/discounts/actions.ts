@@ -10,6 +10,7 @@ import { invalidFields, type FormActionState } from "@/lib/actions/types";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { blankToCents, blankToNull } from "@/lib/validation/coerce";
 import { logError } from "@/lib/observability/log";
+import { requireAdmin } from "@/lib/auth-guard";
 
 function parseDiscountForm(formData: FormData) {
   return discountSchema.safeParse({
@@ -38,6 +39,8 @@ function toRow(data: ReturnType<typeof discountSchema.parse>) {
 }
 
 export async function createDiscount(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
+  await requireAdmin();
+
   const parsed = parseDiscountForm(formData);
   if (!parsed.success) return invalidFields(parsed.error);
 
@@ -58,6 +61,8 @@ export async function updateDiscount(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const parsed = parseDiscountForm(formData);
   if (!parsed.success) return invalidFields(parsed.error);
 
@@ -74,6 +79,8 @@ export async function updateDiscount(
 }
 
 export async function deleteDiscount(id: string, _prevState: FormActionState, _formData: FormData): Promise<FormActionState> {
+  await requireAdmin();
+
   const [existingOrder] = await db.select({ id: orders.id }).from(orders).where(eq(orders.discountCodeId, id)).limit(1);
 
   if (existingOrder) {

@@ -6,6 +6,7 @@ import {
   normalizeBackupCode,
   totpUri,
   verifyTotp,
+  verifyTotpStep,
 } from "@/lib/security/totp";
 
 /**
@@ -78,6 +79,35 @@ describe("verifyTotp", () => {
     for (const input of ["", "28708", "2870821", "abcdef", "   "]) {
       expect(verifyTotp(RFC_SECRET, input)).toBe(false);
     }
+  });
+});
+
+describe("verifyTotpStep", () => {
+  it("returns the absolute step a code validates at", () => {
+    at(59);
+    // 59s / 30s period = step 1.
+    expect(verifyTotpStep(RFC_SECRET, "287082")).toBe(1);
+  });
+
+  it("identifies the same step for the same code no matter when in the drift window it's checked", () => {
+    // This is the property verifyAdminSecondFactor's replay check depends on:
+    // the drift window means the same code validates at more than one instant,
+    // but it must resolve to the one step it actually belongs to every time —
+    // otherwise "reject a step at or below the last accepted one" would compare
+    // against a moving target instead of the code's real identity.
+    at(59);
+    const atIssue = verifyTotpStep(RFC_SECRET, "287082");
+    at(59 + 30);
+    const oneLater = verifyTotpStep(RFC_SECRET, "287082");
+    at(59 - 30);
+    const oneEarlier = verifyTotpStep(RFC_SECRET, "287082");
+    expect(oneLater).toBe(atIssue);
+    expect(oneEarlier).toBe(atIssue);
+  });
+
+  it("returns null for anything verifyTotp itself rejects", () => {
+    at(59 + 90);
+    expect(verifyTotpStep(RFC_SECRET, "287082")).toBeNull();
   });
 });
 

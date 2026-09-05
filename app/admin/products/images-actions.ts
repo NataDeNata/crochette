@@ -9,6 +9,7 @@ import { productImageMetaSchema, MAX_PRODUCT_IMAGES } from "@/lib/validation/pro
 import { uploadProductImageFiles } from "@/lib/db/product-images";
 import type { FormActionState } from "@/lib/actions/types";
 import { logError } from "@/lib/observability/log";
+import { requireAdmin } from "@/lib/auth-guard";
 
 function revalidateStorefront(slug: string) {
   revalidatePath("/");
@@ -26,6 +27,8 @@ export async function uploadProductImages(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const files = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length === 0) {
     return { status: "error", message: "Choose at least one photo to upload." };
@@ -64,6 +67,8 @@ export async function deleteProductImage(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const [row] = await db
     .select({ productId: productImages.productId, url: productImages.url, isPrimary: productImages.isPrimary })
     .from(productImages)
@@ -115,6 +120,8 @@ export async function reorderProductImage(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const [row] = await db
     .select({ productId: productImages.productId })
     .from(productImages)
@@ -160,6 +167,8 @@ export async function setPrimaryProductImage(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const [row] = await db
     .select({ productId: productImages.productId })
     .from(productImages)
@@ -201,6 +210,8 @@ export async function updateProductImagesMeta(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const ids = formData.getAll("imageId").map(String);
   if (ids.length === 0) return { status: "success" };
 

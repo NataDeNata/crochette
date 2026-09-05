@@ -5,14 +5,41 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/data/products";
+import { auth } from "@/lib/auth";
+import { verifyOrderToken } from "@/lib/security/order-token";
 
 export const metadata: Metadata = {
   title: "Order confirmation",
   robots: { index: false, follow: false },
 };
 
-export default async function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OrderConfirmationPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ t?: string }>;
+}) {
   const { id } = await params;
+
+  // Just enough to decide access. The full order (and its items) is fetched
+  // only once one of the three routes below grants it, so a request that
+  // fails all three learns nothing beyond what notFound() already implies.
+  const [ownerRow] = await db
+    .select({ customerId: orders.customerId })
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1);
+  if (!ownerRow) notFound();
+
+  const [session, { t }] = await Promise.all([auth(), searchParams]);
+
+  const isOwningCustomer = session?.user?.role === "customer" && session.user.id === ownerRow.customerId;
+  const hasValidToken = typeof t === "string" && verifyOrderToken(t, id);
+  const isAdmin = session?.user?.role === "admin";
+
+  if (!isOwningCustomer && !hasValidToken && !isAdmin) notFound();
+
   const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
   if (!order) notFound();
 

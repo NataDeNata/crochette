@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { singleLine } from "@/lib/validation/single-line";
 
 export const checkoutSchema = z.object({
-  name: z.string().trim().min(1, "Please enter your name").max(120),
+  name: singleLine(z.string().trim().min(1, "Please enter your name").max(120)),
   email: z.string().trim().email("Please enter a valid email address").max(200),
   phone: z.string().trim().max(30).optional().or(z.literal("")),
   shippingLine1: z.string().trim().min(1, "Please enter your street address").max(200),

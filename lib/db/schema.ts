@@ -209,6 +209,13 @@ export const admins = pgTable("admins", {
    * as they are spent, so the array length *is* the remaining count. Not
    * bcrypt, deliberately — see lib/security/totp.ts. */
   totpBackupCodes: text("totp_backup_codes").array(),
+  /** The absolute 30-second step of the most recent TOTP code this admin has
+   * successfully used to sign in. A code within the drift window otherwise
+   * validates repeatedly for ~90s — this is what makes a code observed over
+   * someone's shoulder, or captured by a phishing proxy, unusable a second
+   * time. Null means no code has been accepted yet. See
+   * lib/security/totp.ts's `verifyTotpStep` and `verifyAdminSecondFactor`. */
+  totpLastStep: integer("totp_last_step"),
 });
 
 /** Customer-facing login (Phase 2 "customer accounts") — separate from

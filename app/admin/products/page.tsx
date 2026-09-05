@@ -17,6 +17,7 @@ import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { LowStockBadge } from "@/components/admin/LowStockBadge";
 import { containsPattern } from "@/lib/db/search";
 import { readPageParam, resolvePage } from "@/lib/db/pagination";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 const PAGE_SIZE = 20;
 
@@ -25,6 +26,8 @@ export default async function AdminProductsPage({
 }: {
   searchParams: Promise<{ page?: string; q?: string; stock?: string }>;
 }) {
+  await requireAdminPage();
+
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const stock = sp.stock === "low" ? "low" : "";

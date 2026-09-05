@@ -4,8 +4,11 @@ import { db } from "@/lib/db";
 import { productImages, products } from "@/lib/db/schema";
 import { GalleryFeaturedRow, GalleryAddableRow } from "@/components/admin/GalleryCurationRow";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export default async function AdminGalleryPage() {
+  await requireAdminPage();
+
   const rows = await db
     .select({
       id: productImages.id,

@@ -3,8 +3,11 @@ import { ProductForm } from "@/components/admin/ProductForm";
 import { createProduct } from "@/app/admin/products/actions";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { requireAdminPage } from "@/lib/auth-guard";
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  await requireAdminPage();
+
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-5">
       <AdminPageHeader

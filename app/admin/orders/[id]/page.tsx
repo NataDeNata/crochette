@@ -10,8 +10,11 @@ import { OrderUpdateForm } from "@/components/admin/OrderUpdateForm";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatusTag } from "@/components/admin/AdminStatusTag";
 import { DetailBlock, DetailDivider, DetailRow } from "@/components/admin/AdminDetail";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage();
+
   const { id } = await params;
   const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
   if (!order) notFound();

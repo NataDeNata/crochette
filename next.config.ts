@@ -25,6 +25,31 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "22mb",
     },
   },
+  // CSP (nonce-based, per-request) lives in proxy.ts instead — this file's
+  // `headers` config cannot produce a per-request nonce value. These have no
+  // such constraint.
+  //
+  // X-Frame-Options duplicates the CSP's `frame-ancestors 'none'`. It was added
+  // because the CSP shipped Report-Only, which enforces nothing — `frame-ancestors`
+  // reported a framing attempt and then permitted it, so this was the only real
+  // clickjacking gate. The CSP now enforces and `frame-ancestors` supersedes this
+  // wherever both are read, so it is kept as belt-and-braces rather than as the
+  // load-bearing control: it costs one header, and it is what still answers if
+  // the CSP is ever reverted to Report-Only.
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
 };
 
 // Gated on the DSN so that with Sentry switched off the build is exactly what

@@ -14,6 +14,7 @@ import { AdminFilterTabs } from "@/components/admin/AdminFilterTabs";
 import { AdminStatusTag, humanizeStatus } from "@/components/admin/AdminStatusTag";
 import { containsPattern } from "@/lib/db/search";
 import { readEnumParam, readPageParam, resolvePage } from "@/lib/db/pagination";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 const CUSTOM_ORDER_STATUSES = [
   "new",
@@ -31,6 +32,8 @@ export default async function AdminCustomOrdersPage({
 }: {
   searchParams: Promise<{ page?: string; q?: string; status?: string }>;
 }) {
+  await requireAdminPage();
+
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = readEnumParam(CUSTOM_ORDER_STATUSES, sp.status);

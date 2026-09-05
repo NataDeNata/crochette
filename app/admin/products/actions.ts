@@ -12,6 +12,7 @@ import { uploadProductImageFiles } from "@/lib/db/product-images";
 import { invalidFields, type FormActionState } from "@/lib/actions/types";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { logError } from "@/lib/observability/log";
+import { requireAdmin } from "@/lib/auth-guard";
 
 function parseProductForm(formData: FormData) {
   return productSchema.safeParse({
@@ -54,6 +55,8 @@ function revalidateStorefront(slug: string) {
 }
 
 export async function createProduct(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
+  await requireAdmin();
+
   const parsed = parseProductForm(formData);
   if (!parsed.success) return invalidFields(parsed.error);
 
@@ -95,6 +98,8 @@ export async function updateProduct(
   _prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   const parsed = parseProductForm(formData);
   if (!parsed.success) return invalidFields(parsed.error);
 
@@ -116,6 +121,8 @@ export async function deleteProduct(
   _prevState: FormActionState,
   _formData: FormData
 ): Promise<FormActionState> {
+  await requireAdmin();
+
   // order_items.product_id is a NOT NULL foreign key with no cascade, so a
   // product that's ever been ordered can't be hard-deleted — Postgres would
   // reject it. Check up front instead of letting that surface as a crash.

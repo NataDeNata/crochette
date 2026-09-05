@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { productSchema, DEFAULT_LOW_STOCK_THRESHOLD } from "@/lib/validation/product";
 import { discountSchema } from "@/lib/validation/discount";
 import { checkoutSchema } from "@/lib/validation/checkout";
+import { customOrderSchema } from "@/lib/validation/custom-order";
+import { contactSchema } from "@/lib/validation/contact";
 import { signupSchema, loginSchema } from "@/lib/validation/account";
 import { orderUpdateSchema } from "@/lib/validation/order-admin";
+import { singleLine } from "@/lib/validation/single-line";
 import { products } from "@/lib/db/schema";
 import { getTableColumns } from "drizzle-orm";
 
@@ -132,6 +136,55 @@ describe("checkoutSchema", () => {
   it("rejects a malformed email", () => {
     expect(errorsFor(checkoutSchema.safeParse({ ...validCheckout, email: "buyer@" })).email).toBeDefined();
   });
+
+  it("rejects a name carrying an embedded line break", () => {
+    // The name reaches an outgoing email subject line unescaped
+    // (lib/email/notifications.ts) — an embedded CRLF there is header
+    // injection, not a formatting quirk.
+    const errors = errorsFor(checkoutSchema.safeParse({ ...validCheckout, name: "Nata\nBcc: attacker@evil.com" }));
+    expect(errors.name).toBeDefined();
+  });
+});
+
+describe("customOrderSchema", () => {
+  const validCustomOrder = {
+    name: "Nata",
+    email: "buyer@example.com",
+    pieceType: "Amigurumi",
+    description: "A small bear, please.",
+  };
+
+  it("accepts a request with every optional field omitted", () => {
+    expect(customOrderSchema.safeParse(validCustomOrder).success).toBe(true);
+  });
+
+  it("rejects a name carrying an embedded line break", () => {
+    const errors = errorsFor(
+      customOrderSchema.safeParse({ ...validCustomOrder, name: "Nata\r\nBcc: attacker@evil.com" })
+    );
+    expect(errors.name).toBeDefined();
+  });
+});
+
+describe("contactSchema", () => {
+  const validContact = { name: "Nata", email: "buyer@example.com", message: "Just saying hello!" };
+
+  it("accepts a message with every optional field omitted", () => {
+    expect(contactSchema.safeParse(validContact).success).toBe(true);
+  });
+
+  it("rejects a name carrying an embedded line break", () => {
+    const errors = errorsFor(contactSchema.safeParse({ ...validContact, name: "Nata\nBcc: attacker@evil.com" }));
+    expect(errors.name).toBeDefined();
+  });
+
+  it("rejects a subject carrying an embedded line break", () => {
+    // subject is interpolated into the outgoing email's own subject line too.
+    const errors = errorsFor(
+      contactSchema.safeParse({ ...validContact, subject: "Hello\nBcc: attacker@evil.com" })
+    );
+    expect(errors.subject).toBeDefined();
+  });
 });
 
 describe("account schemas", () => {
@@ -157,6 +210,26 @@ describe("account schemas", () => {
   it("does not impose the signup length rule on login, so existing passwords still work", () => {
     expect(loginSchema.safeParse({ email: "buyer@example.com", password: "x" }).success).toBe(true);
   });
+
+  it("rejects a signup name carrying an embedded line break", () => {
+    const errors = errorsFor(signupSchema.safeParse({ ...validSignup, name: "Nata\nBcc: attacker@evil.com" }));
+    expect(errors.name).toBeDefined();
+  });
+});
+
+describe("singleLine", () => {
+  const schema = singleLine(z.string());
+
+  it("passes an ordinary value through unchanged", () => {
+    expect(schema.parse("Nata")).toBe("Nata");
+  });
+
+  it.each(["Nata\nBcc: x@evil.com", "Nata\r\nBcc: x@evil.com", "Nata\rBcc: x@evil.com"])(
+    "rejects %j",
+    (value) => {
+      expect(schema.safeParse(value).success).toBe(false);
+    }
+  );
 });
 
 describe("orderUpdateSchema", () => {

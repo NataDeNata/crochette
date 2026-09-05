@@ -1,14 +1,39 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+import { createInterface } from "node:readline";
 import { hash } from "bcryptjs";
 import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { admins } from "./schema";
 
-/** Creates or updates an admin login. Re-run with the same email and a new
- * password any time to change it — usage:
- * `npm run db:seed-admin -- <email> <password> [--clear-2fa]`.
+/** A password typed as a CLI argument persists in shell history and is
+ * readable from the process table (`ps`) by anyone else on the machine for
+ * as long as the process runs. Node has no built-in masked-input prompt, so
+ * this is the standard workaround: `readline`'s own `_writeToOutput` hook
+ * (undocumented, but stable across Node versions) is overridden to swallow
+ * everything except the prompt text itself and the newline that ends input —
+ * i.e. the typed characters never reach the terminal at all. */
+function promptPassword(query: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    const rlInternal = rl as unknown as { _writeToOutput: (s: string) => void; output: NodeJS.WritableStream };
+    rlInternal._writeToOutput = (stringToWrite: string) => {
+      if (stringToWrite === query || /[\r\n]/.test(stringToWrite)) {
+        rlInternal.output.write(stringToWrite);
+      }
+    };
+    rl.question(query, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+/** Creates or updates an admin login. Re-run with the same email any time to
+ * change the password — usage:
+ * `npm run db:seed-admin -- <email> [--clear-2fa]`. The password is read from
+ * a prompt, not an argument.
  *
  * `--clear-2fa` is the break-glass path, and the reason it exists is that
  * without it there isn't one. Two-factor is deliberately not removable from the
@@ -21,9 +46,16 @@ import { admins } from "./schema";
 async function main() {
   const args = process.argv.slice(2);
   const clearTwoFactor = args.includes("--clear-2fa");
-  const [email, password] = args.filter((a) => a !== "--clear-2fa");
-  if (!email || !password) {
-    console.error("Usage: npm run db:seed-admin -- <email> <password> [--clear-2fa]");
+  const [email] = args.filter((a) => a !== "--clear-2fa");
+  if (!email) {
+    console.error("Usage: npm run db:seed-admin -- <email> [--clear-2fa]");
+    process.exit(1);
+  }
+
+  const password = await promptPassword("Password: ");
+  process.stdout.write("\n");
+  if (!password) {
+    console.error("A password is required.");
     process.exit(1);
   }
 

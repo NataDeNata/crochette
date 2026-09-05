@@ -4,10 +4,13 @@ import { createDiscount } from "@/app/admin/discounts/actions";
 import { DiscountForm } from "@/components/admin/DiscountForm";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { requireAdminPage } from "@/lib/auth-guard";
 
 export const metadata: Metadata = { title: "New discount code", robots: { index: false, follow: false } };
 
-export default function NewDiscountPage() {
+export default async function NewDiscountPage() {
+  await requireAdminPage();
+
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-5">
       <AdminPageHeader
