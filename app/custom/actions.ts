@@ -4,7 +4,8 @@ import { put } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { customOrderRequests } from "@/lib/db/schema";
 import { customOrderSchema } from "@/lib/validation/custom-order";
-import { MAX_PHOTOS, MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
+import { MAX_PHOTOS, MAX_PHOTO_BYTES } from "@/lib/validation/photos";
+import { sniffPhotoType } from "@/lib/validation/photo-sniff";
 import { fieldError, invalidFields, rateLimited, type FormActionState } from "@/lib/actions/types";
 import { notifyCustomOrderSubmitted } from "@/lib/email/notifications";
 import { currentCustomerId } from "@/lib/auth-guard";
@@ -12,26 +13,35 @@ import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { logError } from "@/lib/observability/log";
 
 function sanitizeFilename(name: string) {
-  return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
+  const dotIndex = name.lastIndexOf(".");
+  const withoutExtension = dotIndex > 0 ? name.slice(0, dotIndex) : name;
+  return withoutExtension.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
 }
 
 async function uploadPhotos(files: File[]): Promise<{ urls: string[] } | { error: string }> {
   if (files.length > MAX_PHOTOS) {
     return { error: `Attach up to ${MAX_PHOTOS} photos.` };
   }
+
+  const sniffed: { file: File; contentType: string; extension: string }[] = [];
   for (const file of files) {
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      return { error: "Photos must be JPG, PNG, or WebP." };
-    }
     if (file.size > MAX_PHOTO_BYTES) {
       return { error: "Each photo must be 5MB or smaller." };
     }
+    // Sniffed from the file's own bytes, not the client-supplied `file.type` —
+    // see lib/validation/photo-sniff.ts.
+    const detected = await sniffPhotoType(file);
+    if (!detected) {
+      return { error: "Photos must be JPG, PNG, or WebP." };
+    }
+    sniffed.push({ file, ...detected });
   }
 
   const uploads = await Promise.all(
-    files.map((file) =>
-      put(`custom-orders/${crypto.randomUUID()}-${sanitizeFilename(file.name)}`, file, {
+    sniffed.map(({ file, contentType, extension }) =>
+      put(`custom-orders/${crypto.randomUUID()}-${sanitizeFilename(file.name)}.${extension}`, file, {
         access: "public",
+        contentType,
       })
     )
   );

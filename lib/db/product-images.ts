@@ -1,11 +1,14 @@
 import { put } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { productImages } from "@/lib/db/schema";
-import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/validation/photos";
+import { MAX_PHOTO_BYTES } from "@/lib/validation/photos";
+import { sniffPhotoType } from "@/lib/validation/photo-sniff";
 import { logError } from "@/lib/observability/log";
 
 function sanitizeFilename(name: string) {
-  return name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
+  const dotIndex = name.lastIndexOf(".");
+  const withoutExtension = dotIndex > 0 ? name.slice(0, dotIndex) : name;
+  return withoutExtension.replace(/[^a-zA-Z0-9.-]/g, "_").slice(-80);
 }
 
 /** Validates a batch of product photo files, uploads them to Blob, and
@@ -23,21 +26,27 @@ export async function uploadProductImageFiles(
 ): Promise<{ error?: string }> {
   if (files.length === 0) return {};
 
+  const sniffed: { file: File; contentType: string; extension: string }[] = [];
   for (const file of files) {
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      return { error: "Photos must be JPG, PNG, or WebP." };
-    }
     if (file.size > MAX_PHOTO_BYTES) {
       return { error: "Each photo must be 5MB or smaller." };
     }
+    // Sniffed from the file's own bytes, not the client-supplied `file.type` —
+    // see lib/validation/photo-sniff.ts.
+    const detected = await sniffPhotoType(file);
+    if (!detected) {
+      return { error: "Photos must be JPG, PNG, or WebP." };
+    }
+    sniffed.push({ file, ...detected });
   }
 
   let uploads;
   try {
     uploads = await Promise.all(
-      files.map((file) =>
-        put(`products/${productId}/${crypto.randomUUID()}-${sanitizeFilename(file.name)}`, file, {
+      sniffed.map(({ file, contentType, extension }) =>
+        put(`products/${productId}/${crypto.randomUUID()}-${sanitizeFilename(file.name)}.${extension}`, file, {
           access: "public",
+          contentType,
         }),
       ),
     );
