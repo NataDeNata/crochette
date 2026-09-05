@@ -70,6 +70,40 @@ describe("verifyAdminSecondFactor", () => {
     }
   });
 
+  it("rejects the same code presented a second time within its drift window", async () => {
+    // A code observed over someone's shoulder, or captured by a phishing
+    // proxy, is otherwise valid for the whole ~90s drift window — this is the
+    // check that makes a second submission of it worthless.
+    const admin = await enrolledAdmin();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(59_000);
+    try {
+      expect(await verifyAdminSecondFactor(admin.id, RFC_CODE_AT_59)).toBe(true);
+      expect(await verifyAdminSecondFactor(admin.id, RFC_CODE_AT_59)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("still accepts a later code once a new step arrives", async () => {
+    // The replay guard must not become a lockout: a genuinely new code from
+    // the authenticator app has to keep working after a previous one was used.
+    const admin = await enrolledAdmin();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(59_000);
+      expect(await verifyAdminSecondFactor(admin.id, RFC_CODE_AT_59)).toBe(true);
+
+      // otpauth's own RFC 6238 vector at a later instant — a different secret's
+      // schedule would drift from the seed used here, so this reuses the same
+      // seed's next published vector rather than a hand-computed code.
+      vi.setSystemTime(1_111_111_109_000);
+      expect(await verifyAdminSecondFactor(admin.id, "081804")).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("refuses everything when no enrolment is confirmed", async () => {
     // A secret that was generated but never confirmed must not authenticate
     // anything — otherwise starting a setup and abandoning it would silently

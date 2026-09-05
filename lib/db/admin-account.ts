@@ -1,5 +1,5 @@
 import { compare, hash } from "bcryptjs";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { admins } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/security/secret-box";
@@ -10,6 +10,7 @@ import {
   totpQrSvg,
   totpUri,
   verifyTotp,
+  verifyTotpStep,
 } from "@/lib/security/totp";
 
 /** Same cost factor as every other password in this project (customers,
@@ -192,6 +193,13 @@ export async function disableTotp(adminId: string): Promise<void> {
  * is supposed to deny. Instead the match lives in the `WHERE`: the first
  * request removes the hash, the second finds nothing to remove and gets no
  * row back. `RETURNING` is what turns that into the answer.
+ *
+ * A TOTP code gets the same "match and spend in one statement" treatment,
+ * against `totpLastStep` rather than a code list: the drift window otherwise
+ * makes a code valid for ~90s, during which it can be replayed as many times
+ * as it's submitted. Bounded below by the *last accepted* step, not "not
+ * equal to it", so a stale step within the current drift window can't be
+ * replayed just because it isn't the most recent one.
  */
 export async function verifyAdminSecondFactor(adminId: string, code: string): Promise<boolean> {
   const [row] = await db
@@ -205,7 +213,15 @@ export async function verifyAdminSecondFactor(adminId: string, code: string): Pr
   if (!row?.totpConfirmedAt || !row.totpSecret) return false;
 
   const secret = decryptSecret(row.totpSecret);
-  if (secret && verifyTotp(secret, code)) return true;
+  const step = secret ? verifyTotpStep(secret, code) : null;
+  if (step !== null) {
+    const accepted = await db
+      .update(admins)
+      .set({ totpLastStep: step })
+      .where(and(eq(admins.id, adminId), or(isNull(admins.totpLastStep), lt(admins.totpLastStep, step))))
+      .returning({ id: admins.id });
+    if (accepted.length > 0) return true;
+  }
 
   const codeHash = hashBackupCode(code);
   const consumed = await db

@@ -58,16 +58,27 @@ export async function totpQrSvg(uri: string): Promise<string> {
   return QRCode.toString(uri, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
 }
 
-/** True when `token` is valid for this secret, now or one period either side.
+/** The absolute 30-second step `token` validates at (now, or one period
+ * either side), or null if it doesn't validate at all.
  *
  * Non-digits are stripped first: authenticator apps display "123 456" and
- * people paste what they see. */
-export function verifyTotp(secretBase32: string, token: string): boolean {
+ * people paste what they see. The absolute step (rather than just the ±1
+ * delta `validate()` returns) is what lets a caller record "the most recent
+ * step this admin has used" and reject a replay of that same code — see
+ * `verifyAdminSecondFactor` in lib/db/admin-account.ts. */
+export function verifyTotpStep(secretBase32: string, token: string): number | null {
   const normalized = token.replace(/\D/g, "");
-  if (normalized.length !== TOTP_CONFIG.digits) return false;
+  if (normalized.length !== TOTP_CONFIG.digits) return null;
   // `validate` returns the delta (0, ±1) on a match and null otherwise — note
   // that 0 is a *valid* result, so this cannot be a truthiness check.
-  return totpFor(secretBase32, "unused").validate({ token: normalized, window: VALIDATION_WINDOW }) !== null;
+  const delta = totpFor(secretBase32, "unused").validate({ token: normalized, window: VALIDATION_WINDOW });
+  if (delta === null) return null;
+  return Math.floor(Date.now() / 1000 / TOTP_CONFIG.period) + delta;
+}
+
+/** True when `token` is valid for this secret, now or one period either side. */
+export function verifyTotp(secretBase32: string, token: string): boolean {
+  return verifyTotpStep(secretBase32, token) !== null;
 }
 
 const BACKUP_CODE_COUNT = 10;
