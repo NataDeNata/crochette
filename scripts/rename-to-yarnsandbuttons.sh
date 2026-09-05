@@ -445,14 +445,26 @@ else
 fi
 
 step "Preview responds..."
-_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$PREVIEW_URL" 2>/dev/null || echo "000")
+_hdrs=$(curl -sI --max-time 20 "$PREVIEW_URL" 2>/dev/null || printf '')
+_code=$(printf '%s' "$_hdrs" | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -n1 | grep -o '[0-9]*$')
+_code="${_code:-000}"
+_loc=$(printf '%s' "$_hdrs" | grep -i '^location:' | tail -n1)
 case "$_code" in
   200) say "  -> HTTP 200" ;;
-  401|403)
-    say "  -> HTTP $_code: that is Deployment Protection, not a failure."
-    note "     Previews are login-gated by default. The URL resolving at all is"
-    note "     what this check is for; open it in your browser to see the page." ;;
-  *) warn "  -> HTTP $_code (expected 200, or 401/403 if protection is on)"; _pfail=1 ;;
+  302|307|401|403)
+    if grep -qi 'vercel\.com/sso-api' <<<"$_loc" || [[ "$_code" == "401" || "$_code" == "403" ]]; then
+      say "  -> HTTP $_code to Vercel SSO: Deployment Protection, not a failure."
+      note "     Previews are login-gated by default, and protection answers with"
+      note "     a 302 to vercel.com/sso-api rather than a 401. The URL resolving"
+      note "     at all is what this check is for - open it in your browser to"
+      note "     see the page itself."
+    else
+      warn "  -> HTTP $_code, but redirecting somewhere other than Vercel SSO:"
+      warn "     ${_loc:-(no Location header)}"
+      warn "     That is not Deployment Protection. Check where it points."
+      _pfail=1
+    fi ;;
+  *) warn "  -> HTTP $_code (expected 200, or a 302/401/403 from Deployment Protection)"; _pfail=1 ;;
 esac
 
 printf '\n'
