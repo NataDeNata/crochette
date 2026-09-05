@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { discountCodes, orderItems, orders, products as productsTable } from "@/lib/db/schema";
+import { verifyOrderToken } from "@/lib/security/order-token";
 
 /** Thrown by the mocked `redirect`, mirroring how Next signals navigation. */
 class RedirectSignal extends Error {
@@ -355,8 +356,16 @@ describe("payment session lifecycle", () => {
     const order = await onlyOrder();
     const [args] = createPaymentSession.mock.calls[0];
     expect(args.referenceId).toBe(order.id);
-    expect(args.successUrl).toBe(`https://crochette.test/order/${order.id}`);
     expect(args.cancelUrl).toBe("https://crochette.test/cart");
+
+    // A guest has no session for the order page's ownership check to fall
+    // back on, so the success URL must carry a token that verifies for this
+    // exact order — see lib/security/order-token.ts.
+    const successUrl = new URL(args.successUrl);
+    expect(`${successUrl.origin}${successUrl.pathname}`).toBe(`https://crochette.test/order/${order.id}`);
+    const token = successUrl.searchParams.get("t");
+    expect(token).toBeTruthy();
+    expect(verifyOrderToken(token!, order.id)).toBe(true);
   });
 
   it("empties the cart only after the session exists", async () => {

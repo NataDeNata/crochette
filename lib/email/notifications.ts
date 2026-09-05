@@ -2,6 +2,7 @@ import { sendEmail } from "./resend";
 import { formatPrice } from "@/lib/data/products";
 import { SITE_URL } from "@/lib/site";
 import { logError } from "@/lib/observability/log";
+import { mintOrderToken } from "@/lib/security/order-token";
 
 const STUDIO_NOTIFY_EMAIL = process.env.STUDIO_NOTIFY_EMAIL;
 
@@ -197,7 +198,7 @@ export async function notifyOrderShipped(order: {
           ["Carrier", order.carrier],
           ["Tracking number", order.trackingNumber],
         ])}
-        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}?t=${mintOrderToken(order.id)}">View your order</a></p>
       `),
     },
     "order shipped notice"
@@ -218,7 +219,7 @@ export async function notifyOrderDelivered(order: {
       html: wrapEmail(`
         <p>Hi ${safeName},</p>
         <p>Your order is marked complete. We hope you love your piece! If anything's not quite right, just reply and let us know.</p>
-        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}">View your order</a></p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/order/${order.id}?t=${mintOrderToken(order.id)}">View your order</a></p>
       `),
     },
     "order delivered notice"

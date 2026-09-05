@@ -12,6 +12,7 @@ import { clearCart, getRawCartItems } from "@/lib/db/cart";
 import { createPaymentSession } from "@/lib/payments/xendit";
 import { resolveDiscountCode } from "@/lib/db/discounts";
 import { currentCustomerId } from "@/lib/auth-guard";
+import { mintOrderToken } from "@/lib/security/order-token";
 import { SITE_URL } from "@/lib/site";
 import { getClientIp, isRateLimited } from "@/lib/security/rate-limit";
 import { logError, logWarn } from "@/lib/observability/log";
@@ -299,7 +300,11 @@ export async function submitCheckout(
         ...(discountCents > 0 ? [{ name: `Discount (${parsed.data.discountCode?.trim().toUpperCase()})`, amountCents: -discountCents, quantity: 1 }] : []),
       ],
       customer: { name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone || undefined },
-      successUrl: `${origin}/order/${order.id}`,
+      // Guest checkouts have no session to fall back on when Xendit redirects
+      // the browser back here, so the confirmation link has to carry its own
+      // credential. Harmless to include for a signed-in customer too — their
+      // session already grants access on its own.
+      successUrl: `${origin}/order/${order.id}?t=${mintOrderToken(order.id)}`,
       cancelUrl: `${origin}/cart`,
     });
   } catch (err) {
