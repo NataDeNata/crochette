@@ -185,7 +185,7 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 
 
-TOTAL_STAGES=10
+TOTAL_STAGES=11
 
 # This project keeps its real environment in .env.local, not .env.
 ENV_FILE=".env.local"
@@ -193,6 +193,8 @@ ENV_FILE=".env.local"
 OLD_HOST="crochette-zeta.vercel.app"
 OLD_USER="ndnpro"
 NEW_USER="yarnsandbuttons"
+NEW_PROJECT="yarnsandbuttons"
+OLD_PROJECT="crochette"
 WANTED_HOST="yarnsandbuttons.vercel.app"
 
 banner "Rename Crochette infrastructure to Yarns and Buttons"
@@ -200,8 +202,13 @@ banner "Rename Crochette infrastructure to Yarns and Buttons"
 # -- 1 ---------------------------------------------------------------------
 stage "Preflight: confirm what is about to change"
 say "Vercel account   $OLD_USER  ->  $NEW_USER"
-say "Vercel project   crochette  ->  yarnsandbuttons"
+say "Vercel project   $OLD_PROJECT  ->  $NEW_PROJECT"
 say "Deployment host  $OLD_HOST  ->  $WANTED_HOST"
+say "Preview links    <project>-<hash>-$OLD_USER.vercel.app"
+say "             ->  <project>-<hash>-$NEW_USER.vercel.app"
+printf '\n'
+note "Preview URLs are built from the account slug and the project name, so"
+note "stages 2 and 3 rewrite them as a side effect. Stage 10 proves that."
 printf '\n'
 note "Land the code PR first. The origin must already be env-driven, or the"
 note "site keeps emitting the old host in its sitemap and every email link."
@@ -287,14 +294,49 @@ say "Payments are switched off today, so nothing breaks this minute - but an"
 say "un-updated webhook means orders never reach 'paid' once they are on."
 printf '\n'
 open_url "https://dashboard.xendit.co/settings/developers#callbacks"
-step "Find the invoice / payment-paid callback URL."
+step "Find the PAYMENT SESSIONS callback - the 'payment_session.completed'"
+say  "    event. NOT the legacy Invoices callback."
 step "Set it to:"
 say  "    $NEXT_PUBLIC_SITE_URL/api/webhooks/xendit"
 step "Save."
 printf '\n'
+warn "app/api/webhooks/xendit/route.ts tests for 'payment_session.completed'"
+warn "and ignores everything else. Re-point the Invoices callback by mistake"
+warn "and the real one stays on the dead host - which, with payments off,"
+warn "nothing surfaces until the first live order fails to reach 'paid'."
+printf '\n'
+note "Check the Test/Live mode toggle matches the XENDIT_SECRET_KEY set in"
+note "Vercel Production."
+printf '\n'
+warn "Do NOT regenerate the x-callback-token. It must keep matching"
+warn "XENDIT_WEBHOOK_TOKEN in Vercel, or every webhook is rejected and no"
+warn "order can reach 'paid'. If it does change, update Vercel and redeploy."
+printf '\n'
 note "Return URLs need no change here - the app builds those in code from the"
 note "origin you set in stage 4."
 pause "Done? Press Enter."
+
+printf '\n'
+say "Confirming the endpoint is live on the new host..."
+_wh=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+  "$NEXT_PUBLIC_SITE_URL/api/webhooks/xendit" \
+  -H 'content-type: application/json' \
+  -H 'x-callback-token: wizard-probe-not-a-real-token' \
+  -d '{"event":"ping"}' 2>/dev/null || echo "000")
+if [[ "$_wh" == "400" ]]; then
+  say "  -> HTTP 400: reachable, and rejecting a bad token. Correct."
+  printf '\n'
+  note "That probe just wrote a log line that answers a question this check"
+  note "cannot: a MISSING XENDIT_WEBHOOK_TOKEN returns the same 400. In"
+  note "Vercel -> Logs, filter for 'webhook.xendit':"
+  note "  webhook.xendit.auth_failed          -> token is set. Good."
+  note "  webhook.xendit.token_not_configured -> env var missing in Production;"
+  note "                                         set it, then redeploy."
+else
+  warn "  -> HTTP $_wh (expected 400). The route should reject an unsigned"
+  warn "     POST. Check the deployment before switching payments on."
+fi
+pause "Press Enter."
 
 # -- 7 ---------------------------------------------------------------------
 stage "Xendit: fix the merchant display name"
@@ -355,6 +397,87 @@ step "If payments are on, take a test payment and confirm it reaches 'paid'."
 pause "Both verified? Press Enter."
 
 # -- 10 --------------------------------------------------------------------
+stage "Verify a preview link carries the new name"
+say "Production has its own hostname, so stage 9 passing does not prove the"
+say "preview URLs moved. Those are built from the account slug and the project"
+say "name instead, which is why the rename reaches them at all."
+printf '\n'
+open_url "https://vercel.com/dashboard"
+step "Project -> Deployments."
+step "Open any deployment whose Environment is 'Preview' (not Production)."
+note "No preview deployment listed? Push any branch other than master, wait"
+note "for the build, then come back. A preview only exists once one is built."
+step "Copy its full URL from the address bar or the Domains panel."
+printf '\n'
+ask PREVIEW_URL "Paste the preview URL (https://...):"
+PREVIEW_URL="${PREVIEW_URL%/}"
+PREVIEW_HOST="${PREVIEW_URL#https://}"
+printf '\n'
+
+_pfail=0
+step "Preview host names the new account slug..."
+if grep -q -- "-$NEW_USER\.vercel\.app" <<<"$PREVIEW_HOST"; then
+  say "  -> ends in -$NEW_USER.vercel.app"
+else
+  warn "  -> does NOT end in -$NEW_USER.vercel.app"
+  warn "     Stage 2's account rename did not take, or Vercel assigned a"
+  warn "     different slug. Re-read the Username field before continuing."
+  _pfail=1
+fi
+
+step "Preview host names the new project..."
+if grep -q -- "^$NEW_PROJECT-" <<<"$PREVIEW_HOST"; then
+  say "  -> starts with $NEW_PROJECT-"
+else
+  warn "  -> does NOT start with $NEW_PROJECT-"
+  warn "     Either stage 3 did not take, or this preview was built BEFORE the"
+  warn "     rename. Old previews keep their old URLs forever: trigger a fresh"
+  warn "     build and check that one instead."
+  _pfail=1
+fi
+
+step "Preview host no longer names the old identifiers..."
+if grep -q -- "$OLD_USER\|$OLD_PROJECT" <<<"$PREVIEW_HOST"; then
+  warn "  -> still contains '$OLD_USER' or '$OLD_PROJECT'"
+  _pfail=1
+else
+  say "  -> clean"
+fi
+
+step "Preview responds..."
+_hdrs=$(curl -sI --max-time 20 "$PREVIEW_URL" 2>/dev/null || printf '')
+_code=$(printf '%s' "$_hdrs" | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -n1 | grep -o '[0-9]*$')
+_code="${_code:-000}"
+_loc=$(printf '%s' "$_hdrs" | grep -i '^location:' | tail -n1)
+case "$_code" in
+  200) say "  -> HTTP 200" ;;
+  302|307|401|403)
+    if grep -qi 'vercel\.com/sso-api' <<<"$_loc" || [[ "$_code" == "401" || "$_code" == "403" ]]; then
+      say "  -> HTTP $_code to Vercel SSO: Deployment Protection, not a failure."
+      note "     Previews are login-gated by default, and protection answers with"
+      note "     a 302 to vercel.com/sso-api rather than a 401. The URL resolving"
+      note "     at all is what this check is for - open it in your browser to"
+      note "     see the page itself."
+    else
+      warn "  -> HTTP $_code, but redirecting somewhere other than Vercel SSO:"
+      warn "     ${_loc:-(no Location header)}"
+      warn "     That is not Deployment Protection. Check where it points."
+      _pfail=1
+    fi ;;
+  *) warn "  -> HTTP $_code (expected 200, or a 302/401/403 from Deployment Protection)"; _pfail=1 ;;
+esac
+
+printf '\n'
+if (( _pfail )); then
+  warn "Preview checks FAILED. Do NOT run stage 11 yet - it removes the"
+  warn "rollback path. Fix the rename first, then re-run this wizard."
+  confirm "Continue anyway?" || { say "Stopped before cleanup. Nothing was removed."; exit 1; }
+else
+  say "Preview links carry the new name."
+fi
+pause "Press Enter."
+
+# -- 11 --------------------------------------------------------------------
 stage "Clean up, only now that it is proven"
 open_url "https://console.cloud.google.com/apis/credentials"
 step "Remove the old redirect URI:"
