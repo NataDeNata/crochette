@@ -29,12 +29,13 @@ const nextConfig: NextConfig = {
   // `headers` config cannot produce a per-request nonce value. These have no
   // such constraint.
   //
-  // X-Frame-Options duplicates the CSP's `frame-ancestors 'none'` on purpose,
-  // and only for as long as the CSP ships as Report-Only: report-only enforces
-  // nothing, so until that header name is flipped `frame-ancestors` reports a
-  // framing attempt and permits it. This is the enforced clickjacking gate in
-  // the meantime. Once the CSP is enforcing, `frame-ancestors` supersedes this
-  // in every browser that reads both, and the line can go.
+  // X-Frame-Options duplicates the CSP's `frame-ancestors 'none'`. It was added
+  // because the CSP shipped Report-Only, which enforces nothing — `frame-ancestors`
+  // reported a framing attempt and then permitted it, so this was the only real
+  // clickjacking gate. The CSP now enforces and `frame-ancestors` supersedes this
+  // wherever both are read, so it is kept as belt-and-braces rather than as the
+  // load-bearing control: it costs one header, and it is what still answers if
+  // the CSP is ever reverted to Report-Only.
   async headers() {
     return [
       {

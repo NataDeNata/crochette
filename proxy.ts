@@ -29,13 +29,25 @@ const SENTRY_ORIGIN = (() => {
 })();
 
 /**
- * Ships as `Content-Security-Policy-Report-Only` first (Stage: report-only).
- * Flip this one constant to `Content-Security-Policy` once a manual pass over
- * every route class (storefront, product, cart, checkout, commission form,
- * every admin page) shows zero reported violations — see
- * Cro_Security_Spec.md's Implementation Decisions.
+ * Enforcing since 2026-09-06. It shipped as `Content-Security-Policy-Report-Only`
+ * first and was flipped once a signed-in pass over every route class reported
+ * zero violations: storefront, /shop, a product page, /cart, /custom,
+ * /admin/login, and all fifteen authenticated admin routes including the
+ * settings page, both "new" forms, and the order, custom-order and product
+ * photo detail pages.
+ *
+ * One path is still unexercised, and it is the riskiest one left: the TOTP
+ * enrolment QR in AdminTwoFactorSection is the project's only
+ * dangerouslySetInnerHTML carrying generated markup, and its subtree does not
+ * render while an enrolment is already confirmed — so no browse can reach it
+ * without first disabling 2FA. It is server-generated SVG rather than script,
+ * so `script-src` does not apply to it, but confirm it visually the next time
+ * an enrolment actually happens.
+ *
+ * Revert to `-Report-Only` if a violation surfaces in production; that is the
+ * one-constant rollback.
  */
-const CSP_HEADER_NAME = "Content-Security-Policy-Report-Only";
+const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /**
  * `style-src` keeps `unsafe-inline` deliberately: inline styles come from the
