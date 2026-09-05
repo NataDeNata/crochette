@@ -10,6 +10,25 @@ const PUBLIC_ACCOUNT_PATHS = new Set(["/account/login", "/account/signup"]);
 const IMG_SRC_HOSTS = "https://images.unsplash.com https://*.public.blob.vercel-storage.com";
 
 /**
+ * `connect-src` has to name Sentry's ingest host, or the browser SDK's error
+ * POSTs are refused the moment `default-src` stops leaving every unlisted
+ * directive open. Derived from the DSN rather than written out, so it follows
+ * the environment and keeps no org id in source — and resolves to null with
+ * Sentry switched off, leaving the directive as plain `'self'`. Same gating
+ * reasoning as next.config.ts, which only injects the plugin when a DSN exists.
+ */
+const SENTRY_ORIGIN = (() => {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return null;
+  try {
+    return new URL(dsn).origin;
+  } catch {
+    // A malformed DSN is Sentry's problem, not a reason to fail every request.
+    return null;
+  }
+})();
+
+/**
  * Ships as `Content-Security-Policy-Report-Only` first (Stage: report-only).
  * Flip this one constant to `Content-Security-Policy` once a manual pass over
  * every route class (storefront, product, cart, checkout, commission form,
@@ -27,13 +46,25 @@ const CSP_HEADER_NAME = "Content-Security-Policy-Report-Only";
  * Next.js", node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md).
  * `'unsafe-eval'` is dev-only — React's dev-mode error-stack reconstruction
  * needs it; production uses neither React nor Next's own code paths that do.
+ *
+ * `default-src` is the catch-all every unlisted directive falls back to. Without
+ * it `connect-src`, `font-src`, `frame-src`, `media-src` and `worker-src` are
+ * unrestricted — which matters less for getting an injected script to run (that
+ * is what the nonce denies) than for what one could do if it ever did: an open
+ * `connect-src` is a clean exfiltration path for names and shipping addresses.
+ * It closes the exit rather than the entrance.
+ *
+ * `ws:` is dev-only, for Turbopack's HMR socket.
  */
 function buildCspHeader(nonce: string): string {
   const isDev = process.env.NODE_ENV === "development";
+  const connectSrc = ["'self'", SENTRY_ORIGIN, isDev ? "ws:" : null].filter(Boolean).join(" ");
   return [
+    "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' blob: data: ${IMG_SRC_HOSTS}`,
+    `connect-src ${connectSrc}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",

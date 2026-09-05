@@ -26,9 +26,15 @@ const nextConfig: NextConfig = {
     },
   },
   // CSP (nonce-based, per-request) lives in proxy.ts instead — this file's
-  // `headers` config cannot produce a per-request nonce value. These five have
-  // no such constraint. `frame-ancestors` is CSP's job, not X-Frame-Options's,
-  // so it isn't duplicated here.
+  // `headers` config cannot produce a per-request nonce value. These have no
+  // such constraint.
+  //
+  // X-Frame-Options duplicates the CSP's `frame-ancestors 'none'` on purpose,
+  // and only for as long as the CSP ships as Report-Only: report-only enforces
+  // nothing, so until that header name is flipped `frame-ancestors` reports a
+  // framing attempt and permits it. This is the enforced clickjacking gate in
+  // the meantime. Once the CSP is enforcing, `frame-ancestors` supersedes this
+  // in every browser that reads both, and the line can go.
   async headers() {
     return [
       {
@@ -36,6 +42,7 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
