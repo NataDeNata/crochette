@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { singleLine } from "@/lib/validation/single-line";
 
 export const customOrderSchema = z.object({
-  name: z.string().trim().min(1, "Please enter your name").max(120),
+  name: singleLine(z.string().trim().min(1, "Please enter your name").max(120)),
   email: z.string().trim().email("Please enter a valid email address").max(200),
   pieceType: z.string().trim().min(1, "Please choose a piece type"),
   preferredSize: z.string().trim().max(120).optional().or(z.literal("")),

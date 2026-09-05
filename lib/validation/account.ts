@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { singleLine } from "@/lib/validation/single-line";
 
 export const signupSchema = z
   .object({
-    name: z.string().trim().min(1, "Please enter your name").max(120),
+    name: singleLine(z.string().trim().min(1, "Please enter your name").max(120)),
     email: z.string().trim().email("Please enter a valid email address").max(200),
     password: z.string().min(8, "Password must be at least 8 characters").max(200),
     confirmPassword: z.string(),
