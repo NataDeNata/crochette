@@ -25,6 +25,23 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "22mb",
     },
   },
+  // CSP (nonce-based, per-request) lives in proxy.ts instead — this file's
+  // `headers` config cannot produce a per-request nonce value. These five have
+  // no such constraint. `frame-ancestors` is CSP's job, not X-Frame-Options's,
+  // so it isn't duplicated here.
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
 };
 
 // Gated on the DSN so that with Sentry switched off the build is exactly what
