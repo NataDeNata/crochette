@@ -111,8 +111,7 @@ export function Cutout({
           </p>
           <p
             className={cn(
-              "type-sheet-spec tabular-nums",
-              lead ? "text-[11px]" : "text-[10px]",
+              "type-sheet-spec tabular-nums text-[11px]",
               soldOut ? "text-keyline/60" : "text-keyline/75",
             )}
           >

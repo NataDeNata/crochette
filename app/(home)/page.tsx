@@ -164,6 +164,29 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* A closing ask, independent of whether the gallery above rendered.
+          Without this the page's last word before the footer was whichever of
+          the studio paragraph or the gallery teaser happened to be last, and
+          neither one is a prompt back to the catalogue or to /custom. */}
+      <section className="bg-sheet">
+        <div className="page-gutter pb-16 pt-4 sm:pb-20 sm:pt-6">
+          <div className="max-w-[1320px] mx-auto mb-14 border-t border-keyline/15 sm:mb-16" />
+          <div className="max-w-[1320px] mx-auto text-center">
+            <h2 className="type-sheet-display text-[clamp(26px,3.4vw,42px)] text-balance mb-8">
+              Something here for you, or something only you could ask for.
+            </h2>
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Button href="/shop" variant="default" size="md">
+                Shop the collection
+              </Button>
+              <Button href="/custom" variant="outline" size="md">
+                Start a custom order
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
