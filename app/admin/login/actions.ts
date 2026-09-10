@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { eq } from "drizzle-orm";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
@@ -15,6 +15,7 @@ import { logInfo } from "@/lib/observability/log";
 import type { AdminLoginState } from "@/lib/actions/auth-form-types";
 
 const GENERIC_FAILURE = "Incorrect email or password.";
+const SYSTEM_FAILURE = "Something went wrong on our end. Please try again in a moment.";
 
 /** Scoped to the login route so the browser never sends it anywhere else, and
  * httpOnly so no script can read it. `secure` is dropped on localhost, where
@@ -160,7 +161,15 @@ async function finishSignIn(
   } catch (error) {
     // Refused: leave the cookie alone. A wrong code has to be retryable without
     // re-entering the password, which is the entire reason the challenge exists.
-    if (error instanceof AuthError) return { ...onFailure, email };
+    if (error instanceof CredentialsSignin) return { ...onFailure, email };
+    // Anything else that's still an `AuthError` (`CallbackRouteError`, most
+    // likely) means `authorize()` threw rather than returned null — a system
+    // failure, not a wrong code or password. Reporting it as `onFailure`
+    // would read as "that code isn't right" for a DB error, which is exactly
+    // the confusion that cost real debugging time when migration 0016 had
+    // not been applied (see the security handoff). `lib/auth.ts` already
+    // logs the underlying cause before rethrowing.
+    if (error instanceof AuthError) return { status: "error", message: SYSTEM_FAILURE, email };
     // Accepted — `signIn` signals success by throwing Next's redirect. The
     // challenge has now been spent, so drop it before the throw propagates.
     //

@@ -76,11 +76,22 @@ export function PolicySection({
  * a placeholder that ships; one the owner sees on the page every time they
  * look at it is one that gets answered. Delete the wrapper, keep the text, and
  * the page is finished.
+ *
+ * The `title` alone reached only a sighted visitor who happens to hover: a
+ * screen reader doesn't reliably announce `title`, a touch visitor can never
+ * trigger it, and even a sighted visitor who never hovers just sees a
+ * highlight with no idea what it means. The visible "TBC" mark and the
+ * screen-reader-only text below say the same thing through every one of those
+ * paths without touching what the highlight is actually marking.
  */
 export function Confirm({ children }: { children: ReactNode }) {
   return (
     <mark className="bg-butter px-1.5 py-0.5 text-keyline" title="Confirm this before launch">
       {children}
+      <span aria-hidden="true" className="ml-1 align-super text-[0.7em] text-keyline/60">
+        TBC
+      </span>
+      <span className="sr-only"> (placeholder — to be confirmed before launch)</span>
     </mark>
   );
 }

@@ -27,10 +27,10 @@ export default function TermsPage() {
         <p>
           Yarns and Buttons, a single-owner studio operating from{" "}
           <Confirm>[business address and registration number, if registered]</Confirm>.
-          Contact:{" "}
-          <a href="mailto:hello@crochette.shop" className="underline">
-            hello@crochette.shop
-          </a>
+          Contact: use the{" "}
+          <Link href="/contact" className="underline">
+            contact form
+          </Link>
           .
         </p>
       </PolicySection>

@@ -74,7 +74,7 @@ export default async function GalleryPage() {
                   New pieces, works in progress and behind-the-scenes.
                 </p>
               </div>
-              <Button href="https://instagram.com">@crochette.studio</Button>
+              <Button href="https://instagram.com/crochette.studio">@crochette.studio</Button>
             </div>
           </div>
         </section>

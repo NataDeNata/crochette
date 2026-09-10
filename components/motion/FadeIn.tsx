@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, type TargetAndTransition } from "framer-motion";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 type FadeInProps = {
   children: ReactNode;
@@ -35,6 +35,21 @@ type FadeInProps = {
  * nothing. The shop grid used to be wrapped in this and is not any more; it
  * uses the `.sheet-reveal` CSS entrance instead, whose resting state is
  * visible.
+ *
+ * `viewport={{ once: true }}` means the IntersectionObserver only ever gets
+ * one chance to report "visible" per mount. For content that starts inside
+ * the viewport — the exact case this component is for — that one check
+ * should fire almost immediately, but under a slow or contended first paint
+ * (production traffic spikes, a heavy dev-server compile) it can land before
+ * layout has settled, misreport "not intersecting", and then never get asked
+ * again: the content stays at `opacity: 0` forever with nothing to retry it.
+ * Reproduced on `/custom`'s hero and would hit `/order/[id]`'s confirmation
+ * heading identically, both content present at first paint. The
+ * `getBoundingClientRect` check below answers the "is this already onscreen"
+ * question directly and synchronously instead of trusting the one-shot
+ * observer for it, so first-paint content can never be stranded invisible;
+ * genuinely below-the-fold content is untouched and still waits for a real
+ * scroll via `whileInView`.
  */
 export function FadeIn({
   children,
@@ -47,6 +62,17 @@ export function FadeIn({
 }: FadeInProps) {
   const reduceMotion = useReducedMotion();
   const MotionTag = motion[as];
+  const ref = useRef<HTMLElement | null>(null);
+  const [alreadyInView, setAlreadyInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setAlreadyInView(true);
+    }
+  }, []);
 
   if (reduceMotion) {
     const Tag = as;
@@ -57,11 +83,15 @@ export function FadeIn({
 
   return (
     <MotionTag
+      ref={(el: HTMLElement | null) => {
+        ref.current = el;
+      }}
       className={className}
       layout={layout}
       exit={exit}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
+      animate={alreadyInView ? { opacity: 1, y: 0 } : undefined}
       // -40px, not the -80px this started at. The margin shrinks the viewport
       // the observer tests against, so it is a delay measured in pixels of
       // scrolling — and stacked on top of the duration and the caller's

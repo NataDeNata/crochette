@@ -16,6 +16,11 @@ const fieldClassName =
 export function ContactForm() {
   const [state, formAction, isPending] = useActionState(submitContactMessage, IDLE_STATE);
   const fieldErrors = state.fieldErrors ?? {};
+  // See checkout/actions.ts's identical pattern: `defaultValue` from the just
+  // -submitted values is what React 19 resets an uncontrolled form action's
+  // fields *to*, so a rejected submission refills rather than empties them.
+  const submitted = state.values;
+  const refill = (name: string) => submitted?.[name] ?? undefined;
 
   return (
     <AnimatePresence mode="wait">
@@ -38,6 +43,7 @@ export function ContactForm() {
               label="Your name"
               autoComplete="name"
               required
+              defaultValue={refill("name")}
               className={fieldClassName}
               error={fieldErrors.name?.[0]}
             />
@@ -51,6 +57,7 @@ export function ContactForm() {
               type="email"
               autoComplete="email"
               required
+              defaultValue={refill("email")}
               className={fieldClassName}
               error={fieldErrors.email?.[0]}
             />
@@ -60,6 +67,7 @@ export function ContactForm() {
             id="contact-subject"
             name="subject"
             label="Subject (optional)"
+            defaultValue={refill("subject")}
             className={fieldClassName}
           />
 
@@ -72,6 +80,7 @@ export function ContactForm() {
               name="message"
               rows={5}
               required
+              defaultValue={refill("message")}
               aria-invalid={fieldErrors.message?.[0] ? true : undefined}
               aria-describedby={fieldErrors.message?.[0] ? "contact-message-error" : undefined}
               className={`${fieldClassName} resize-y`}

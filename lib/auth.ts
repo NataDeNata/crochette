@@ -194,9 +194,26 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
         const challenge = typeof credentials?.challenge === "string" ? credentials.challenge : undefined;
         const totp = typeof credentials?.totp === "string" ? credentials.totp : "";
 
-        const admin = challenge
-          ? await adminFromChallenge(challenge)
-          : await adminFromPassword(credentials?.email, credentials?.password);
+        // Distinguished from `return null` on purpose. A thrown error here
+        // (an unmigrated column, a dropped connection) must not read as a
+        // wrong password: `return null` is Auth.js's *only* signal for that,
+        // so a rethrow after this log stays a thrown `CallbackRouteError`,
+        // not a `CredentialsSignin` — and the login Server Actions key off
+        // exactly that distinction to show a system-failure message instead
+        // of "Incorrect email or password." See the security handoff: this
+        // exact confusion cost real debugging time when migration 0016 had
+        // not been applied.
+        let admin: AdminRecord | null;
+        try {
+          admin = challenge
+            ? await adminFromChallenge(challenge)
+            : await adminFromPassword(credentials?.email, credentials?.password);
+        } catch (err) {
+          logError("auth.admin.credential_lookup_failed", err, {
+            detail: "treat as a system failure, not a rejected credential",
+          });
+          throw err;
+        }
 
         if (!admin) return null;
 
@@ -205,9 +222,17 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
         // carries no code at all and therefore always fails this once 2FA is
         // on. That is deliberate: the direct-POST route must not be a way to
         // sign in with a single factor.
-        if (admin.totpConfirmedAt && !(await verifyAdminSecondFactor(admin.id, totp))) {
-          logInfo("auth.admin.second_factor_rejected", { adminId: admin.id, via: challenge ? "challenge" : "password" });
-          return null;
+        try {
+          if (admin.totpConfirmedAt && !(await verifyAdminSecondFactor(admin.id, totp))) {
+            logInfo("auth.admin.second_factor_rejected", { adminId: admin.id, via: challenge ? "challenge" : "password" });
+            return null;
+          }
+        } catch (err) {
+          logError("auth.admin.second_factor_check_failed", err, {
+            adminId: admin.id,
+            detail: "treat as a system failure, not a rejected code",
+          });
+          throw err;
         }
 
         return { id: admin.id, email: admin.email, name: admin.name ?? admin.email, role: "admin" as const };
@@ -225,7 +250,17 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
         if (await authEndpointLimited()) return null;
 
-        const [customer] = await db.select().from(customers).where(eq(customers.email, email)).limit(1);
+        // Same distinction as the admin provider above: a thrown lookup error
+        // must surface as a system failure, not "Incorrect email or password."
+        let customer: typeof customers.$inferSelect | undefined;
+        try {
+          [customer] = await db.select().from(customers).where(eq(customers.email, email)).limit(1);
+        } catch (err) {
+          logError("auth.customer.credential_lookup_failed", err, {
+            detail: "treat as a system failure, not a rejected credential",
+          });
+          throw err;
+        }
         // A null hash is a Google-only account (no password was ever set).
         // Treated identically to "no such account" — same dummy comparison,
         // same timing, same generic failure — so it can't be distinguished,

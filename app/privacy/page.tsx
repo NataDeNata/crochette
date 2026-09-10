@@ -27,10 +27,10 @@ export default function PrivacyPage() {
         <p>
           Yarns and Buttons, a single-owner studio operating from{" "}
           <Confirm>[business address — required by the Data Privacy Act]</Confirm>.
-          Questions and requests:{" "}
-          <a href="mailto:hello@crochette.shop" className="underline">
-            hello@crochette.shop
-          </a>
+          Questions and requests: use the{" "}
+          <Link href="/contact" className="underline">
+            contact form
+          </Link>
           .
         </p>
       </PolicySection>
@@ -101,10 +101,10 @@ export default function PrivacyPage() {
       <PolicySection heading="Your rights">
         <p>
           Under the Data Privacy Act of 2012 you can ask what is held about you, have it
-          corrected, have it deleted, or object to how it is used. Write to{" "}
-          <a href="mailto:hello@crochette.shop" className="underline">
-            hello@crochette.shop
-          </a>{" "}
+          corrected, have it deleted, or object to how it is used. Use the{" "}
+          <Link href="/contact" className="underline">
+            contact form
+          </Link>{" "}
           and you will get an answer within <Confirm>15 days</Confirm>. If you are not
           satisfied you can complain to the National Privacy Commission.
         </p>
