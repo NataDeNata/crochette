@@ -15,8 +15,10 @@ export const metadata: Metadata = {
   },
 };
 
+// No "Email" row: it printed hello@crochette.shop, whose domain returns
+// NXDOMAIN — see Footer.tsx's comment removing the same address, and issue
+// #17. This form below is the real, working way to reach the studio.
 const DETAILS = [
-  { label: "Email", value: "hello@crochette.shop" },
   { label: "Instagram", value: "@crochette.studio" },
   // With the timezone. This studio ships internationally-adjacent enough that
   // "9am" alone is a different eight hours depending on who is reading it, and

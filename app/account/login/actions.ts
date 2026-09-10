@@ -1,6 +1,6 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { signIn } from "@/lib/auth";
 import { getClientIp, isAuthRateLimited } from "@/lib/security/rate-limit";
 import { RATE_LIMITED_MESSAGE } from "@/lib/actions/types";
@@ -29,8 +29,17 @@ export async function accountLogin(_prevState: AccountLoginState, formData: Form
     });
     return { status: "idle" };
   } catch (error) {
-    if (error instanceof AuthError) {
+    // A rejected credential (`authorize()` returned null) surfaces as
+    // `CredentialsSignin` specifically. Anything else that's still an
+    // `AuthError` — `CallbackRouteError`, most likely — means `authorize()`
+    // threw, which is a system failure (a DB error, say), not a wrong
+    // password, and must not be reported as one: `lib/auth.ts` already logs
+    // the underlying cause before rethrowing.
+    if (error instanceof CredentialsSignin) {
       return { status: "error", message: "Incorrect email or password.", email: echo };
+    }
+    if (error instanceof AuthError) {
+      return { status: "error", message: "Something went wrong on our end. Please try again in a moment.", email: echo };
     }
     // signIn() throws Next's internal redirect signal on success — rethrow
     // anything that isn't an auth failure so the navigation actually happens.

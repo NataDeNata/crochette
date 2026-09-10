@@ -92,7 +92,13 @@ export const metadata: Metadata = {
  * most-shared URLs on the site — home and /shop — carried nothing. These sit
  * in the root layout so every page states them, which is what lets a search
  * result show the studio's name and socials rather than just a page title.
- * The email and Instagram handle here are the same two the footer prints. */
+ *
+ * No `email` field: it printed hello@crochette.shop, whose domain returns
+ * NXDOMAIN (see the Footer.tsx comment removing the same address from the
+ * footer, and issue #17). Publishing a dead address in structured data that
+ * search engines and assistants surface as a contact point is the same
+ * mistake in a place a visitor never sees to distrust — comes back once
+ * issue #17 lands a verified domain. */
 const SITE_JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
@@ -102,7 +108,6 @@ const SITE_JSON_LD = {
       name: SITE_NAME,
       url: SITE_URL,
       description: SITE_DESCRIPTION,
-      email: "hello@crochette.shop",
       sameAs: ["https://instagram.com/crochette.studio"],
       areaServed: "PH",
     },

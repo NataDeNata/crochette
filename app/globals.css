@@ -1329,6 +1329,16 @@ body:has([data-surface="storefront"][data-world="cutout"]) {
   background: var(--butter);
 }
 
+/* Same reasoning as the fields' focus rule below: `focus-visible:outline-2
+ * focus-visible:outline-offset-2 focus-visible:outline-ring` on the button's
+ * own cva classes sets outline-width/-color but never -style, so it silently
+ * renders nothing without this — buttons were keyboard-focusable with no
+ * visible indicator at all. */
+[data-surface="storefront"][data-world="cutout"] [data-slot="button"]:focus-visible {
+  outline: 2px solid var(--press-red);
+  outline-offset: 2px;
+}
+
 /* Fields, on the same terms as the buttons above: shared with /admin, so the
  * world is applied here rather than in the primitives.
  *
