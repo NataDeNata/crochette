@@ -2,12 +2,37 @@ import { headers } from "next/headers";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 
-/** Vercel sets x-forwarded-for on every request; falls back to a constant
- * so local dev (no proxy) still gets a stable, if shared, rate-limit key. */
+/**
+ * The client IP used as a rate-limit key — taken from a source the *platform*
+ * controls, never from a position the client can inject.
+ *
+ * `x-real-ip` is set by Vercel's edge to the real connecting IP and overwrites
+ * any value the client sent, so it is preferred. Its fallback is the **last**
+ * entry of `x-forwarded-for`, not the first: Vercel appends the true connecting
+ * IP to whatever XFF the client supplied, so the header reads
+ * `<client-injected...>, <real ip>`. Reading `split(",")[0]` (the old code) took
+ * the leftmost, client-controlled value — which let an attacker mint a fresh
+ * rate-limit bucket per request by rotating the header, defeating every
+ * IP-keyed limit here (auth, checkout, custom-order, contact). The rightmost
+ * entry is the one the trusted hop added.
+ *
+ * Falls back to a constant so local dev (no proxy, neither header present) still
+ * gets a stable, if shared, key rather than throwing.
+ */
 export async function getClientIp(): Promise<string> {
   const h = await headers();
+
+  const realIp = h.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
   const forwardedFor = h.get("x-forwarded-for");
-  return forwardedFor?.split(",")[0]?.trim() || "unknown";
+  if (forwardedFor) {
+    const parts = forwardedFor.split(",");
+    const last = parts[parts.length - 1]?.trim();
+    if (last) return last;
+  }
+
+  return "unknown";
 }
 
 // Vercel's Upstash-for-Redis marketplace integration provisions
