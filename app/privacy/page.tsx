@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Confirm, PolicyPage, PolicySection } from "@/components/layout/PolicyPage";
-import { OG_IMAGE } from "@/lib/site";
+import { OG_IMAGE, CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy",
@@ -27,7 +27,11 @@ export default function PrivacyPage() {
         <p>
           Yarns and Buttons, a single-owner studio operating from{" "}
           <Confirm>[business address — required by the Data Privacy Act]</Confirm>.
-          Questions and requests: use the{" "}
+          Questions and requests: email{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="underline">
+            {CONTACT_EMAIL}
+          </a>{" "}
+          or use the{" "}
           <Link href="/contact" className="underline">
             contact form
           </Link>

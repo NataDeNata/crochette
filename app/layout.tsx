@@ -3,7 +3,7 @@ import { Jost, Gloock, Archivo } from "next/font/google";
 import "./globals.css";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { CartProvider } from "@/lib/cart/CartContext";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, CONTACT_EMAIL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth";
@@ -93,12 +93,12 @@ export const metadata: Metadata = {
  * in the root layout so every page states them, which is what lets a search
  * result show the studio's name and socials rather than just a page title.
  *
- * No `email` field: it printed hello@crochette.shop, whose domain returns
- * NXDOMAIN (see the Footer.tsx comment removing the same address from the
- * footer, and issue #17). Publishing a dead address in structured data that
- * search engines and assistants surface as a contact point is the same
- * mistake in a place a visitor never sees to distrust — comes back once
- * issue #17 lands a verified domain. */
+ * The `email` is the studio's real address at the verified domain, held once
+ * in lib/site.ts as CONTACT_EMAIL (issue #17, Stage A). The previous address
+ * was on a domain that returns NXDOMAIN, and was dropped from here for exactly
+ * as long as no working address existed — publishing a dead address in
+ * structured data a crawler surfaces as a contact point is a mistake in a
+ * place a visitor never sees to distrust. */
 const SITE_JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
@@ -108,6 +108,7 @@ const SITE_JSON_LD = {
       name: SITE_NAME,
       url: SITE_URL,
       description: SITE_DESCRIPTION,
+      email: CONTACT_EMAIL,
       sameAs: ["https://instagram.com/crochette.studio"],
       areaServed: "PH",
     },
