@@ -15,11 +15,13 @@ function getResend(): Resend {
   return cached;
 }
 
-/** Sender address for the shared Resend test domain. Swap for a verified
- * domain address (e.g. orders@crochette.com) once one is configured — see
- * .env.example. Until then, Resend only delivers to the account's own
- * verified email, regardless of the "to" address used below. */
-export const EMAIL_FROM = "Yarns and Buttons <onboarding@resend.dev>";
+/** Sender address. Read from `EMAIL_FROM` so the verified-domain sender
+ * (`Yarns and Buttons <hello@yarnsandbuttons.com>`) is set per environment
+ * rather than hardcoded — the same shape as SITE_URL in lib/site.ts. The
+ * fallback is Resend's shared test domain, which keeps local dev and builds
+ * working without the variable set; on the sandbox Resend only delivers to
+ * the account's own verified email, regardless of the "to" address below. */
+export const EMAIL_FROM = process.env.EMAIL_FROM?.trim() || "Yarns and Buttons <onboarding@resend.dev>";
 
 export async function sendEmail(params: { to: string; subject: string; html: string }) {
   const resend = getResend();

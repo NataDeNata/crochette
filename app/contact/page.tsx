@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { Sheet } from "@/components/layout/Sheet";
 import { ContactForm } from "@/components/contact/ContactForm";
-import { OG_IMAGE } from "@/lib/site";
+import { OG_IMAGE, CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -15,10 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
-// No "Email" row: it printed hello@crochette.shop, whose domain returns
-// NXDOMAIN — see Footer.tsx's comment removing the same address, and issue
-// #17. This form below is the real, working way to reach the studio.
-const DETAILS = [
+const DETAILS: { label: string; value: string; href?: string }[] = [
+  { label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
   { label: "Instagram", value: "@crochette.studio" },
   // With the timezone. This studio ships internationally-adjacent enough that
   // "9am" alone is a different eight hours depending on who is reading it, and
@@ -43,7 +41,15 @@ export default function ContactPage() {
               {DETAILS.map((d) => (
                 <div key={d.label}>
                   <dt className="type-sheet-spec text-keyline/55 mb-1">{d.label}</dt>
-                  <dd className="text-[16px] text-keyline">{d.value}</dd>
+                  <dd className="text-[16px] text-keyline">
+                    {d.href ? (
+                      <a href={d.href} className="underline underline-offset-2 hover:text-keyline/70">
+                        {d.value}
+                      </a>
+                    ) : (
+                      d.value
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>

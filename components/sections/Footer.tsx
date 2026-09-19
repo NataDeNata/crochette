@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import Image from "next/image";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
   return (
@@ -65,24 +66,30 @@ export function Footer({ hasGallery = false }: { hasGallery?: boolean }) {
             </div>
           </div>
 
-          {/* The "Get in touch" column is deliberately absent, not lost.
-              It printed two links: a mailto to hello@crochette.shop, whose
-              domain returns NXDOMAIN — mail to it bounces today — and the
-              studio's Instagram handle. Publishing a dead address as a live
-              `mailto:` is worse than publishing none: it reads as a working
-              route and silently swallows whatever a shopper sends. The handle
-              came out with it rather than being left as a lone orphan under a
-              heading that no longer describes a column.
-
-              /contact is still linked from Explore above, and it is a real
-              page backed by the database rather than by mail, so the footer
-              has not stopped offering a way through.
-
-              This comes back when issue #17 lands a verified domain and a
-              contact address held in one place. The same dead address is still
-              printed on /contact, in the JSON-LD Organization schema, and as
-              the data-controller contact in /privacy and /terms — all four are
-              that issue's job, not this change's. */}
+          <div>
+            <div className="type-sheet-spec mb-4 text-footer-heading">
+              Get in touch
+            </div>
+            {/* Both were plain <span>s before the address went dead and the
+                column was pulled. On a phone — most of this audience — a
+                printed address you cannot tap is text to copy by hand, and the
+                Instagram handle is the studio's actual second storefront. The
+                address is now `hello@yarnsandbuttons.com`, held once in
+                lib/site.ts (issue #17, Stage A). */}
+            <div className="flex flex-col gap-2.5 text-sm">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="footer-link">
+                {CONTACT_EMAIL}
+              </a>
+              <a
+                href="https://instagram.com/crochette.studio"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="footer-link"
+              >
+                @crochette.studio
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* The Admin link that used to sit at the right of this row is gone.

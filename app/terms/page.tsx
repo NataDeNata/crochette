@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Confirm, PolicyPage, PolicySection } from "@/components/layout/PolicyPage";
 import { SHIPPING_CENTS } from "@/lib/cart/constants";
 import { formatPrice } from "@/lib/data/products";
-import { OG_IMAGE } from "@/lib/site";
+import { OG_IMAGE, CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms",
@@ -27,7 +27,11 @@ export default function TermsPage() {
         <p>
           Yarns and Buttons, a single-owner studio operating from{" "}
           <Confirm>[business address and registration number, if registered]</Confirm>.
-          Contact: use the{" "}
+          Contact: email{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="underline">
+            {CONTACT_EMAIL}
+          </a>{" "}
+          or use the{" "}
           <Link href="/contact" className="underline">
             contact form
           </Link>

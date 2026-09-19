@@ -42,6 +42,15 @@ export const SITE_URL =
  * drifting away from the origin the rest of the app believes in. */
 export const SITE_HOST = new URL(SITE_URL).host;
 
+/** The public contact address, in one place so it cannot rot across the four
+ * surfaces that print it (the footer, /contact, /privacy, /terms and the
+ * JSON-LD organisation block). The previous address was on a domain that
+ * returned NXDOMAIN — removed everywhere as a stopgap (PR #20, `7f5a91b`) and
+ * restored here against the verified `yarnsandbuttons.com`. Not a secret, so a
+ * plain constant rather than an env var: it is the same on every deployment and
+ * is read by client components as well as server ones. */
+export const CONTACT_EMAIL = "hello@yarnsandbuttons.com";
+
 /**
  * The generated link-preview card, for pages that declare their own
  * `openGraph` block.

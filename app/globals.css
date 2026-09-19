@@ -353,15 +353,11 @@
   }
 }
 
-/* Four columns since the policy links landed: the studio blurb, Explore,
- * The small print, Get in touch. */
-/* Three columns, not four: the "Get in touch" column came out with the dead
- * contact address (see Footer.tsx). The brand column keeps its extra width —
- * it carries the wordmark plate and a line of prose, the other two carry short
- * link lists — so the remaining two simply share the space it does not need
- * rather than stretching their links across half a footer each. */
+/* Four columns: the studio blurb (wider — it carries the wordmark plate and a
+ * line of prose), Explore, The small print, Get in touch. The last returned
+ * with the verified contact address (issue #17, Stage A); see Footer.tsx. */
 .footer-grid {
-  grid-template-columns: 1.6fr 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
 }
 
 @media (max-width: 900px) {
