@@ -7,9 +7,18 @@ import { compare } from "bcryptjs";
  * own unit tests, and the interesting failures here are all at the seam: what
  * the request form discloses, and whether a spent link is really spent.
  *
- * Three things are mocked and nothing else. `after()` runs its callback inline
- * so the mail can be asserted on; the real one defers past the response, which
- * is the point of using it (see the action) but leaves nothing to observe.
+ * `after()` runs its callback inline here so the mail can be asserted on; the
+ * real one defers past the response, which is the point of using it (see the
+ * action) but leaves nothing to observe.
+ *
+ * `next-auth` is stubbed down to the one export the action actually uses. Not
+ * for isolation — importing it for real fails outright, because `next-auth`'s
+ * `lib/env.js` imports `next/server` in a form Vitest's resolver cannot follow
+ * (`Cannot find module .../next/server`, hinting at `next/server.js`). That
+ * bites any test importing a module that imports `next-auth`, which until now
+ * was none of them: `@/lib/auth` is mocked everywhere, and the three actions
+ * that pull `AuthError` straight from the package had no test. Worth knowing
+ * before writing the next one.
  */
 const afterCallbacks: Array<() => unknown> = [];
 vi.mock("next/server", () => ({
@@ -25,6 +34,11 @@ async function flushAfter() {
   const pending = afterCallbacks.splice(0);
   for (const fn of pending) await fn();
 }
+
+/** The action's only use of the package: `error instanceof AuthError`, to tell
+ * a failed convenience sign-in from Next's redirect signal. The class identity
+ * is what matters, and the action imports this same mocked module. */
+vi.mock("next-auth", () => ({ AuthError: class AuthError extends Error {} }));
 
 const isAuthRateLimited = vi.fn(async () => false);
 vi.mock("@/lib/security/rate-limit", () => ({
