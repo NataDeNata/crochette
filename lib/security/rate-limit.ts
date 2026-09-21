@@ -81,6 +81,26 @@ export const RATE_LIMITS = {
   "admin-totp": { max: 10, window: "10 m" },
   login: { max: 5, window: "10 m" },
   signup: { max: 5, window: "10 m" },
+  /** The two Stage B request paths, declared here with the rest rather than
+   * invented at the call site.
+   *
+   * These are not guessing limits — neither form can be brute-forced, since
+   * both answer identically whatever they are given. They are **outbound-mail**
+   * limits: each accepted request sends a real email to an address the
+   * requester names, so an unlimited form is a way to have this studio's
+   * verified sending domain mail a stranger repeatedly. That is a deliverability
+   * problem (a domain that sends unwanted mail loses its reputation) before it
+   * is a cost one, which is why they are tighter than the volumetric endpoints
+   * below despite being cheap to serve.
+   *
+   * Keyed `IP:email` like the auth endpoints, behind the same `auth-ip` bucket,
+   * so rotating the address does not buy a fresh allowance. */
+  "password-reset": { max: 5, window: "15 m" },
+  /** Tighter than the reset request: this one is reachable from a signed-in
+   * page with a button on it, so a bored click-through costs nothing, and three
+   * genuine resends inside a quarter of an hour already means the mail is not
+   * arriving and another copy will not help. */
+  "verify-email": { max: 3, window: "15 m" },
   checkout: { max: 10, window: "10 m" },
   "custom-order": { max: 6, window: "15 m" },
   contact: { max: 5, window: "10 m" },

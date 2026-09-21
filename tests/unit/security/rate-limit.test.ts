@@ -32,7 +32,10 @@ describe("RATE_LIMITS", () => {
     expect(RATE_LIMITS["auth-endpoint"]).not.toBe(RATE_LIMITS["auth-ip"]);
   });
 
-  it("still covers every endpoint the 2026-07-27 plan scoped", () => {
+  it("still covers every endpoint the 2026-07-27 plan scoped, plus the two Stage B mail paths", () => {
+    // An exhaustive set rather than a subset, so a new limited endpoint has to
+    // come past this test to exist — which is what it is for, and it worked:
+    // Stage B's two additions landed here before they landed anywhere else.
     expect(Object.keys(RATE_LIMITS).sort()).toEqual(
       [
         "admin-login",
@@ -43,9 +46,21 @@ describe("RATE_LIMITS", () => {
         "contact",
         "custom-order",
         "login",
+        "password-reset",
         "signup",
+        "verify-email",
       ].sort()
     );
+  });
+
+  it("holds the outbound-mail forms tighter than the login form", () => {
+    // Not a guessing limit — neither form can be brute-forced, since both
+    // answer identically whatever they are given. What these cap is this
+    // studio's verified sending domain mailing a stranger on demand, which is
+    // a deliverability problem before it is a cost one. Asserted as a
+    // relationship so it survives a renumbering of either side.
+    expect(RATE_LIMITS["verify-email"].max).toBeLessThan(RATE_LIMITS.login.max);
+    expect(RATE_LIMITS["password-reset"].max).toBeLessThanOrEqual(RATE_LIMITS.login.max);
   });
 
   it("caps second-factor guesses tighter than password attempts", () => {

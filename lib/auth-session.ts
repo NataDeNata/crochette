@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { admins } from "@/lib/db/schema";
+import { admins, customers } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/auth-types";
+import { logError } from "@/lib/observability/log";
 
 /** A real bcrypt hash (cost 12, matching the stored ones) of a random string.
  *
@@ -50,32 +51,57 @@ export function isAbsoluteSessionExpired(
 
 /** Was the account's password rotated after this session was issued?
  *
- * Admin-only, one PK lookup. `npm run db:seed-admin` stamps
- * `admins.passwordChangedAt` on every change, so this is what turns a password
- * rotation into an actual revocation of live sessions rather than a change that
- * only affects the *next* login.
+ * One primary-key lookup, for admins and customers alike. `npm run
+ * db:seed-admin` stamps `admins.passwordChangedAt` on every change and
+ * `setCustomerPassword` stamps `customers.passwordChangedAt` on every reset, so
+ * this is what turns a password rotation into an actual revocation of live
+ * sessions rather than a change that only affects the *next* login.
  *
- * Scoped to admin on purpose: `customers.passwordChangedAt` exists but nothing
- * writes it yet (no self-service change, no reset), so checking it would add a
- * DB round-trip to every shopper's every request to learn a value that is
- * always null. See the column comment in lib/db/schema.ts.
+ * **Customers were exempt until Stage B, and the exemption was correct while it
+ * lasted:** nothing wrote their column, so the query could only ever return
+ * null, and paying a round-trip per request for a known answer is not a
+ * trade. Password reset writes it — and a reset that leaves the attacker's
+ * other sessions alive fails the one expectation the feature exists to meet,
+ * since "someone else is in my account" is the usual reason for asking. So the
+ * check widens the moment the column starts moving, and not before.
+ *
+ * The cost is one indexed lookup per authenticated request. Guests carry no
+ * session and never reach this: `jwt` only runs where a token exists, which is
+ * the great majority of storefront traffic skipped entirely.
  *
  * Fails **open** on a database error — a Supabase blip should not log the owner
- * out of the back office. The absolute cap above is the guarantee that does not
- * depend on the database being reachable. */
+ * out of the back office, nor every shopper out of their account. The absolute
+ * cap above is the guarantee that does not depend on the database being
+ * reachable.
+ *
+ * That fail-open is a `try`/`catch` here rather than an unhandled throw at the
+ * call site, which is a correction as much as an addition: the docblock claimed
+ * it before this function had one, and the claim was only ever true by accident
+ * of admins being rare. A thrown query inside the `jwt` callback surfaces as a
+ * failed session read, and this now runs for every signed-in shopper. */
 export async function hasPasswordChangedSince(
   role: UserRole | undefined,
   userId: string | undefined,
   authTime: number | undefined
 ): Promise<boolean> {
-  if (role !== "admin" || !userId || typeof authTime !== "number") return false;
+  if (!userId || typeof authTime !== "number") return false;
+  if (role !== "admin" && role !== "customer") return false;
 
-  const [row] = await db
-    .select({ passwordChangedAt: admins.passwordChangedAt })
-    .from(admins)
-    .where(eq(admins.id, userId))
-    .limit(1);
+  const table = role === "admin" ? admins : customers;
+  try {
+    const [row] = await db
+      .select({ passwordChangedAt: table.passwordChangedAt })
+      .from(table)
+      .where(eq(table.id, userId))
+      .limit(1);
 
-  if (!row?.passwordChangedAt) return false;
-  return row.passwordChangedAt.getTime() > authTime;
+    if (!row?.passwordChangedAt) return false;
+    return row.passwordChangedAt.getTime() > authTime;
+  } catch (err) {
+    logError("auth.password_rotation_check_failed", err, {
+      role,
+      detail: "session allowed through; the absolute cap is the guarantee that does not need the database",
+    });
+    return false;
+  }
 }

@@ -6,6 +6,7 @@ import { signIn } from "@/lib/auth";
 import { findCustomerByEmail, createCustomer } from "@/lib/db/accounts";
 import { signupSchema } from "@/lib/validation/account";
 import { notifyAccountCreated } from "@/lib/email/notifications";
+import { sendVerificationLink } from "@/lib/account/verification";
 import { getClientIp, isAuthRateLimited } from "@/lib/security/rate-limit";
 import { INVALID_FIELDS_MESSAGE, RATE_LIMITED_MESSAGE } from "@/lib/actions/types";
 import type { AccountSignupState } from "@/lib/actions/auth-form-types";
@@ -53,9 +54,15 @@ export async function signupAccount(_prevState: AccountSignupState, formData: Fo
   }
 
   const passwordHash = await hash(parsed.data.password, 12);
-  await createCustomer({ email: parsed.data.email, passwordHash, name: parsed.data.name });
+  const customer = await createCustomer({ email: parsed.data.email, passwordHash, name: parsed.data.name });
 
   await notifyAccountCreated({ email: parsed.data.email, name: parsed.data.name });
+  // Two mails rather than one combined welcome-and-confirm, because they are
+  // resent independently: the banner's resend button re-sends this one and only
+  // this one, and a shopper who clicks it three times should not receive three
+  // more welcomes. Both are safe-sent, so neither can fail the signup — the
+  // account exists either way and the banner offers another copy.
+  await sendVerificationLink(customer);
 
   try {
     await signIn("customer", {

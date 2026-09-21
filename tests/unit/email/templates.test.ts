@@ -6,9 +6,14 @@ vi.mock("@/lib/email/resend", () => ({
 }));
 
 const { sendEmail } = await import("@/lib/email/resend");
-const { notifyOrderPaid, notifyOrderShipped, notifyOrderDelivered } = await import(
-  "@/lib/email/notifications"
-);
+const {
+  notifyOrderPaid,
+  notifyOrderShipped,
+  notifyOrderDelivered,
+  notifyEmailVerification,
+  notifyPasswordReset,
+  notifyPasswordResetUnavailable,
+} = await import("@/lib/email/notifications");
 
 /**
  * `escapeHtml` and `detailList` are module-private, so they are exercised
@@ -170,5 +175,66 @@ describe("delivery failures", () => {
     await notifyOrderPaid(ORDER, ITEMS);
 
     expect(sent()).toHaveLength(2);
+  });
+});
+
+/**
+ * The two Stage B links.
+ *
+ * What is worth pinning is not the prose but the URL: these are the only mails
+ * whose body is a credential, and a link that loses its token, points at the
+ * wrong path, or mangles the token in transit is a dead link that looks like a
+ * live one. The token's own correctness is tested in
+ * tests/unit/security/account-token.test.ts.
+ */
+describe("account link emails", () => {
+  const token = "v1.3f2504e0-4f89-41d3-9a0c-0305e82c3301.c2FtQGV4YW1wbGUuY29t.1700000604800.c2ln";
+
+  it("points the verification link at the confirmation page, token intact", async () => {
+    await notifyEmailVerification({ email: "sam@example.com", name: "Sam", token });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).toContain(`/account/verify?token=${encodeURIComponent(token)}`);
+  });
+
+  it("points the reset link at the reset page, token intact", async () => {
+    await notifyPasswordReset({ email: "sam@example.com", name: "Sam", token });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).toContain(`/account/reset-password?token=${encodeURIComponent(token)}`);
+  });
+
+  it("greets an account with no name on it without a hole in the sentence", async () => {
+    // Google accounts can arrive nameless, and a bare `Hi ,` is the kind of
+    // detail that makes a real email look like a phishing attempt.
+    await notifyEmailVerification({ email: "sam@example.com", name: null, token });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).toContain("Hello,");
+    expect(html).not.toContain("Hi ,");
+  });
+
+  it("escapes markup in the name, like every other template here", async () => {
+    await notifyPasswordReset({ email: "sam@example.com", name: '<script>alert("xss")</script>', token });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).not.toContain("<script>");
+  });
+
+  it("offers a Google-only account a route in rather than a reset link", async () => {
+    await notifyPasswordResetUnavailable({ email: "sam@example.com", name: "Sam" });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).not.toContain("/account/reset-password");
+    expect(html).toContain("/account/login");
+  });
+
+  it("never propagates a send failure to the caller", async () => {
+    // Signup calls this after the row is committed; a throw would tell a
+    // shopper their account was not created when it was.
+    vi.mocked(sendEmail).mockRejectedValue(new Error("Resend send failed: unverified domain"));
+
+    await expect(notifyEmailVerification({ email: "sam@example.com", token })).resolves.toBeUndefined();
+    await expect(notifyPasswordReset({ email: "sam@example.com", token })).resolves.toBeUndefined();
   });
 });
