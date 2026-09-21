@@ -6,7 +6,7 @@ import { compare } from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { admins, customers } from "@/lib/db/schema";
-import { claimGuestOrders, lookupOrCreateGoogleCustomer } from "@/lib/db/accounts";
+import { claimGuestOrders, findCustomerById, lookupOrCreateGoogleCustomer } from "@/lib/db/accounts";
 import { verifyAdminSecondFactor } from "@/lib/db/admin-account";
 import { verifyAdminChallenge } from "@/lib/security/admin-challenge";
 import { mergeCarts } from "@/lib/db/cart";
@@ -350,24 +350,36 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
       if (user?.role !== "customer" || !customerId) return;
 
       /**
-       * Google only, and the gate is the whole security argument.
+       * Proven addresses only, and the gate is the whole security argument.
        *
        * claimGuestOrders matches on email, so it must only run where the email
-       * has been proven to belong to whoever is signing in. Google asserts
-       * `email_verified` and the profile() callback above hard-rejects anything
-       * else. Credentials sign-ins are excluded because nothing verifies a
-       * password account's address yet — until email verification ships,
-       * including them would let anyone sign up with someone else's address and
-       * read the name, phone and shipping address off that person's orders.
+       * has been proven to belong to whoever is signing in. Two things count as
+       * proof, and nothing else does:
        *
-       * When email verification lands, widening this to `customer` sign-ins
-       * whose address is verified is the only change needed.
+       * - **Google.** It asserts `email_verified`, and the profile() callback
+       *   above hard-rejects anything else before a row is ever resolved.
+       * - **A stamped `email_verified_at`** — the shopper clicked the link this
+       *   project mailed them. This is Stage B's widening; the comment that
+       *   used to sit here said it would be the only change needed, and it was.
+       *
+       * An unverified password account is still excluded, for the original
+       * reason: including it would let anyone sign up with someone else's
+       * address and read the name, phone and shipping address off that person's
+       * guest orders.
+       *
+       * The lookup only happens on the credentials path — a Google sign-in is
+       * already proven and should not pay for a query to be told so.
        */
-      if (account?.provider === "google" && user.email) {
+      if (user.email) {
         try {
-          const claimed = await claimGuestOrders(customerId, user.email);
-          if (claimed > 0) {
-            logInfo("orders.guest_claimed", { customerId, count: claimed });
+          const proven =
+            account?.provider === "google" || Boolean((await findCustomerById(customerId))?.emailVerifiedAt);
+
+          if (proven) {
+            const claimed = await claimGuestOrders(customerId, user.email);
+            if (claimed > 0) {
+              logInfo("orders.guest_claimed", { customerId, count: claimed });
+            }
           }
         } catch (err) {
           logError("orders.guest_claim_failed", err, {

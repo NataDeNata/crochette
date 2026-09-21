@@ -51,6 +51,9 @@ export default async function AccountLoginPage({
           <GoogleSignInButton />
         </div>
         <p className="text-[13px] text-muted-foreground text-center mt-5">
+          <Link href="/account/forgot-password">Forgot your password?</Link>
+        </p>
+        <p className="text-[13px] text-muted-foreground text-center mt-2">
           New here? <Link href="/account/signup">Create an account</Link>
         </p>
       </div>

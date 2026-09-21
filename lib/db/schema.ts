@@ -232,13 +232,27 @@ export const customers = pgTable("customers", {
   passwordHash: text("password_hash"),
   name: text("name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  /** Mirrors `admins.passwordChangedAt` above, but is **not yet enforced**:
-   * customers have no way to change a password today (self-service change and
-   * reset are both still open scope), so there is nothing to revoke, and
-   * checking it would cost a DB lookup per request for every shopper in
-   * exchange for nothing. The column exists now so the reset flow doesn't need
-   * its own migration; switch the check on — throttled — when that lands. */
+  /** Mirrors `admins.passwordChangedAt` above, and **is enforced** as of Stage
+   * B: password reset writes it, `lib/auth-session.ts` reads it on every
+   * authenticated request, and `lib/security/account-token.ts` binds it into
+   * every reset link — which is what makes a reset link single-use without a
+   * token table. It was added ahead of the feature for exactly this, so the
+   * flow needed no migration of its own; the earlier comment here said the
+   * check was off because nothing wrote the column, and that is no longer
+   * true. */
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+  /** When this address was proven, not whether — a timestamp rather than a
+   * boolean, so "verified, but only after the order in question" stays
+   * answerable later. Null is the normal state for a password account between
+   * signup and the click; a Google account is stamped on arrival, since that
+   * provider's own `email_verified` claim is enforced at sign-in.
+   *
+   * Enforcement is soft. An unverified customer signs in, browses and checks
+   * out exactly as before — blocking checkout for unverified *account holders*
+   * would push them onto the guest path, which is less accountable, not more.
+   * What the stamp actually gates is `claimGuestOrders`, which matches on
+   * email and therefore may only run where the address has been proven. */
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
 });
 
 /** Saved shipping addresses for a customer account. Purely a convenience

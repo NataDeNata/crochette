@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { accountSignOut } from "@/app/account/actions";
+import { findCustomerById } from "@/lib/db/accounts";
+import { VerifyEmailBanner } from "@/components/account/VerifyEmailBanner";
 import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
@@ -18,6 +20,12 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   // those two pages — render them bare, without the account sub-nav, same
   // pattern as app/admin/layout.tsx.
   if (session?.user?.role !== "customer") return <>{children}</>;
+
+  // Read from the row, not from the session. A JWT is stamped at sign-in and
+  // rolled forward untouched, so a `verified` flag put in the token would keep
+  // telling a shopper to confirm their address for up to thirty days after they
+  // had. One primary-key lookup, on the /account pages only.
+  const customer = await findCustomerById(session.user.id);
 
   return (
     <section className="pt-12 page-gutter pb-24 max-w-[900px] mx-auto">
@@ -45,6 +53,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
           </form>
         </div>
       </div>
+      {customer && !customer.emailVerifiedAt && <VerifyEmailBanner email={customer.email} />}
       {children}
     </section>
   );

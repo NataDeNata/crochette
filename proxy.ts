@@ -2,7 +2,26 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login"]);
-const PUBLIC_ACCOUNT_PATHS = new Set(["/account/login", "/account/signup"]);
+/**
+ * Every `/account/*` path a signed-out visitor is allowed to reach.
+ *
+ * The three Stage B additions are all paths someone arrives at *because* they
+ * cannot sign in — a verification link opened on a phone that has never had a
+ * session, and the two halves of password reset, which exist for the case where
+ * the password is the thing that is missing. Gating them behind a session would
+ * redirect exactly the people they were built for to the login form they are
+ * stuck at. Each one carries its own proof: the two links are HMAC-signed
+ * tokens that name their own account (lib/security/account-token.ts), and the
+ * request form authorizes nothing at all — it only mails an address it was
+ * given, and answers the same whether or not that address has an account.
+ */
+const PUBLIC_ACCOUNT_PATHS = new Set([
+  "/account/login",
+  "/account/signup",
+  "/account/verify",
+  "/account/forgot-password",
+  "/account/reset-password",
+]);
 
 // Same remote image hosts as next.config.ts's images.remotePatterns — img-src
 // has to enumerate them or product photography (Blob-hosted) and the seed

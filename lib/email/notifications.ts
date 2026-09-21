@@ -243,6 +243,78 @@ export async function notifyAccountCreated(data: { email: string; name: string }
   );
 }
 
+/**
+ * The "prove this is your address" link, sent at signup and on every resend.
+ *
+ * Goes through `sendEmailSafe` like the other nine, so a mail failure can never
+ * fail the signup that triggered it — an account that exists but has not been
+ * mailed is recoverable from the banner's resend button, whereas a signup that
+ * throws after the row is written is not.
+ */
+export async function notifyEmailVerification(data: { email: string; name?: string | null; token: string }) {
+  const greeting = data.name ? `Hi ${escapeHtml(data.name)},` : "Hello,";
+  const link = `${SITE_URL}/account/verify?token=${encodeURIComponent(data.token)}`;
+
+  await sendEmailSafe(
+    {
+      to: data.email,
+      subject: "Confirm your email address",
+      html: wrapEmail(`
+        <p>${greeting}</p>
+        <p>Please confirm this is your email address so we can keep your order history and account recovery attached to it.</p>
+        <p style="font-size: 13px;"><a href="${link}">Confirm my email address</a></p>
+        <p style="font-size: 12px; color: #8a8175;">The link works for seven days. If you didn't create an account with us, you can ignore this — nothing happens until it's clicked.</p>
+      `),
+    },
+    "email verification"
+  );
+}
+
+/**
+ * The reset link. Sent only where an account exists *and* has a password —
+ * `notifyPasswordResetUnavailable` below is what a Google-only account gets
+ * instead, so that the request form can answer identically in every case
+ * without the mail itself becoming the oracle the form refused to be.
+ */
+export async function notifyPasswordReset(data: { email: string; name?: string | null; token: string }) {
+  const greeting = data.name ? `Hi ${escapeHtml(data.name)},` : "Hello,";
+  const link = `${SITE_URL}/account/reset-password?token=${encodeURIComponent(data.token)}`;
+
+  await sendEmailSafe(
+    {
+      to: data.email,
+      subject: "Reset your password",
+      html: wrapEmail(`
+        <p>${greeting}</p>
+        <p>Someone asked to reset the password on your Yarns and Buttons account. If that was you, choose a new one here:</p>
+        <p style="font-size: 13px;"><a href="${link}">Set a new password</a></p>
+        <p style="font-size: 12px; color: #8a8175;">The link works for two hours and can only be used once. If it wasn't you, ignore this email — your password hasn't changed, and nobody can reset it without this link.</p>
+      `),
+    },
+    "password reset"
+  );
+}
+
+/** What a reset request against a Google-only account gets: how to sign in,
+ * not a link to a password the account has never had. */
+export async function notifyPasswordResetUnavailable(data: { email: string; name?: string | null }) {
+  const greeting = data.name ? `Hi ${escapeHtml(data.name)},` : "Hello,";
+
+  await sendEmailSafe(
+    {
+      to: data.email,
+      subject: "Reset your password",
+      html: wrapEmail(`
+        <p>${greeting}</p>
+        <p>Someone asked to reset the password on your Yarns and Buttons account. This account signs in with Google, so there's no password to reset — use the "Continue with Google" button instead.</p>
+        <p style="font-size: 13px;"><a href="${SITE_URL}/account/login">Go to sign in</a></p>
+        <p style="font-size: 12px; color: #8a8175;">If it wasn't you who asked, you can ignore this email. Nothing about your account has changed.</p>
+      `),
+    },
+    "password reset unavailable"
+  );
+}
+
 export async function notifyContactMessageSubmitted(data: {
   name: string;
   email: string;
