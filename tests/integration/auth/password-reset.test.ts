@@ -37,12 +37,22 @@ async function flushAfter() {
 
 /** The action's only use of the package: `error instanceof AuthError`, to tell
  * a failed convenience sign-in from Next's redirect signal. The class identity
- * is what matters, and the action imports this same mocked module. */
-vi.mock("next-auth", () => ({ AuthError: class AuthError extends Error {} }));
+ * is what matters, and the action imports this same mocked module.
+ *
+ * Hoisted so a test can throw one deliberately — `vi.mock` factories are lifted
+ * above the file, so a plain `const` declared here would not exist yet when the
+ * factory runs. */
+const { AuthErrorStub } = vi.hoisted(() => ({ AuthErrorStub: class AuthError extends Error {} }));
+vi.mock("next-auth", () => ({ AuthError: AuthErrorStub }));
 
 const isAuthRateLimited = vi.fn(async () => false);
+/** Kept separate from `isAuthRateLimited` on purpose: the point of the
+ * address-keyed bucket is that it is a *different* call with a *different* key
+ * shape, and a mock that collapsed them could not tell the two apart. */
+const isRateLimited = vi.fn<(scope: string, key: string) => Promise<boolean>>(async () => false);
 vi.mock("@/lib/security/rate-limit", () => ({
   isAuthRateLimited: (...args: unknown[]) => isAuthRateLimited(...(args as [])),
+  isRateLimited: (...args: unknown[]) => isRateLimited(...(args as [never, never])),
   getClientIp: async () => "203.0.113.9",
 }));
 
@@ -50,9 +60,12 @@ const notifyPasswordReset =
   vi.fn<(data: { email: string; name?: string | null; token: string }) => Promise<void>>(async () => {});
 const notifyPasswordResetUnavailable =
   vi.fn<(data: { email: string; name?: string | null }) => Promise<void>>(async () => {});
+const notifyPasswordChanged =
+  vi.fn<(data: { email: string; name?: string | null }) => Promise<void>>(async () => {});
 vi.mock("@/lib/email/notifications", () => ({
   notifyPasswordReset: (...args: unknown[]) => notifyPasswordReset(...(args as [never])),
   notifyPasswordResetUnavailable: (...args: unknown[]) => notifyPasswordResetUnavailable(...(args as [never])),
+  notifyPasswordChanged: (...args: unknown[]) => notifyPasswordChanged(...(args as [never])),
 }));
 
 /** The convenience sign-in at the end of a reset. Mocked to a no-op: what it
@@ -94,8 +107,11 @@ beforeEach(() => {
   afterCallbacks.length = 0;
   isAuthRateLimited.mockClear();
   isAuthRateLimited.mockResolvedValue(false);
+  isRateLimited.mockClear();
+  isRateLimited.mockResolvedValue(false);
   notifyPasswordReset.mockClear();
   notifyPasswordResetUnavailable.mockClear();
+  notifyPasswordChanged.mockClear();
   signIn.mockClear();
 });
 
@@ -162,6 +178,45 @@ describe("requestPasswordReset", () => {
     expect(state.values?.email).toBe("not-an-address");
   });
 
+  it("caps the address independently of the client, with no IP in the key", async () => {
+    // The finding this closes: every other limit here is keyed IP:email, so an
+    // attacker with a pool of addresses got a fresh allowance per hop and could
+    // have our verified sending domain mail one victim indefinitely. The cap
+    // that binds is the one on the address.
+    await makeCustomer({ email: "victim@example.test" });
+
+    await requestPasswordReset({ status: "idle" }, requestForm("victim@example.test"));
+
+    expect(isRateLimited).toHaveBeenCalledWith("password-reset-email", "victim@example.test");
+  });
+
+  it("refuses when the address bucket is spent even though the client's is not", async () => {
+    await makeCustomer({ email: "victim@example.test" });
+    isAuthRateLimited.mockResolvedValue(false);
+    isRateLimited.mockResolvedValue(true);
+
+    const state = await requestPasswordReset({ status: "idle" }, requestForm("victim@example.test"));
+    await flushAfter();
+
+    expect(state.status).toBe("error");
+    expect(notifyPasswordReset).not.toHaveBeenCalled();
+  });
+
+  it("spends the address bucket for an unknown address too", async () => {
+    // A limit that only applied to real accounts would answer "this address
+    // exists" by the fourth attempt, undoing the identical-response property
+    // the whole action is built around.
+    await requestPasswordReset({ status: "idle" }, requestForm("nobody@example.test"));
+
+    expect(isRateLimited).toHaveBeenCalledWith("password-reset-email", "nobody@example.test");
+  });
+
+  it("lowercases the address before keying it, so case cannot buy a fresh bucket", async () => {
+    await requestPasswordReset({ status: "idle" }, requestForm("Victim@Example.TEST"));
+
+    expect(isRateLimited).toHaveBeenCalledWith("password-reset-email", "victim@example.test");
+  });
+
   it("refuses once the limit trips, and sends nothing", async () => {
     await makeCustomer({ email: "flood@example.test" });
     isAuthRateLimited.mockResolvedValue(true);
@@ -185,6 +240,61 @@ describe("completePasswordReset", () => {
     expect(await compare("a-better-password", after!.passwordHash!)).toBe(true);
     expect(after!.passwordChangedAt).toBeInstanceOf(Date);
     expect(signIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("tells the account holder the password changed", async () => {
+    // The notification that matters. The reset link says a reset was *asked
+    // for*, which its owner can ignore if it wasn't them; this says one
+    // *happened*, which they cannot — it is how someone whose account has just
+    // been taken finds out.
+    const customer = await makeCustomer({ email: "sam@example.test" });
+    const token = await requestAndCaptureToken("sam@example.test");
+
+    await completePasswordReset({ status: "idle" }, resetForm(token, "a-better-password"));
+    await flushAfter();
+
+    expect(notifyPasswordChanged).toHaveBeenCalledWith(expect.objectContaining({ email: customer.email }));
+  });
+
+  it("defers that notification past the response, like every other send here", async () => {
+    await makeCustomer({ email: "sam@example.test" });
+    const token = await requestAndCaptureToken("sam@example.test");
+
+    await completePasswordReset({ status: "idle" }, resetForm(token, "a-better-password"));
+    // Registered, not yet run: a Resend outage must not turn a completed
+    // password change into an error on screen.
+    expect(notifyPasswordChanged).not.toHaveBeenCalled();
+
+    await flushAfter();
+    expect(notifyPasswordChanged).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends nothing when the reset did not happen", async () => {
+    // A "your password was changed" mail for a password that did not change is
+    // worse than no mail at all — it is an alarm the reader cannot act on, and
+    // it trains them to ignore the real one.
+    await makeCustomer({ email: "sam@example.test" });
+
+    await completePasswordReset({ status: "idle" }, resetForm("not-a-token", "a-better-password"));
+    await flushAfter();
+
+    expect(notifyPasswordChanged).not.toHaveBeenCalled();
+  });
+
+  it("still notifies when the convenience sign-in fails", async () => {
+    // The password is changed either way, so the alert must not be collateral
+    // damage of a failed sign-in. `after()` is documented to run even when the
+    // response ends in a redirect or an error, which is why it is registered
+    // before the signIn call rather than after it.
+    await makeCustomer({ email: "sam@example.test" });
+    const token = await requestAndCaptureToken("sam@example.test");
+    signIn.mockRejectedValueOnce(new AuthErrorStub("sign-in failed"));
+
+    const state = await completePasswordReset({ status: "idle" }, resetForm(token, "a-better-password"));
+    await flushAfter();
+
+    expect(state.status).toBe("error");
+    expect(notifyPasswordChanged).toHaveBeenCalledTimes(1);
   });
 
   it("makes the link single-use, with nothing stored to make it so", async () => {

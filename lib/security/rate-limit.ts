@@ -96,6 +96,27 @@ export const RATE_LIMITS = {
    * Keyed `IP:email` like the auth endpoints, behind the same `auth-ip` bucket,
    * so rotating the address does not buy a fresh allowance. */
   "password-reset": { max: 5, window: "15 m" },
+  /**
+   * The same form, keyed on the **email alone** — no IP in the key.
+   *
+   * Every other limit here is keyed `IP:email`, which caps what one client can
+   * do and is the right shape for guessing. It is the wrong shape for this: the
+   * thing being spent is a mail to *someone else's* inbox, so an attacker with
+   * a pool of addresses gets a fresh bucket per hop and can have this studio's
+   * verified sending domain deliver to one victim as often as they like. A cap
+   * on the address is the only one that binds.
+   *
+   * 3 an hour. A genuine shopper needs one, occasionally two when the first
+   * lands in spam.
+   *
+   * **The trade is real and is accepted deliberately.** A per-address bucket
+   * means an attacker can exhaust *someone else's* allowance and stop them
+   * resetting for the rest of the hour. That is a nuisance, bounded and
+   * self-clearing, and it is a much smaller harm than an unbounded mail relay
+   * pointed at one inbox. It is not an account lockout: nothing is disabled,
+   * sign-in is untouched, and the existing password keeps working throughout.
+   */
+  "password-reset-email": { max: 3, window: "1 h" },
   /** Tighter than the reset request: this one is reachable from a signed-in
    * page with a button on it, so a bored click-through costs nothing, and three
    * genuine resends inside a quarter of an hour already means the mail is not

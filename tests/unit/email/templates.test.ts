@@ -13,6 +13,7 @@ const {
   notifyEmailVerification,
   notifyPasswordReset,
   notifyPasswordResetUnavailable,
+  notifyPasswordChanged,
 } = await import("@/lib/email/notifications");
 
 /**
@@ -236,5 +237,75 @@ describe("account link emails", () => {
 
     await expect(notifyEmailVerification({ email: "sam@example.com", token })).resolves.toBeUndefined();
     await expect(notifyPasswordReset({ email: "sam@example.com", token })).resolves.toBeUndefined();
+  });
+});
+
+/**
+ * The mail sent *after* a password actually changes.
+ *
+ * Its whole job is to reach someone who did not ask for it. So the cases worth
+ * pinning are: it says when, it says what to do, and it hands over nothing
+ * spendable — a "your password changed" mail is a natural phishing shape, and
+ * one carrying a live link would be training the reader to click exactly the
+ * thing that would hurt them.
+ */
+describe("password changed notification", () => {
+  it("carries no reset link and no token", async () => {
+    await notifyPasswordChanged({ email: "sam@example.com", name: "Sam" });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).not.toContain("/account/reset-password");
+    expect(html).not.toContain("token=");
+  });
+
+  it("names the time and the zone, so the reader can place it", async () => {
+    // A bare timestamp in an unknown zone is not evidence anyone can act on.
+    // The question this mail has to answer is "was that me, this morning?"
+    await notifyPasswordChanged({
+      email: "sam@example.com",
+      name: "Sam",
+      at: new Date("2026-09-21T02:30:00Z"),
+    });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).toContain("2026");
+    expect(html).toContain("Philippine time");
+  });
+
+  it("tells the reader what to do when it was not them", async () => {
+    await notifyPasswordChanged({ email: "sam@example.com", name: "Sam" });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).toContain("/contact");
+    // A raw apostrophe, not `&#x27;` — `escapeHtml` is applied to the values
+    // interpolated into these templates (the name, the timestamp), never to the
+    // static prose around them.
+    expect(html).toContain("wasn't you");
+  });
+
+  it("says the other sessions are gone, because they are", async () => {
+    // completePasswordReset advances password_changed_at, which lib/auth-session
+    // reads on every authenticated request. The mail should not claim this
+    // unless the code does it — and it does.
+    await notifyPasswordChanged({ email: "sam@example.com" });
+
+    expect(sentTo("sam@example.com").html).toContain("signed out");
+  });
+
+  it("greets a nameless account without a hole in the sentence", async () => {
+    await notifyPasswordChanged({ email: "sam@example.com", name: null });
+
+    const { html } = sentTo("sam@example.com");
+    expect(html).toContain("Hello,");
+    expect(html).not.toContain("Hi ,");
+  });
+
+  it("never propagates a send failure to the caller", async () => {
+    // Fires after the password is already written. A throw here would report a
+    // failure for a change that succeeded, which is the worst possible thing to
+    // tell someone about their own password.
+    vi.mocked(sendEmail).mockRejectedValue(new Error("Resend send failed"));
+
+    await expect(notifyPasswordChanged({ email: "sam@example.com" })).resolves.toBeUndefined();
   });
 });

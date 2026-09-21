@@ -1,7 +1,9 @@
 "use server";
 
+import { after } from "next/server";
 import { hash } from "bcryptjs";
 import { AuthError } from "next-auth";
+import { notifyPasswordChanged } from "@/lib/email/notifications";
 import { signIn } from "@/lib/auth";
 import { findCustomerById, setCustomerPassword } from "@/lib/db/accounts";
 import { resetPasswordSchema } from "@/lib/validation/account";
@@ -67,6 +69,25 @@ export async function completePasswordReset(
 
   const passwordHash = await hash(parsed.data.password, 12);
   await setCustomerPassword(customer.id, passwordHash);
+
+  /**
+   * "Your password was changed" — registered here, before the sign-in below,
+   * because that call ends in a thrown redirect and nothing after it runs.
+   * `after()` is documented to fire even when the response ends in a redirect
+   * or an error, which is exactly the property this needs: the mail must go
+   * whether or not the convenience sign-in works.
+   *
+   * Deferred rather than awaited for the same reason as the request side — a
+   * Resend outage must not turn a completed password change into an error on
+   * screen, and the shopper is mid-redirect either way.
+   *
+   * This is the notification that matters. The reset link says a reset was
+   * *asked for*, which its owner can ignore if it wasn't them; this says one
+   * *happened*, which they cannot.
+   */
+  after(async () => {
+    await notifyPasswordChanged({ email: customer.email, name: customer.name });
+  });
 
   // Not the email address, which is the customer's; `hadPassword` distinguishes
   // a genuine reset from a Google-only account being given its first password,

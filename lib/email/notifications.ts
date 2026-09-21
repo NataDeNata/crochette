@@ -295,6 +295,47 @@ export async function notifyPasswordReset(data: { email: string; name?: string |
   );
 }
 
+/**
+ * Sent once a password has actually changed — the other half of the reset mail,
+ * and the more important one.
+ *
+ * The reset link tells someone a reset was *requested*, which they can ignore if
+ * it wasn't them. This tells them it *succeeded*, which they cannot: if it
+ * wasn't them, somebody now holds their account and this mail is how they find
+ * out. That is the whole justification for a message with no action in it.
+ *
+ * Deliberately contains **no link that does anything** — no reset, no sign-in
+ * token, nothing spendable. A mail sent to someone whose account may already be
+ * compromised should not also be a credential, and "your password changed" is a
+ * natural shape for a phishing lure, so this one points only at the contact
+ * form the site already publishes.
+ */
+export async function notifyPasswordChanged(data: { email: string; name?: string | null; at?: Date }) {
+  const greeting = data.name ? `Hi ${escapeHtml(data.name)},` : "Hello,";
+  // Spelled out with the zone named, because a bare timestamp in an unknown
+  // zone is not evidence a reader can act on — the question this mail has to
+  // answer is "was that me, twenty minutes ago?"
+  const when = (data.at ?? new Date()).toLocaleString("en-PH", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Asia/Manila",
+  });
+
+  await sendEmailSafe(
+    {
+      to: data.email,
+      subject: "Your password was changed",
+      html: wrapEmail(`
+        <p>${greeting}</p>
+        <p>The password on your Yarns and Buttons account was changed on ${escapeHtml(when)} (Philippine time). Every other device that was signed in has been signed out.</p>
+        <p style="font-size: 13px;">If this was you, there's nothing to do.</p>
+        <p style="font-size: 13px;"><strong>If it wasn't you, tell us straight away</strong> — reply to this email or use the contact form at <a href="${SITE_URL}/contact">${SITE_URL}/contact</a>. Don't use any password-reset link you may have received; ask us first.</p>
+      `),
+    },
+    "password changed"
+  );
+}
+
 /** What a reset request against a Google-only account gets: how to sign in,
  * not a link to a password the account has never had. */
 export async function notifyPasswordResetUnavailable(data: { email: string; name?: string | null }) {

@@ -47,10 +47,22 @@ describe("RATE_LIMITS", () => {
         "custom-order",
         "login",
         "password-reset",
+        "password-reset-email",
         "signup",
         "verify-email",
       ].sort()
     );
+  });
+
+  it("caps the reset form on the address as well as on the client", () => {
+    // Every other scope here is keyed IP:email, which caps what one client can
+    // do — the right shape for guessing, the wrong one for this. What a reset
+    // request spends is a delivery to someone else's inbox, so an attacker with
+    // a pool of addresses gets a fresh bucket per hop unless a limit binds to
+    // the address itself. These two exist together for that reason, and a
+    // change that collapsed them into one would quietly restore the hole.
+    expect(RATE_LIMITS["password-reset-email"]).toEqual({ max: 3, window: "1 h" });
+    expect(RATE_LIMITS["password-reset-email"]).not.toBe(RATE_LIMITS["password-reset"]);
   });
 
   it("holds the outbound-mail forms tighter than the login form", () => {
