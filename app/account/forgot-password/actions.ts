@@ -5,7 +5,7 @@ import { findCustomerByEmail } from "@/lib/db/accounts";
 import { forgotPasswordSchema } from "@/lib/validation/account";
 import { mintPasswordResetToken } from "@/lib/security/account-token";
 import { notifyPasswordReset, notifyPasswordResetUnavailable } from "@/lib/email/notifications";
-import { getClientIp, isAuthRateLimited } from "@/lib/security/rate-limit";
+import { getClientIp, isAuthRateLimited, isRateLimited } from "@/lib/security/rate-limit";
 import { invalidFields, rateLimited, type FormActionState } from "@/lib/actions/types";
 import { logInfo } from "@/lib/observability/log";
 
@@ -49,7 +49,27 @@ export async function requestPasswordReset(
   const parsed = forgotPasswordSchema.safeParse({ email });
   if (!parsed.success) return invalidFields(parsed.error, { values });
 
-  if (await isAuthRateLimited("password-reset", await getClientIp(), parsed.data.email.toLowerCase())) {
+  /**
+   * Two independent caps, and they are different shapes on purpose.
+   *
+   * `isAuthRateLimited` is the usual pair — the IP bucket, then `IP:email` —
+   * which caps what one client can do. The second call caps what can be done to
+   * one *address*, with no IP in the key, because the resource being spent here
+   * is a delivery to somebody else's inbox: keyed `IP:email`, an attacker with
+   * a pool of addresses gets a fresh allowance per hop and can mail-bomb a
+   * single victim through our verified sending domain.
+   *
+   * Checked on the submitted address before any lookup, so a nonexistent
+   * account spends a bucket exactly like a real one — a limit that only applied
+   * to real accounts would answer "this address exists" by the fourth attempt,
+   * undoing the identical-response property this whole action is built around.
+   */
+  const emailKey = parsed.data.email.toLowerCase();
+  const ip = await getClientIp();
+  if (
+    (await isAuthRateLimited("password-reset", ip, emailKey)) ||
+    (await isRateLimited("password-reset-email", emailKey))
+  ) {
     return rateLimited({ values });
   }
 
